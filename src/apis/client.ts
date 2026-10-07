@@ -61,6 +61,12 @@ interface ErrorEnvelope {
 api.interceptors.response.use(
   (response) => response,
   (error: unknown) => {
+    if (axios.isCancel(error)) {
+      return Promise.reject(
+        new ApiError("REQUEST_CANCELLED", "Request was aborted by caller.", 0)
+      );
+    }
+
     if (!axios.isAxiosError(error)) {
       return Promise.reject(error);
     }
@@ -74,6 +80,8 @@ api.interceptors.response.use(
         ? "TOO_MANY_REQUESTS"
         : status === 401
         ? "UNAUTHORIZED"
+        : status === 404
+        ? "NOT_FOUND"
         : "UNKNOWN_ERROR");
 
     const message =
@@ -91,6 +99,7 @@ api.interceptors.response.use(
 /** 백엔드 성공 응답 봉투 */
 export interface Envelope<T> {
   data: T;
+  meta?: Record<string, unknown>;
 }
 
 export interface PagedEnvelope<T, M = unknown> {
@@ -98,39 +107,88 @@ export interface PagedEnvelope<T, M = unknown> {
   meta: M;
 }
 
-export async function get<T>(url: string, params?: object): Promise<T> {
-  const res = await api.get<Envelope<T>>(url, params ? { params } : undefined);
+export interface RequestOptions {
+  signal?: AbortSignal;
+  headers?: Record<string, string>;
+  timeout?: number;
+}
+
+export async function get<T>(
+  url: string,
+  params?: object,
+  options?: RequestOptions
+): Promise<T> {
+  const res = await api.get<Envelope<T>>(url, {
+    params,
+    signal: options?.signal,
+    headers: options?.headers,
+    timeout: options?.timeout,
+  });
   return res.data.data;
 }
 
 export async function getPaged<T, M = unknown>(
   url: string,
-  params?: object
+  params?: object,
+  options?: RequestOptions
 ): Promise<{ data: T; meta: M }> {
-  const res = await api.get<PagedEnvelope<T, M>>(
-    url,
-    params ? { params } : undefined
-  );
+  const res = await api.get<PagedEnvelope<T, M>>(url, {
+    params,
+    signal: options?.signal,
+    headers: options?.headers,
+    timeout: options?.timeout,
+  });
   return { data: res.data.data, meta: res.data.meta };
 }
 
-export async function post<T>(url: string, body?: unknown): Promise<T> {
-  const res = await api.post<Envelope<T>>(url, body);
+export async function post<T>(
+  url: string,
+  body?: unknown,
+  options?: RequestOptions
+): Promise<T> {
+  const res = await api.post<Envelope<T>>(url, body, {
+    signal: options?.signal,
+    headers: options?.headers,
+    timeout: options?.timeout,
+  });
   return res.data.data;
 }
 
-export async function put<T>(url: string, body?: unknown): Promise<T> {
-  const res = await api.put<Envelope<T>>(url, body);
+export async function put<T>(
+  url: string,
+  body?: unknown,
+  options?: RequestOptions
+): Promise<T> {
+  const res = await api.put<Envelope<T>>(url, body, {
+    signal: options?.signal,
+    headers: options?.headers,
+    timeout: options?.timeout,
+  });
   return res.data.data;
 }
 
-export async function patch<T>(url: string, body?: unknown): Promise<T> {
-  const res = await api.patch<Envelope<T>>(url, body);
+export async function patch<T>(
+  url: string,
+  body?: unknown,
+  options?: RequestOptions
+): Promise<T> {
+  const res = await api.patch<Envelope<T>>(url, body, {
+    signal: options?.signal,
+    headers: options?.headers,
+    timeout: options?.timeout,
+  });
   return res.data.data;
 }
 
-export async function del<T = void>(url: string): Promise<T> {
-  const res = await api.delete<Envelope<T>>(url);
+export async function del<T = void>(
+  url: string,
+  options?: RequestOptions
+): Promise<T> {
+  const res = await api.delete<Envelope<T>>(url, {
+    signal: options?.signal,
+    headers: options?.headers,
+    timeout: options?.timeout,
+  });
   return res.data?.data as T;
 }
 
@@ -138,7 +196,8 @@ export async function del<T = void>(url: string): Promise<T> {
 export async function postMultipart<T>(
   url: string,
   formData: FormData,
-  fileSizeBytes?: number
+  fileSizeBytes?: number,
+  options?: RequestOptions
 ): Promise<T> {
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
   if (fileSizeBytes !== undefined && fileSizeBytes > MAX_FILE_SIZE) {
@@ -150,8 +209,11 @@ export async function postMultipart<T>(
   }
 
   const res = await api.post<Envelope<T>>(url, formData, {
+    signal: options?.signal,
+    timeout: options?.timeout,
     headers: {
       "Content-Type": "multipart/form-data",
+      ...options?.headers,
     },
   });
   return res.data.data;
