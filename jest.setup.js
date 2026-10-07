@@ -10,6 +10,10 @@ jest.mock("react-native", () => ({
     OS: "android",
     select: (obj) => obj.android || obj.default,
   },
+  AppState: {
+    currentState: "active",
+    addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+  },
 }));
 
 // Mock expo-constants
