@@ -76,3 +76,61 @@ jest.mock("expo-haptics", () => ({
   },
   notificationAsync: jest.fn().mockResolvedValue(undefined),
 }));
+
+// Mock expo-location
+jest.mock("expo-location", () => ({
+  Accuracy: {
+    Balanced: 3,
+    High: 4,
+    Highest: 5,
+  },
+  PermissionStatus: {
+    GRANTED: "granted",
+    DENIED: "denied",
+    UNDETERMINED: "undetermined",
+  },
+  requestForegroundPermissionsAsync: jest.fn().mockResolvedValue({ status: "granted" }),
+  watchPositionAsync: jest.fn().mockResolvedValue({ remove: jest.fn() }),
+}));
+
+// Mock expo-av
+jest.mock("expo-av", () => ({
+  Audio: {
+    requestPermissionsAsync: jest.fn().mockResolvedValue({ granted: true }),
+    setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
+    RecordingOptionsPresets: {
+      HIGH_QUALITY: {},
+    },
+    Recording: jest.fn().mockImplementation(() => ({
+      prepareToRecordAsync: jest.fn().mockResolvedValue(undefined),
+      startAsync: jest.fn().mockResolvedValue(undefined),
+      stopAndUnloadAsync: jest.fn().mockResolvedValue(undefined),
+      getStatusAsync: jest.fn().mockResolvedValue({ durationMillis: 2500 }),
+      getURI: jest.fn().mockReturnValue("file:///data/voice_query.m4a"),
+    })),
+    Sound: {
+      createAsync: jest.fn().mockResolvedValue({
+        sound: {
+          playAsync: jest.fn().mockResolvedValue(undefined),
+          pauseAsync: jest.fn().mockResolvedValue(undefined),
+          stopAsync: jest.fn().mockResolvedValue(undefined),
+          unloadAsync: jest.fn().mockResolvedValue(undefined),
+        },
+        status: { isLoaded: true },
+      }),
+    },
+  },
+}));
+
+// Mock @react-native-community/netinfo
+jest.mock("@react-native-community/netinfo", () => ({
+  addEventListener: jest.fn((callback) => {
+    callback({
+      isConnected: true,
+      isInternetReachable: true,
+      type: "wifi",
+    });
+    return jest.fn();
+  }),
+}));
+
