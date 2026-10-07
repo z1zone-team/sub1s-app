@@ -1,0 +1,170 @@
+import * as client from "@/apis/client";
+import { getTimeline } from "./getTimeline";
+import { useTimelineQuery } from "./useTimelineQuery";
+import { getTravelStats } from "./getTravelStats";
+import { useTravelStatsQuery } from "./useTravelStatsQuery";
+import { getLineMap } from "./getLineMap";
+import { useLineMapQuery } from "./useLineMapQuery";
+import { useCreateTravelLogMutation } from "@/apis/mutations/travel/useCreateTravelLogMutation";
+
+const mockUseQuery = jest.fn();
+const mockUseMutation = jest.fn();
+const mockInvalidateQueries = jest.fn();
+
+jest.mock("@tanstack/react-query", () => {
+  const actual = jest.requireActual("@tanstack/react-query");
+  return {
+    ...actual,
+    useQuery: (options: unknown) => mockUseQuery(options),
+    useMutation: (options: unknown) => mockUseMutation(options),
+    useQueryClient: () => ({
+      invalidateQueries: mockInvalidateQueries,
+    }),
+  };
+});
+
+jest.mock("@/hooks/useAuthToken", () => ({
+  useAuthToken: () => ({
+    isLoaded: true,
+    isSignedIn: true,
+    userId: "user-1",
+  }),
+}));
+
+jest.mock("@/apis/client", () => {
+  const actual = jest.requireActual("@/apis/client");
+  return {
+    ...actual,
+    get: jest.fn(),
+    post: jest.fn(),
+  };
+});
+
+describe("Travel & Profile Domain APIs & Hooks", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("getTimeline and useTimelineQuery should fetch timeline data", async () => {
+    const mockTimeline = {
+      logs: [
+        {
+          id: "log-1",
+          originStationName: "강남",
+          destStationName: "시청",
+          totalDistanceKm: 12.5,
+          transferCount: 1,
+          earnedPoints: 120,
+          createdAt: "2026-10-07T10:00:00Z",
+        },
+      ],
+      totalCount: 1,
+      totalDistanceKm: 12.5,
+    };
+    (client.get as jest.Mock).mockResolvedValue(mockTimeline);
+
+    const query = { year: 2026, month: 10, page: 1, limit: 10 };
+    const result = await getTimeline(query);
+
+    expect(client.get).toHaveBeenCalledWith("/travel/timeline", query, undefined);
+    expect(result).toEqual(mockTimeline);
+
+    mockUseQuery.mockReturnValue({ data: mockTimeline, isSuccess: true });
+    useTimelineQuery(query);
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: ["profile", "timeline", 2026, 10, 1, 10],
+        enabled: true,
+      })
+    );
+  });
+
+  it("getTravelStats and useTravelStatsQuery should fetch stats", async () => {
+    const mockStats = {
+      userId: "user-1",
+      period: "MONTH" as const,
+      totalDistanceKm: 150.8,
+      totalTravelCount: 18,
+      transferCount: 6,
+      totalRideDurationSec: 15400,
+      mostVisitedStations: [{ stationId: "0222", stationName: "강남", visitCount: 12 }],
+    };
+    (client.get as jest.Mock).mockResolvedValue(mockStats);
+
+    const result = await getTravelStats({ period: "MONTH" });
+    expect(client.get).toHaveBeenCalledWith("/travel/stats", { period: "MONTH" }, undefined);
+    expect(result).toEqual(mockStats);
+
+    mockUseQuery.mockReturnValue({ data: mockStats, isSuccess: true });
+    useTravelStatsQuery("MONTH");
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: ["profile", "stats", "MONTH"],
+        enabled: true,
+      })
+    );
+  });
+
+  it("getLineMap and useLineMapQuery should fetch line map", async () => {
+    const mockLineMap = {
+      userId: "user-1",
+      period: "ALL" as const,
+      lines: [
+        {
+          lineId: "2호선",
+          lineName: "2호선",
+          colorHex: "#00A84D",
+          stations: [
+            { stationId: "0222", stationName: "강남", lineSeq: 1, visited: true },
+          ],
+        },
+      ],
+    };
+    (client.get as jest.Mock).mockResolvedValue(mockLineMap);
+
+    const result = await getLineMap({ period: "ALL" });
+    expect(client.get).toHaveBeenCalledWith("/line-map", { period: "ALL" }, undefined);
+    expect(result).toEqual(mockLineMap);
+
+    mockUseQuery.mockReturnValue({ data: mockLineMap, isSuccess: true });
+    useLineMapQuery("ALL");
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: ["linemap", "lines", "all", "all", "all"],
+        enabled: true,
+      })
+    );
+  });
+
+  it("useCreateTravelLogMutation should call post /travel/log and invalidate queries", async () => {
+    const mockLogResponse = {
+      logId: "log-100",
+      totalDistanceKm: 14.2,
+      transferCount: 1,
+      earnedPoints: 150,
+      currentTotalPoints: 1400,
+    };
+    mockUseMutation.mockReturnValue({ mutateAsync: jest.fn() });
+
+    useCreateTravelLogMutation();
+
+    const passedOptions = mockUseMutation.mock.calls[0][0];
+    (client.post as jest.Mock).mockResolvedValue(mockLogResponse);
+
+    const res = await passedOptions.mutationFn({
+      originStationId: "0222",
+      destStationId: "0234",
+    });
+    expect(client.post).toHaveBeenCalledWith("/travel/log", {
+      originStationId: "0222",
+      destStationId: "0234",
+    });
+    expect(res).toEqual(mockLogResponse);
+
+    passedOptions.onSuccess();
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ["auth"] });
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ["profile"] });
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ["ranking"] });
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ["linemap"] });
+  });
+});

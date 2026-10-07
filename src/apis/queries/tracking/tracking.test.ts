@@ -1,0 +1,159 @@
+import * as client from "@/apis/client";
+import { getTrackingSession } from "./getTrackingSession";
+import { useTrackingSessionQuery } from "./useTrackingSessionQuery";
+import { useStartTrackingMutation } from "@/apis/mutations/tracking/useStartTrackingMutation";
+import { useDeviateCheckMutation } from "@/apis/mutations/tracking/useDeviateCheckMutation";
+import { useReportLocationMutation } from "@/apis/mutations/tracking/useReportLocationMutation";
+
+const mockUseQuery = jest.fn();
+const mockUseMutation = jest.fn();
+const mockSetQueryData = jest.fn();
+
+jest.mock("@tanstack/react-query", () => {
+  const actual = jest.requireActual("@tanstack/react-query");
+  return {
+    ...actual,
+    useQuery: (options: unknown) => mockUseQuery(options),
+    useMutation: (options: unknown) => mockUseMutation(options),
+    useQueryClient: () => ({
+      setQueryData: mockSetQueryData,
+      invalidateQueries: jest.fn(),
+    }),
+  };
+});
+
+jest.mock("@/apis/client", () => {
+  const actual = jest.requireActual("@/apis/client");
+  return {
+    ...actual,
+    get: jest.fn(),
+    post: jest.fn(),
+  };
+});
+
+describe("Tracking Domain APIs & Hooks", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const mockSession = {
+    sessionId: "sess-12345",
+    routeId: "route-999",
+    currentStationId: "0222",
+    nextStationId: "0223",
+    status: "IN_TRANSIT" as const,
+    currentSegmentIndex: 0,
+    startedAt: "2026-10-07T14:00:00Z",
+    updatedAt: "2026-10-07T14:05:00Z",
+  };
+
+  it("getTrackingSession should call get /routes/track/:sessionId", async () => {
+    (client.get as jest.Mock).mockResolvedValue(mockSession);
+
+    const result = await getTrackingSession("sess-12345");
+    expect(client.get).toHaveBeenCalledWith("/routes/track/sess-12345", undefined, undefined);
+    expect(result).toEqual(mockSession);
+  });
+
+  it("useTrackingSessionQuery should configure query options", async () => {
+    mockUseQuery.mockReturnValue({ data: mockSession, isSuccess: true });
+
+    const query = useTrackingSessionQuery("sess-12345");
+
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: ["tracking", "session", "sess-12345"],
+        enabled: true,
+        staleTime: 5_000,
+      })
+    );
+    expect(query.data).toEqual(mockSession);
+
+    (client.get as jest.Mock).mockResolvedValue(mockSession);
+    const passedOptions = mockUseQuery.mock.calls[0][0];
+    const res = await passedOptions.queryFn({ signal: undefined });
+    expect(client.get).toHaveBeenCalledWith(
+      "/routes/track/sess-12345",
+      undefined,
+      { signal: undefined }
+    );
+    expect(res).toEqual(mockSession);
+  });
+
+  it("useStartTrackingMutation should call post /routes/track/start and update cache on success", async () => {
+    mockUseMutation.mockReturnValue({ mutateAsync: jest.fn() });
+
+    useStartTrackingMutation();
+
+    const passedOptions = mockUseMutation.mock.calls[0][0];
+    (client.post as jest.Mock).mockResolvedValue(mockSession);
+
+    const res = await passedOptions.mutationFn({
+      routeId: "route-999",
+      initialStationId: "0222",
+    });
+    expect(client.post).toHaveBeenCalledWith("/routes/track/start", {
+      routeId: "route-999",
+      initialStationId: "0222",
+    });
+    expect(res).toEqual(mockSession);
+
+    passedOptions.onSuccess(mockSession);
+    expect(mockSetQueryData).toHaveBeenCalledWith(
+      ["tracking", "session", "sess-12345"],
+      mockSession
+    );
+  });
+
+  it("useDeviateCheckMutation should call post /routes/track/deviate", async () => {
+    const mockAlert = {
+      isOffRoute: true,
+      sessionId: "sess-12345",
+      detectedStationId: "0250",
+      reason: "반대 방향 탑승 감지",
+    };
+    mockUseMutation.mockReturnValue({ mutateAsync: jest.fn() });
+
+    useDeviateCheckMutation();
+
+    const passedOptions = mockUseMutation.mock.calls[0][0];
+    (client.post as jest.Mock).mockResolvedValue(mockAlert);
+
+    const res = await passedOptions.mutationFn({
+      sessionId: "sess-12345",
+      currentStationId: "0250",
+    });
+
+    expect(client.post).toHaveBeenCalledWith("/routes/track/deviate", {
+      sessionId: "sess-12345",
+      currentStationId: "0250",
+    });
+    expect(res).toEqual(mockAlert);
+  });
+
+  it("useReportLocationMutation should call post /routes/track/location and update cache", async () => {
+    mockUseMutation.mockReturnValue({ mutateAsync: jest.fn() });
+
+    useReportLocationMutation();
+
+    const passedOptions = mockUseMutation.mock.calls[0][0];
+    (client.post as jest.Mock).mockResolvedValue(mockSession);
+
+    const res = await passedOptions.mutationFn({
+      sessionId: "sess-12345",
+      currentStationId: "0223",
+    });
+
+    expect(client.post).toHaveBeenCalledWith("/routes/track/location", {
+      sessionId: "sess-12345",
+      currentStationId: "0223",
+    });
+    expect(res).toEqual(mockSession);
+
+    passedOptions.onSuccess(mockSession);
+    expect(mockSetQueryData).toHaveBeenCalledWith(
+      ["tracking", "session", "sess-12345"],
+      mockSession
+    );
+  });
+});

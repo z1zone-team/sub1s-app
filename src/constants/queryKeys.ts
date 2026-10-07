@@ -25,15 +25,53 @@ export const queryKeys = {
   },
   ranking: {
     all: ["ranking"] as const,
-    leaderboard: (scope: "ALL" | "MONTHLY", friendsOnly: boolean) =>
-      [...queryKeys.ranking.all, "leaderboard", scope, friendsOnly] as const,
+    leaderboard: (
+      periodType: "ALL" | "MONTHLY" = "MONTHLY",
+      periodKey?: string,
+      friendsOnly: boolean = false,
+      page: number = 1,
+      limit: number = 20
+    ) =>
+      [
+        ...queryKeys.ranking.all,
+        "leaderboard",
+        periodType,
+        periodKey ?? "current",
+        friendsOnly,
+        page,
+        limit,
+      ] as const,
     myScore: () => [...queryKeys.ranking.all, "myScore"] as const,
   },
   profile: {
     all: ["profile"] as const,
-    stats: (period: "WEEK" | "MONTH" | "YEAR" | "ALL") =>
+    stats: (period: "WEEK" | "MONTH" | "YEAR" | "ALL" = "ALL") =>
       [...queryKeys.profile.all, "stats", period] as const,
-    timeline: () => [...queryKeys.profile.all, "timeline"] as const,
+    timeline: (
+      year?: number,
+      month?: number,
+      page: number = 1,
+      limit: number = 20
+    ) =>
+      [
+        ...queryKeys.profile.all,
+        "timeline",
+        year ?? "all",
+        month ?? "all",
+        page,
+        limit,
+      ] as const,
+  },
+  linemap: {
+    all: ["linemap"] as const,
+    lines: (lineId?: string, year?: number, month?: number) =>
+      [
+        ...queryKeys.linemap.all,
+        "lines",
+        lineId ?? "all",
+        year ?? "all",
+        month ?? "all",
+      ] as const,
   },
   notifications: {
     all: ["notifications"] as const,
