@@ -1,11 +1,17 @@
 import { post, type RequestOptions } from "@/apis/client";
 
-export type RouteMode = "OPTIMAL" | "COMFORTABLE" | "PERSONAL" | "CHEAPEST";
+export type RouteMode =
+  | "OPTIMAL"
+  | "COMFORTABLE"
+  | "PERSONAL"
+  | "CHEAPEST"
+  | "ONLY_WALK";
+
 export type CongestionLevel = "여유" | "보통" | "혼잡";
 
 export interface PathSegmentDto {
-  lineId: string;
-  direction: "UP" | "DOWN" | "INNER" | "OUTER";
+  lineId: string; // 호선 ID 또는 'WALK'
+  direction: "UP" | "DOWN" | "INNER" | "OUTER" | "NONE";
   isExpress: boolean;
   fromStationId: string;
   fromStationName: string;
@@ -19,6 +25,8 @@ export interface PathSegmentDto {
   congestionLevel: CongestionLevel;
   congestionRate: number;
   isEstimated?: boolean;
+  walkCalories?: number;
+  walkSteps?: number;
 }
 
 export interface SubwayRouteOptionDto {
@@ -29,6 +37,10 @@ export interface SubwayRouteOptionDto {
   transferCount: number;
   estimatedArrivalTimestamp: string;
   segments: PathSegmentDto[];
+  totalWalkDurationSec?: number;
+  totalWalkDistanceKm?: number;
+  totalCalories?: number;
+  totalSteps?: number;
 }
 
 export interface RouteSearchResult {
@@ -37,16 +49,22 @@ export interface RouteSearchResult {
 }
 
 export interface RouteSearchRequest {
-  originStationId: string;
-  destinationStationId: string;
+  originStationId?: string;
+  originLat?: number;
+  originLng?: number;
+  originName?: string;
+  destinationStationId?: string;
+  destinationLat?: number;
+  destinationLng?: number;
+  destinationName?: string;
   routeMode?: RouteMode;
   departureAt?: string;
 }
 
 /**
-  * 다익스트라 기반 최적 지하철 경로 탐색
-  * POST /api/v1/routes/search
-  */
+ * 다익스트라 기반 최적 지하철 및 도보 복합 경로 탐색
+ * POST /api/v1/routes/search
+ */
 export const searchRoutes = (
   params: RouteSearchRequest,
   options?: RequestOptions

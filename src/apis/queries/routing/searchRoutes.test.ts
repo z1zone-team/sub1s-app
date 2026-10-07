@@ -104,6 +104,22 @@ describe("Routing Domain APIs & Hooks", () => {
     );
   });
 
+  it("useRouteSearchQuery should enable query when coordinates are provided", () => {
+    useRouteSearchQuery({
+      originLat: 37.498,
+      originLng: 127.027,
+      destinationLat: 37.566,
+      destinationLng: 126.978,
+    });
+
+    expect(mockUseQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabled: true,
+        queryKey: ["routes", "optimal", "37.498,127.027", "37.566,126.978", undefined],
+      })
+    );
+  });
+
   it("useRouteSearchMutation should configure mutationFn correctly", async () => {
     mockUseMutation.mockReturnValue({ mutateAsync: jest.fn() });
 
