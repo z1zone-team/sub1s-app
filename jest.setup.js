@@ -1,3 +1,17 @@
+// Mock react-native components and APIs
+jest.mock("react-native", () => ({
+  View: "View",
+  Text: "Text",
+  TouchableOpacity: "TouchableOpacity",
+  StyleSheet: {
+    create: (styles) => styles,
+  },
+  Platform: {
+    OS: "android",
+    select: (obj) => obj.android || obj.default,
+  },
+}));
+
 // Mock expo-constants
 jest.mock("expo-constants", () => ({
   expoConfig: {

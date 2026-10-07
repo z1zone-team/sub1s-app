@@ -5,13 +5,14 @@ import { BottomTabNavigator } from "./BottomTabNavigator";
 import { RouteResultScreen } from "@/screens/RouteResultScreen";
 import { LiveNavScreen } from "@/screens/LiveNavScreen";
 import { TimelineScreen } from "@/screens/TimelineScreen";
+import { linking } from "./linking";
 import type { RootStackParamList } from "./navigation-types";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking}>
       <Stack.Navigator
         initialRouteName="MainTabs"
         screenOptions={{
