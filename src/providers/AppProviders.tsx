@@ -5,6 +5,7 @@ import * as SecureStore from "expo-secure-store";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { setTokenGetter } from "@/apis/client";
 import { ENV } from "@/constants/env";
+import { ErrorBoundary } from "@/common/components/ErrorBoundary";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -67,15 +68,17 @@ export interface AppProvidersProps {
 
 export function AppProviders({ children }: AppProvidersProps) {
   return (
-    <SafeAreaProvider>
-      <ClerkProvider
-        publishableKey={ENV.CLERK_PUBLISHABLE_KEY}
-        tokenCache={tokenCache}
-      >
-        <QueryClientProvider client={queryClient}>
-          <TokenBridge>{children}</TokenBridge>
-        </QueryClientProvider>
-      </ClerkProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <ClerkProvider
+          publishableKey={ENV.CLERK_PUBLISHABLE_KEY}
+          tokenCache={tokenCache}
+        >
+          <QueryClientProvider client={queryClient}>
+            <TokenBridge>{children}</TokenBridge>
+          </QueryClientProvider>
+        </ClerkProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
