@@ -4,3 +4,4 @@ export * from "./types/api.types";
 export * from "./auth";
 export * from "./notifications";
 export * from "./realtime";
+export * from "./device";
