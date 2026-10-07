@@ -5,6 +5,7 @@ import { getTravelStats } from "./getTravelStats";
 import { useTravelStatsQuery } from "./useTravelStatsQuery";
 import { getLineMap } from "./getLineMap";
 import { useLineMapQuery } from "./useLineMapQuery";
+import { createTravelLog } from "@/apis/mutations/travel/createTravelLog";
 import { useCreateTravelLogMutation } from "@/apis/mutations/travel/useCreateTravelLogMutation";
 
 const mockUseQuery = jest.fn();
@@ -136,6 +137,28 @@ describe("Travel & Profile Domain APIs & Hooks", () => {
     );
   });
 
+  it("createTravelLog standalone function should call post /travel/log", async () => {
+    const mockLogResponse = {
+      logId: "log-100",
+      totalDistanceKm: 14.2,
+      transferCount: 1,
+      earnedPoints: 150,
+      currentTotalPoints: 1400,
+    };
+    (client.post as jest.Mock).mockResolvedValue(mockLogResponse);
+
+    const res = await createTravelLog({
+      originStationId: "0222",
+      destStationId: "0234",
+    });
+
+    expect(client.post).toHaveBeenCalledWith("/travel/log", {
+      originStationId: "0222",
+      destStationId: "0234",
+    }, undefined);
+    expect(res).toEqual(mockLogResponse);
+  });
+
   it("useCreateTravelLogMutation should call post /travel/log and invalidate queries", async () => {
     const mockLogResponse = {
       logId: "log-100",
@@ -158,7 +181,7 @@ describe("Travel & Profile Domain APIs & Hooks", () => {
     expect(client.post).toHaveBeenCalledWith("/travel/log", {
       originStationId: "0222",
       destStationId: "0234",
-    });
+    }, undefined);
     expect(res).toEqual(mockLogResponse);
 
     passedOptions.onSuccess();

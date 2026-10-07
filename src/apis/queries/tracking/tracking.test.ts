@@ -1,8 +1,11 @@
 import * as client from "@/apis/client";
 import { getTrackingSession } from "./getTrackingSession";
 import { useTrackingSessionQuery } from "./useTrackingSessionQuery";
+import { startTracking } from "@/apis/mutations/tracking/startTracking";
 import { useStartTrackingMutation } from "@/apis/mutations/tracking/useStartTrackingMutation";
+import { checkDeviate } from "@/apis/mutations/tracking/deviateCheck";
 import { useDeviateCheckMutation } from "@/apis/mutations/tracking/useDeviateCheckMutation";
+import { reportLocation } from "@/apis/mutations/tracking/reportLocation";
 import { useReportLocationMutation } from "@/apis/mutations/tracking/useReportLocationMutation";
 
 const mockUseQuery = jest.fn();
@@ -80,7 +83,22 @@ describe("Tracking Domain APIs & Hooks", () => {
     expect(res).toEqual(mockSession);
   });
 
-  it("useStartTrackingMutation should call post /routes/track/start and update cache on success", async () => {
+  it("startTracking standalone function should call post /routes/track/start", async () => {
+    (client.post as jest.Mock).mockResolvedValue(mockSession);
+
+    const res = await startTracking({
+      routeId: "route-999",
+      initialStationId: "0222",
+    });
+
+    expect(client.post).toHaveBeenCalledWith("/routes/track/start", {
+      routeId: "route-999",
+      initialStationId: "0222",
+    }, undefined);
+    expect(res).toEqual(mockSession);
+  });
+
+  it("useStartTrackingMutation should delegate to startTracking and update cache on success", async () => {
     mockUseMutation.mockReturnValue({ mutateAsync: jest.fn() });
 
     useStartTrackingMutation();
@@ -95,7 +113,7 @@ describe("Tracking Domain APIs & Hooks", () => {
     expect(client.post).toHaveBeenCalledWith("/routes/track/start", {
       routeId: "route-999",
       initialStationId: "0222",
-    });
+    }, undefined);
     expect(res).toEqual(mockSession);
 
     passedOptions.onSuccess(mockSession);
@@ -105,7 +123,29 @@ describe("Tracking Domain APIs & Hooks", () => {
     );
   });
 
-  it("useDeviateCheckMutation should call post /routes/track/deviate", async () => {
+  it("checkDeviate standalone function should call post /routes/track/deviate", async () => {
+    const mockAlert = {
+      isOffRoute: true,
+      sessionId: "sess-12345",
+      detectedStationId: "0250",
+      reason: "반대 방향 탑승 감지",
+    };
+    (client.post as jest.Mock).mockResolvedValue(mockAlert);
+
+    const res = await checkDeviate({
+      sessionId: "sess-12345",
+      detectedStationId: "0250",
+    });
+
+    expect(client.post).toHaveBeenCalledWith("/routes/track/deviate", {
+      sessionId: "sess-12345",
+      detectedStationId: "0250",
+      isUserConfirmed: undefined,
+    }, undefined);
+    expect(res).toEqual(mockAlert);
+  });
+
+  it("useDeviateCheckMutation should delegate to checkDeviate", async () => {
     const mockAlert = {
       isOffRoute: true,
       sessionId: "sess-12345",
@@ -121,17 +161,33 @@ describe("Tracking Domain APIs & Hooks", () => {
 
     const res = await passedOptions.mutationFn({
       sessionId: "sess-12345",
-      currentStationId: "0250",
+      detectedStationId: "0250",
     });
 
     expect(client.post).toHaveBeenCalledWith("/routes/track/deviate", {
       sessionId: "sess-12345",
-      currentStationId: "0250",
-    });
+      detectedStationId: "0250",
+      isUserConfirmed: undefined,
+    }, undefined);
     expect(res).toEqual(mockAlert);
   });
 
-  it("useReportLocationMutation should call post /routes/track/location and update cache", async () => {
+  it("reportLocation standalone function should call post /routes/track/location", async () => {
+    (client.post as jest.Mock).mockResolvedValue(mockSession);
+
+    const res = await reportLocation({
+      sessionId: "sess-12345",
+      currentStationId: "0223",
+    });
+
+    expect(client.post).toHaveBeenCalledWith("/routes/track/location", {
+      sessionId: "sess-12345",
+      currentStationId: "0223",
+    }, undefined);
+    expect(res).toEqual(mockSession);
+  });
+
+  it("useReportLocationMutation should delegate to reportLocation and update cache", async () => {
     mockUseMutation.mockReturnValue({ mutateAsync: jest.fn() });
 
     useReportLocationMutation();
@@ -147,7 +203,7 @@ describe("Tracking Domain APIs & Hooks", () => {
     expect(client.post).toHaveBeenCalledWith("/routes/track/location", {
       sessionId: "sess-12345",
       currentStationId: "0223",
-    });
+    }, undefined);
     expect(res).toEqual(mockSession);
 
     passedOptions.onSuccess(mockSession);

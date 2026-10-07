@@ -1,12 +1,9 @@
 import { useMutation, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
-import { post } from "@/apis/client";
 import { queryKeys } from "@/constants/queryKeys";
 import type { TrackingSession } from "@/apis/queries/tracking/getTrackingSession";
+import { reportLocation, type ReportLocationRequest } from "./reportLocation";
 
-export interface ReportLocationRequest {
-  sessionId: string;
-  currentStationId: string;
-}
+export type { ReportLocationRequest };
 
 /**
  * 실시간 정차역 위치 보고 및 세션 갱신 Mutation 훅
@@ -20,8 +17,7 @@ export const useReportLocationMutation = (): UseMutationResult<
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: ReportLocationRequest) =>
-      post<TrackingSession>("/routes/track/location", body),
+    mutationFn: (body: ReportLocationRequest) => reportLocation(body),
     onSuccess: (data) => {
       queryClient.setQueryData(
         queryKeys.tracking.session(data.sessionId),
