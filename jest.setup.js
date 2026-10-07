@@ -134,3 +134,21 @@ jest.mock("@react-native-community/netinfo", () => ({
   }),
 }));
 
+// Mock @react-native-async-storage/async-storage
+const mockAsyncStorageStore = new Map();
+jest.mock("@react-native-async-storage/async-storage", () => ({
+  getItem: jest.fn((key) => Promise.resolve(mockAsyncStorageStore.get(key) ?? null)),
+  setItem: jest.fn((key, value) => {
+    mockAsyncStorageStore.set(key, value);
+    return Promise.resolve();
+  }),
+  removeItem: jest.fn((key) => {
+    mockAsyncStorageStore.delete(key);
+    return Promise.resolve();
+  }),
+  clear: jest.fn(() => {
+    mockAsyncStorageStore.clear();
+    return Promise.resolve();
+  }),
+}));
+
