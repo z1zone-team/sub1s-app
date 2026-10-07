@@ -43,3 +43,32 @@ jest.mock("@clerk/clerk-expo", () => ({
   })),
   ClerkProvider: ({ children }) => children,
 }));
+
+// Mock expo-notifications
+jest.mock("expo-notifications", () => ({
+  AndroidImportance: {
+    DEFAULT: 3,
+    HIGH: 4,
+    MAX: 5,
+  },
+  SchedulableTriggerInputTypes: {
+    TIME_INTERVAL: "timeInterval",
+  },
+  setNotificationHandler: jest.fn(),
+  setNotificationChannelAsync: jest.fn().mockResolvedValue({}),
+  scheduleNotificationAsync: jest.fn().mockResolvedValue("notif-1234"),
+  getPermissionsAsync: jest.fn().mockResolvedValue({ status: "granted" }),
+  requestPermissionsAsync: jest.fn().mockResolvedValue({ status: "granted" }),
+  getExpoPushTokenAsync: jest.fn().mockResolvedValue({ data: "ExponentPushToken[mock-token-123]" }),
+  addNotificationResponseReceivedListener: jest.fn().mockReturnValue({ remove: jest.fn() }),
+}));
+
+// Mock expo-haptics
+jest.mock("expo-haptics", () => ({
+  NotificationFeedbackType: {
+    Success: "success",
+    Warning: "warning",
+    Error: "error",
+  },
+  notificationAsync: jest.fn().mockResolvedValue(undefined),
+}));
