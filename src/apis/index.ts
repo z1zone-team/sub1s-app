@@ -21,8 +21,11 @@ export * from "./queries/congestion/useTrainCongestionQuery";
 // Tracking Queries & Mutations
 export * from "./queries/tracking/getTrackingSession";
 export * from "./queries/tracking/useTrackingSessionQuery";
+export * from "./mutations/tracking/startTracking";
 export * from "./mutations/tracking/useStartTrackingMutation";
+export * from "./mutations/tracking/deviateCheck";
 export * from "./mutations/tracking/useDeviateCheckMutation";
+export * from "./mutations/tracking/reportLocation";
 export * from "./mutations/tracking/useReportLocationMutation";
 
 // Profile & Travel Queries & Mutations
@@ -32,6 +35,7 @@ export * from "./queries/profile/getTravelStats";
 export * from "./queries/profile/useTravelStatsQuery";
 export * from "./queries/profile/getLineMap";
 export * from "./queries/profile/useLineMapQuery";
+export * from "./mutations/travel/createTravelLog";
 export * from "./mutations/travel/useCreateTravelLogMutation";
 
 // Ranking Queries
@@ -39,4 +43,5 @@ export * from "./queries/ranking/getRanking";
 export * from "./queries/ranking/useRankingQuery";
 
 // Voice Mutations
+export * from "./mutations/voice/recommendVoiceRoute";
 export * from "./mutations/voice/useVoiceRouteRecommendMutation";
