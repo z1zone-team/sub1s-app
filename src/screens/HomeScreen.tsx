@@ -15,6 +15,8 @@ import { Text } from "@/common/components/Text";
 import { formatMonthDayKst } from "@/common/utils/format";
 import { useRecentDestinations } from "@/features/routing/useRecentDestinations";
 import { PLACE_KINDS, PLACE_LABEL, placeOfKind, placeToEndpoint } from "@/features/places/placeEndpoint";
+import { useActiveGuideStore } from "@/features/guide/active-guide-store";
+import { minutesLabel } from "@/features/guide/guideText";
 import { VWorldMap } from "@/features/map/VWorldMap";
 import { useHomeMapData } from "@/features/map/useHomeMapData";
 import { useOnboardingPrompt } from "@/features/onboarding/useOnboardingPrompt";
@@ -28,6 +30,7 @@ export function HomeScreen() {
   const { isSignedIn } = useAuth();
   const places = useUserPlacesQuery();
   const removePlace = useRemovePlaceMutation();
+  const activeGuide = useActiveGuideStore((state) => state.guide);
 
   const openPlace = (kind: PlaceKind) => {
     const place = placeOfKind(places.data, kind);
@@ -74,6 +77,24 @@ export function HomeScreen() {
             <Text className="text-body font-sans-bold text-primary">음성</Text>
           </Pressable>
         </View>
+
+        {activeGuide ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`안내 화면으로 돌아가기, ${minutesLabel(activeGuide.remainingSec)} 남음`}
+            onPress={() =>
+              navigation.navigate("LiveNav", {
+                sessionId: activeGuide.sessionId,
+                option: activeGuide.option,
+                startedAtMs: activeGuide.startedAtMs,
+              })
+            }
+            className="absolute bottom-4 right-4 h-17 w-17 items-center justify-center gap-px rounded-pill border-4 border-bg bg-primary"
+          >
+            <Text className="text-title font-sans-extrabold text-on-primary">안내</Text>
+            <Text className="text-small font-sans-extrabold text-on-primary">{minutesLabel(activeGuide.remainingSec)}</Text>
+          </Pressable>
+        ) : null}
 
         {isSignedIn ? (
           <View className="absolute left-4 top-18 flex-row gap-2">
