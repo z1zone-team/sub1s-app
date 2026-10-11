@@ -1,9 +1,11 @@
 import { post, type RequestOptions } from "@/apis/client";
+import type { SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
 import type { TrackingSession } from "@/apis/queries/tracking/getTrackingSession";
 
 export interface StartTrackingRequest {
-  routeId: string;
-  initialStationId: string;
+  routeOption: SubwayRouteOptionDto;
+  /** 서버가 경로에서 역 목록을 풀어 쓰지 않고 이 목록을 그대로 쓰게 할 때 */
+  stationIds?: string[];
 }
 
 /**

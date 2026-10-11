@@ -11,7 +11,14 @@ export interface TravelLogResponse {
   totalDistanceKm: number;
   transferCount: number;
   earnedPoints: number;
+  distancePoints: number;
+  onTimeBonus: number;
   currentTotalPoints: number;
+  monthlyTotalPoints: number;
+  /** 세션이 확인될 때만 온다 */
+  rideDurationSec?: number;
+  /** 실제 소요 - 예정 소요(초). 음수면 일찍 도착 */
+  arrivalDeltaSec?: number;
 }
 
 /**

@@ -5,6 +5,7 @@ import { BottomTabNavigator } from "./BottomTabNavigator";
 import { RouteDetailScreen } from "@/screens/RouteDetailScreen";
 import { RouteResultScreen } from "@/screens/RouteResultScreen";
 import { SearchScreen } from "@/screens/SearchScreen";
+import { ArrivedScreen } from "@/screens/ArrivedScreen";
 import { LiveNavScreen } from "@/screens/LiveNavScreen";
 import { TimelineScreen } from "@/screens/TimelineScreen";
 import { useTheme } from "@/theme";
@@ -51,7 +52,12 @@ export function RootNavigator() {
         <Stack.Screen
           name="LiveNav"
           component={LiveNavScreen}
-          options={{ title: "실시간 주행" }}
+          options={{ title: "안내 중", headerBackVisible: false, gestureEnabled: false }}
+        />
+        <Stack.Screen
+          name="Arrived"
+          component={ArrivedScreen}
+          options={{ title: "도착", headerBackVisible: false, gestureEnabled: false }}
         />
         <Stack.Screen
           name="Timeline"

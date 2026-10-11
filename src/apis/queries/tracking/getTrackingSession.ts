@@ -1,31 +1,31 @@
 import { get, type RequestOptions } from "@/apis/client";
 import type { SubwayRouteOptionDto } from "../routing/searchRoutes";
 
-export type TrackingStatus =
-  | "WAITING"
-  | "IN_TRANSIT"
-  | "TRANSFERRING"
-  | "ARRIVED"
-  | "OFF_ROUTE";
-
 export interface TrackingSession {
   sessionId: string;
-  routeId: string;
   currentStationId: string;
-  nextStationId?: string;
-  status: TrackingStatus;
-  currentSegmentIndex: number;
-  startedAt: string;
-  updatedAt: string;
-  estimatedArrivalTimestamp?: string;
+  currentStationName: string;
+  nextStationId: string;
+  nextStationName: string;
+  destStationId: string;
+  destStationName: string;
+  /** 시작할 때의 경로 전체 소요 시간이고 줄어들지 않는다. 남은 시간은 앱이 계산한다 */
+  remainingDurationSec: number;
+  isOffRoute: boolean;
+  /** 현재 역 다음부터 도착역까지 남은 역 ID */
+  expectedRemainingStationIds: string[];
 }
 
+export type OffRouteReason = "WRONG_DIRECTION" | "SKIPPED_TRANSFER";
+
 export interface OffRouteAlert {
-  isOffRoute: boolean;
   sessionId: string;
   detectedStationId: string;
-  reason: string;
-  recommendedRecoveryRoute?: SubwayRouteOptionDto;
+  detectedStationName: string;
+  reason: OffRouteReason;
+  message: string;
+  rerouteOption: SubwayRouteOptionDto;
+  isOffRoute: true;
 }
 
 /**
