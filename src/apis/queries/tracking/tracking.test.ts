@@ -39,15 +39,19 @@ describe("Tracking Domain APIs & Hooks", () => {
     jest.clearAllMocks();
   });
 
+  const mockOption = { segments: [{ lineId: "02" }] } as never;
+  const startBody = { routeOption: mockOption };
   const mockSession = {
     sessionId: "sess-12345",
-    routeId: "route-999",
     currentStationId: "0222",
+    currentStationName: "강남",
     nextStationId: "0223",
-    status: "IN_TRANSIT" as const,
-    currentSegmentIndex: 0,
-    startedAt: "2026-10-07T14:00:00Z",
-    updatedAt: "2026-10-07T14:05:00Z",
+    nextStationName: "역삼",
+    destStationId: "0230",
+    destStationName: "잠실",
+    remainingDurationSec: 900,
+    isOffRoute: false,
+    expectedRemainingStationIds: ["0223", "0230"],
   };
 
   it("getTrackingSession should call get /routes/track/:sessionId", async () => {
@@ -86,15 +90,9 @@ describe("Tracking Domain APIs & Hooks", () => {
   it("startTracking standalone function should call post /routes/track/start", async () => {
     (client.post as jest.Mock).mockResolvedValue(mockSession);
 
-    const res = await startTracking({
-      routeId: "route-999",
-      initialStationId: "0222",
-    });
+    const res = await startTracking(startBody);
 
-    expect(client.post).toHaveBeenCalledWith("/routes/track/start", {
-      routeId: "route-999",
-      initialStationId: "0222",
-    }, undefined);
+    expect(client.post).toHaveBeenCalledWith("/routes/track/start", startBody, undefined);
     expect(res).toEqual(mockSession);
   });
 
@@ -106,14 +104,8 @@ describe("Tracking Domain APIs & Hooks", () => {
     const passedOptions = mockUseMutation.mock.calls[0][0];
     (client.post as jest.Mock).mockResolvedValue(mockSession);
 
-    const res = await passedOptions.mutationFn({
-      routeId: "route-999",
-      initialStationId: "0222",
-    });
-    expect(client.post).toHaveBeenCalledWith("/routes/track/start", {
-      routeId: "route-999",
-      initialStationId: "0222",
-    }, undefined);
+    const res = await passedOptions.mutationFn(startBody);
+    expect(client.post).toHaveBeenCalledWith("/routes/track/start", startBody, undefined);
     expect(res).toEqual(mockSession);
 
     passedOptions.onSuccess(mockSession);
