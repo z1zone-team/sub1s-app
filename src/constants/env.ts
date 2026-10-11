@@ -12,6 +12,8 @@ const envSchema = z.object({
   /** V-World 지도 키와 그 키에 등록한 도메인(지도 요청에 Referer로 보낸다). 없으면 지도 대신 안내를 보여 준다 */
   VWORLD_KEY: z.string().default(""),
   VWORLD_REFERER: z.string().default(""),
+  /** Expo 푸시 토큰을 얻는 EAS 프로젝트 ID(UUID). 없으면 푸시 등록을 건너뛴다 */
+  EAS_PROJECT_ID: z.string().default(""),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;
@@ -36,6 +38,7 @@ const rawEnv = {
     "dev-mobile-client-key",
   VWORLD_KEY: process.env.EXPO_PUBLIC_VWORLD_KEY || extra.vworldKey || "",
   VWORLD_REFERER: process.env.EXPO_PUBLIC_VWORLD_REFERER || extra.vworldReferer || "",
+  EAS_PROJECT_ID: process.env.EXPO_PUBLIC_EAS_PROJECT_ID || extra.eas?.projectId || "",
 };
 
 export const parseEnv = (input: Record<string, unknown> = rawEnv): AppEnv => {

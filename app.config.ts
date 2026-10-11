@@ -69,7 +69,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       clientKey:
         process.env.EXPO_PUBLIC_CLIENT_KEY || "dev-mobile-client-key",
       eas: {
-        projectId: "sub1s-mobile-project-id",
+        projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID || "",
       },
     },
   };

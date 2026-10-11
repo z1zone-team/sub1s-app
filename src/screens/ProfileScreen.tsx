@@ -8,6 +8,7 @@ import { useFriendsQuery } from "@/apis/queries/users/useFriends";
 import { useGetMe } from "@/apis/queries/auth/useGetMe";
 import { useTravelStatsQuery } from "@/apis/queries/profile/useTravelStatsQuery";
 import { useRankingQuery } from "@/apis/queries/ranking/useRankingQuery";
+import { unregisterCurrentPushToken } from "@/common/notifications/pushRegistration";
 import { Button } from "@/common/components/Button";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
@@ -147,7 +148,7 @@ export function ProfileScreen() {
         <Row label="이동 기록 타임라인" onPress={() => navigation.navigate("Timeline")} />
       </View>
 
-      <Button label="로그아웃" variant="ghost" onPress={() => void signOut()} />
+      <Button label="로그아웃" variant="ghost" onPress={() => void unregisterCurrentPushToken().then(() => signOut())} />
     </Screen>
   );
 }
