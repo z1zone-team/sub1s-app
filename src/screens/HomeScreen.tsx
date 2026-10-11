@@ -1,12 +1,20 @@
 import React, { useCallback } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { Alert, Pressable, ScrollView, View } from "react-native";
+import { useAuth } from "@clerk/clerk-expo";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import {
+  useRemovePlaceMutation,
+  useUserPlacesQuery,
+} from "@/apis/queries/users/useUserPlaces";
+import type { PlaceKind } from "@/apis/queries/users/places";
+import { Chip } from "@/common/components/Chip";
 import { LineBadge } from "@/common/components/LineBadge";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { formatMonthDayKst } from "@/common/utils/format";
 import { useRecentDestinations } from "@/features/routing/useRecentDestinations";
+import { PLACE_KINDS, PLACE_LABEL, placeOfKind, placeToEndpoint } from "@/features/places/placeEndpoint";
 import { VWorldMap } from "@/features/map/VWorldMap";
 import { useHomeMapData } from "@/features/map/useHomeMapData";
 import { useOnboardingPrompt } from "@/features/onboarding/useOnboardingPrompt";
@@ -17,6 +25,23 @@ export function HomeScreen() {
   useOnboardingPrompt();
   const recent = useRecentDestinations();
   const mapData = useHomeMapData(recent.destinations);
+  const { isSignedIn } = useAuth();
+  const places = useUserPlacesQuery();
+  const removePlace = useRemovePlaceMutation();
+
+  const openPlace = (kind: PlaceKind) => {
+    const place = placeOfKind(places.data, kind);
+    if (place) navigation.navigate("Search", { destination: placeToEndpoint(place) });
+    else navigation.navigate("Search", { pickPlace: kind });
+  };
+
+  const editPlace = (kind: PlaceKind) => {
+    Alert.alert(`${PLACE_LABEL[kind]} 변경`, "저장한 장소를 어떻게 할까요?", [
+      { text: "다시 지정", onPress: () => navigation.navigate("Search", { pickPlace: kind }) },
+      { text: "삭제", style: "destructive", onPress: () => removePlace.mutate(kind) },
+      { text: "취소", style: "cancel" },
+    ]);
+  };
 
   // 검색 화면에서 돌아오면 방금 검색한 도착지가 보이도록 다시 읽는다
   const { reload } = recent;
@@ -49,6 +74,23 @@ export function HomeScreen() {
             <Text className="text-body font-sans-bold text-primary">음성</Text>
           </Pressable>
         </View>
+
+        {isSignedIn ? (
+          <View className="absolute left-4 top-18 flex-row gap-2">
+            {PLACE_KINDS.map((kind) => {
+              const saved = placeOfKind(places.data, kind);
+              return (
+                <Chip
+                  key={kind}
+                  label={PLACE_LABEL[kind]}
+                  selected={!!saved}
+                  onPress={() => openPlace(kind)}
+                  onLongPress={saved ? () => editPlace(kind) : undefined}
+                />
+              );
+            })}
+          </View>
+        ) : null}
       </View>
 
       <View className="max-h-[50%] rounded-t-lg-plus border-t border-border bg-bg">

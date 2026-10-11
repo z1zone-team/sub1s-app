@@ -15,6 +15,8 @@ import {
   type RouteEndpoint,
 } from "@/features/routing/endpoint";
 import { toSearchRows, type SearchRow } from "@/features/routing/searchRows";
+import { endpointToSaveBody, PLACE_LABEL } from "@/features/places/placeEndpoint";
+import { useSavePlaceMutation } from "@/apis/queries/users/useUserPlaces";
 import { useRecentDestinations } from "@/features/routing/useRecentDestinations";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import type { RootStackParamList } from "@/navigation/navigation-types";
@@ -29,6 +31,8 @@ export function SearchScreen({
   route,
 }: NativeStackScreenProps<RootStackParamList, "Search">) {
   const presetDestination = route.params?.destination;
+  const pickPlace = route.params?.pickPlace;
+  const savePlace = useSavePlaceMutation();
 
   const [origin, setOrigin] = useState<RouteEndpoint | undefined>();
   const [destination, setDestination] = useState<RouteEndpoint | undefined>(presetDestination);
@@ -48,8 +52,8 @@ export function SearchScreen({
 
   const locationDenied = location.error === "LOCATION_PERMISSION_DENIED";
   useEffect(() => {
-    if (locationDenied && !origin) setActive("origin");
-  }, [locationDenied, origin]);
+    if (!pickPlace && locationDenied && !origin) setActive("origin");
+  }, [pickPlace, locationDenied, origin]);
 
   const query = useDebouncedValue(text, SEARCH_DEBOUNCE_MS);
   const search = usePlaceSearchQuery({
@@ -61,7 +65,7 @@ export function SearchScreen({
 
   // 두 지점은 사용자가 고르거나 미리 정해서 들어온 경우, 위치가 잡힌 경우에만 채워지므로 둘 다 정해지면 바로 경로 목록으로 간다
   useEffect(() => {
-    if (navigated.current) return;
+    if (pickPlace || navigated.current) return;
     if (!isValidEndpoint(origin) || !isValidEndpoint(destination)) return;
     if (isSameEndpoint(origin, destination)) return;
 
@@ -77,11 +81,16 @@ export function SearchScreen({
       destLng: destination.lng,
     });
     navigation.replace("RouteResult", { origin, destination });
-  }, [origin, destination, navigation, recent]);
+  }, [pickPlace, origin, destination, navigation, recent]);
 
   const choose = useCallback(
     (endpoint: RouteEndpoint) => {
       setText("");
+      if (pickPlace) {
+        const body = endpointToSaveBody(endpoint);
+        if (body) savePlace.mutate({ kind: pickPlace, body }, { onSuccess: () => navigation.goBack() });
+        return;
+      }
       if (active === "origin") {
         setOriginChosenByUser(true);
         setOrigin(endpoint);
@@ -91,7 +100,7 @@ export function SearchScreen({
         if (!origin) setActive("origin");
       }
     },
-    [active, destination, origin]
+    [pickPlace, savePlace, navigation, active, destination, origin]
   );
 
   const sameStationWarning =
@@ -121,20 +130,24 @@ export function SearchScreen({
           <Text className="text-headline">{"‹"}</Text>
         </Pressable>
 
+        {pickPlace ? (
+          <Text className="text-title font-sans-extrabold">{PLACE_LABEL[pickPlace]}으로 지정할 장소</Text>
+        ) : (
+          <FieldRow
+            label="출발"
+            endpoint={origin}
+            placeholder={locationDenied ? "출발지를 입력하세요" : "현재 위치 확인 중"}
+            active={active === "origin"}
+            text={text}
+            onChangeText={setText}
+            onActivate={() => {
+              setActive("origin");
+              setText("");
+            }}
+          />
+        )}
         <FieldRow
-          label="출발"
-          endpoint={origin}
-          placeholder={locationDenied ? "출발지를 입력하세요" : "현재 위치 확인 중"}
-          active={active === "origin"}
-          text={text}
-          onChangeText={setText}
-          onActivate={() => {
-            setActive("origin");
-            setText("");
-          }}
-        />
-        <FieldRow
-          label="도착"
+          label={pickPlace ? "장소" : "도착"}
           endpoint={destination}
           placeholder="도착지 입력"
           active={active === "destination"}
@@ -145,7 +158,8 @@ export function SearchScreen({
             setText("");
           }}
         />
-        {locationDenied ? (
+        {savePlace.error ? <Text className="text-small text-error">저장하지 못했어요. 다시 시도해 주세요.</Text> : null}
+        {locationDenied && !pickPlace ? (
           <Text className="text-small text-text-secondary">위치 권한이 없어 출발지를 직접 입력해야 해요.</Text>
         ) : null}
         {sameStationWarning ? (
