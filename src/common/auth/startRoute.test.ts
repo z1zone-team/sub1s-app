@@ -19,4 +19,13 @@ describe("resolveStartRoute", () => {
   it("둘러보기를 골랐으면 홈이다", () => {
     expect(resolveStartRoute({ ...base, guestChosen: true })).toBe("MAIN");
   });
+
+  it("로그인 서비스가 시간 안에 응답하지 않으면 로그인하지 않은 상태로 시작한다", () => {
+    expect(resolveStartRoute({ ...base, authLoaded: false, authTimedOut: true })).toBe("LOGIN");
+    expect(resolveStartRoute({ ...base, authLoaded: false, authTimedOut: true, guestChosen: true })).toBe("MAIN");
+  });
+
+  it("시간이 지나도 둘러보기 선택을 읽는 동안은 로딩이다", () => {
+    expect(resolveStartRoute({ ...base, authLoaded: false, guestLoaded: false, authTimedOut: true })).toBe("LOADING");
+  });
 });

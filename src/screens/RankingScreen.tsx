@@ -5,7 +5,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTravelStatsQuery } from "@/apis/queries/profile/useTravelStatsQuery";
 import { useRankingQuery } from "@/apis/queries/ranking/useRankingQuery";
-import { Button } from "@/common/components/Button";
+import { LoginRequired } from "@/common/components/LoginRequired";
 import { Chip } from "@/common/components/Chip";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
@@ -41,13 +41,7 @@ export function RankingScreen() {
   const monthStats = useTravelStatsQuery("MONTH");
 
   if (!isSignedIn) {
-    return (
-      <Screen contentClassName="justify-center gap-4 px-6">
-        <Text className="text-title-lg font-sans-extrabold">로그인이 필요해요</Text>
-        <Text className="text-text-secondary">로그인하면 랭킹을 보고 친구와 겨룰 수 있어요</Text>
-        <Button label="로그인" onPress={() => navigation.navigate("Login")} />
-      </Screen>
-    );
+    return <LoginRequired description="로그인하면 랭킹을 보고 친구와 겨룰 수 있어요" />;
   }
 
   const data = ranking.data;

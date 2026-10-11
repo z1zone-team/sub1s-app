@@ -10,6 +10,8 @@ import { useTravelStatsQuery } from "@/apis/queries/profile/useTravelStatsQuery"
 import { useRankingQuery } from "@/apis/queries/ranking/useRankingQuery";
 import { unregisterCurrentPushToken } from "@/common/notifications/pushRegistration";
 import { Button } from "@/common/components/Button";
+import { Icon } from "@/common/components/Icon";
+import { LoginRequired } from "@/common/components/LoginRequired";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { formatDistanceKm } from "@/common/utils/format";
@@ -30,7 +32,10 @@ function Row({ label, value, onPress }: { label: string; value?: string; onPress
       className="h-row flex-row items-center justify-between border-b border-border"
     >
       <Text className="text-subtitle">{label}</Text>
-      <Text className="text-body text-text-secondary">{value ? `${value}  >` : ">"}</Text>
+      <View className="flex-row items-center gap-1">
+        {value ? <Text className="text-body text-text-secondary">{value}</Text> : null}
+        <Icon name="chevron-forward" size={18} tone="secondary" />
+      </View>
     </Pressable>
   );
 }
@@ -46,15 +51,7 @@ export function ProfileScreen() {
   const friends = useFriendsQuery();
 
   if (!isSignedIn) {
-    return (
-      <Screen contentClassName="justify-center gap-4 px-6">
-        <Text className="text-title-lg font-sans-extrabold">로그인이 필요해요</Text>
-        <Text className="text-body text-text-secondary">
-          로그인하면 이동 기록과 랭킹, 나에게 맞는 경로 추천을 쓸 수 있어요
-        </Text>
-        <Button label="로그인" onPress={() => navigation.navigate("Login")} />
-      </Screen>
-    );
+    return <LoginRequired description="로그인하면 이동 기록과 랭킹, 나에게 맞는 경로 추천을 쓸 수 있어요" />;
   }
 
   const profile = me.data;

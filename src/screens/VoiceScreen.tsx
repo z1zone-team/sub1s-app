@@ -7,6 +7,8 @@ import {
   type VoiceRouteRecommendResponseDto,
 } from "@/apis/mutations/voice/useVoiceRouteRecommendMutation";
 import { Button } from "@/common/components/Button";
+import { Icon } from "@/common/components/Icon";
+import { LoginRequired } from "@/common/components/LoginRequired";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { useAudioRecorder, type AudioRecordingResult } from "@/common/device/audio/useAudioRecorder";
@@ -88,13 +90,7 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
   };
 
   if (!isSignedIn) {
-    return (
-      <Screen edges={[]} contentClassName="items-center justify-center gap-4 px-6">
-        <Text className="text-title-lg font-sans-extrabold">{FAILURE_TEXT.LOGIN.title}</Text>
-        <Text className="text-center text-text-secondary">{FAILURE_TEXT.LOGIN.body}</Text>
-        <Button label="로그인" onPress={() => navigation.navigate("Login")} />
-      </Screen>
-    );
+    return <LoginRequired edges={[]} description={FAILURE_TEXT.LOGIN.body} />;
   }
 
   if (phase.name === "failed") {
@@ -187,7 +183,7 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
           processing && "opacity-50"
         )}
       >
-        <Text className="text-title-lg font-sans-extrabold text-on-primary">{processing ? "…" : "■"}</Text>
+        {processing ? <Icon name="ellipsis-horizontal" size={32} tone="onPrimary" /> : <Icon name="stop" size={32} tone="onPrimary" />}
       </Pressable>
 
       <Text className="text-body-sm text-text-secondary">
