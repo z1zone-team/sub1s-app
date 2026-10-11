@@ -5,20 +5,25 @@ import { BottomTabNavigator } from "./BottomTabNavigator";
 import { RouteResultScreen } from "@/screens/RouteResultScreen";
 import { LiveNavScreen } from "@/screens/LiveNavScreen";
 import { TimelineScreen } from "@/screens/TimelineScreen";
+import { useTheme } from "@/theme";
+import { buildNavigationTheme } from "@/theme/navigationTheme";
 import { linking } from "./linking";
 import type { RootStackParamList } from "./navigation-types";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
+  const { scheme, colors } = useTheme();
+
   return (
-    <NavigationContainer linking={linking}>
+    <NavigationContainer linking={linking} theme={buildNavigationTheme(scheme, colors)}>
       <Stack.Navigator
         initialRouteName="MainTabs"
         screenOptions={{
-          headerStyle: { backgroundColor: "#0B0F19" },
-          headerTintColor: "#FFFFFF",
-          contentStyle: { backgroundColor: "#0B0F19" },
+          headerStyle: { backgroundColor: colors.bg },
+          headerTintColor: colors.text,
+          headerShadowVisible: false,
+          contentStyle: { backgroundColor: colors.bg },
         }}
       >
         <Stack.Screen
