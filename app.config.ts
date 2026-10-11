@@ -50,14 +50,14 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       apiBaseUrl:
         process.env.EXPO_PUBLIC_API_BASE_URL ||
         (appEnv === "production"
-          ? "https://api.sub1s.com"
+          ? "https://sub1s.devnoco.com"
           : appEnv === "staging"
           ? "https://staging-api.sub1s.com"
           : "http://10.0.2.2:3000"),
       wsUrl:
         process.env.EXPO_PUBLIC_WS_URL ||
         (appEnv === "production"
-          ? "wss://api.sub1s.com/ws/subway"
+          ? "wss://sub1s.devnoco.com/ws/subway"
           : appEnv === "staging"
           ? "wss://staging-api.sub1s.com/ws/subway"
           : "http://10.0.2.2:3000/ws/subway"),
