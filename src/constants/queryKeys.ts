@@ -57,6 +57,10 @@ export const queryKeys = {
       ] as const,
     myScore: () => [...queryKeys.ranking.all, "myScore"] as const,
   },
+  users: {
+    all: ["users"] as const,
+    preferences: () => [...queryKeys.users.all, "preferences"] as const,
+  },
   profile: {
     all: ["profile"] as const,
     stats: (period: "WEEK" | "MONTH" | "YEAR" | "ALL" = "ALL") =>

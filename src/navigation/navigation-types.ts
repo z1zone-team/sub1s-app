@@ -11,6 +11,7 @@ export type BottomTabParamList = {
 
 export type RootStackParamList = {
   Login: undefined;
+  Onboarding: undefined;
   MainTabs: NavigatorScreenParams<BottomTabParamList>;
   Search: {
     /** 홈의 최근 도착지처럼 도착지를 미리 정해서 들어올 때 */

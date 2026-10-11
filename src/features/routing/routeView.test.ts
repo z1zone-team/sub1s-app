@@ -130,12 +130,12 @@ describe("groupRouteOptions", () => {
 describe("reasonText", () => {
   it("lists the preferences the route fits, in the order the user ranked them", () => {
     expect(
-      reasonText(["FEWEST_TRANSFERS", "WEAK_AC_CAR", "FASTEST"], ["PERSONAL"], ["FEWEST_TRANSFERS", "WEAK_AC"])
+      reasonText(["FEWEST_TRANSFERS", "WEAK_AC_CAR", "FASTEST"], ["PERSONAL"], ["FEW_TRANSFERS", "WEAK_AC"])
     ).toBe("환승 적게 · 약냉방칸 선호에 맞췄어요");
   });
 
   it("counts no transfer at all as fitting the fewer-transfers preference", () => {
-    expect(reasonText(["NO_TRANSFER"], ["PERSONAL"], ["FEWEST_TRANSFERS"])).toBe("환승 적게 선호에 맞췄어요");
+    expect(reasonText(["NO_TRANSFER"], ["PERSONAL"], ["FEW_TRANSFERS"])).toBe("환승 적게 선호에 맞췄어요");
   });
 
   it("falls back to the mode tagline, then to the route highlights, when no preference fits", () => {
