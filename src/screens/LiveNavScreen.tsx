@@ -9,6 +9,7 @@ import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { StopStrip } from "@/features/guide/components/StopStrip";
 import { visibleStopIndexes } from "@/features/guide/progress";
+import { useActiveGuideStore } from "@/features/guide/active-guide-store";
 import { remainingText, upcomingMessage } from "@/features/guide/guideText";
 import { useGuide } from "@/features/guide/useGuide";
 import { describeDoor } from "@/features/routing/routeView";
@@ -46,6 +47,15 @@ function Guide({ navigation, sessionId, option, startedAtMs }: GuideProps) {
   const createLog = useCreateTravelLogMutation();
   const [picking, setPicking] = useState(false);
 
+  // 홈으로 나가도 안내가 이어지도록 진행 중인 안내를 기억한다
+  useEffect(() => {
+    useActiveGuideStore.getState().begin({ sessionId, option, startedAtMs });
+  }, [sessionId, option, startedAtMs]);
+
+  useEffect(() => {
+    useActiveGuideStore.getState().setRemaining(guide.progress.remainingSec);
+  }, [guide.progress.remainingSec]);
+
   useEffect(() => {
     if (!guide.alert) return;
     navigation.navigate("OffRoute", {
@@ -77,8 +87,10 @@ function Guide({ navigation, sessionId, option, startedAtMs }: GuideProps) {
     createLog.mutate(
       { originStationId: origin, destStationId: dest, sessionId },
       {
-        onSuccess: (log) =>
-          navigation.replace("Arrived", { log, destinationName: destination, arrivedAtMs: Date.now() }),
+        onSuccess: (log) => {
+          useActiveGuideStore.getState().end();
+          navigation.replace("Arrived", { log, destinationName: destination, arrivedAtMs: Date.now() });
+        },
       }
     );
   };
@@ -139,9 +151,17 @@ function Guide({ navigation, sessionId, option, startedAtMs }: GuideProps) {
           <Button label="아직 도착하지 않았어요" variant="ghost" onPress={() => setPicking((value) => !value)} />
         ) : null}
         <Button
+          label="홈 보기"
+          variant="secondary"
+          onPress={() => navigation.navigate("MainTabs", { screen: "HomeTab" })}
+        />
+        <Button
           label="안내 종료"
           variant="ghost"
-          onPress={() => navigation.navigate("MainTabs", { screen: "HomeTab" })}
+          onPress={() => {
+            useActiveGuideStore.getState().end();
+            navigation.navigate("MainTabs", { screen: "HomeTab" });
+          }}
         />
       </View>
 
