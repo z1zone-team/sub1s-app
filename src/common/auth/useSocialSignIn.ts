@@ -24,7 +24,9 @@ export function useSocialSignIn() {
         if (createdSessionId && setActive) {
           await setActive({ session: createdSessionId });
         }
-      } catch {
+      } catch (err) {
+        const detail = (err as { errors?: Array<{ code?: string; longMessage?: string }> })?.errors?.[0];
+        console.warn("[social-signin]", provider, detail?.code ?? "", detail?.longMessage ?? (err instanceof Error ? err.message : String(err)));
         setError("로그인하지 못했어요. 잠시 후 다시 시도해 주세요.");
       } finally {
         setPending(null);
