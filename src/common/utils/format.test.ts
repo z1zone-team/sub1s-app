@@ -1,4 +1,10 @@
-import { formatDistanceKm, formatDurationSec, formatFare, formatMonthDayKst } from "./format";
+import {
+  formatClockKst,
+  formatDistanceKm,
+  formatDurationSec,
+  formatFare,
+  formatMonthDayKst,
+} from "./format";
 
 describe("format", () => {
   describe("formatFare", () => {
@@ -67,6 +73,23 @@ describe("format", () => {
 
     it("returns an empty string for an invalid value", () => {
       expect(formatMonthDayKst("not-a-date")).toBe("");
+    });
+  });
+
+  describe("formatClockKst", () => {
+    it("writes the time in 12-hour Korean style regardless of the offset in the input", () => {
+      expect(formatClockKst("2026-10-11T14:17:00.000+09:00")).toBe("오후 2:17");
+      expect(formatClockKst("2026-10-11T05:17:00.000Z")).toBe("오후 2:17");
+      expect(formatClockKst(Date.parse("2026-10-11T09:05:00+09:00"))).toBe("오전 9:05");
+    });
+
+    it("uses 12 for noon and midnight", () => {
+      expect(formatClockKst("2026-10-11T12:00:00+09:00")).toBe("오후 12:00");
+      expect(formatClockKst("2026-10-11T00:00:00+09:00")).toBe("오전 12:00");
+    });
+
+    it("returns an empty string for an invalid value", () => {
+      expect(formatClockKst("nope")).toBe("");
     });
   });
 });
