@@ -33,6 +33,15 @@ export type RouteHighlight =
   | "CHEAPEST"
   | "WEAK_AC_CAR";
 
+/** 1~10번 칸 하나의 예측 혼잡도 */
+export interface SegmentCar {
+  carNo: number;
+  /** 0~100 */
+  rate: number;
+  level: CongestionLevel;
+  isWeakAirConditioned: boolean;
+}
+
 export interface PathSegmentDto {
   lineId: string; // 호선 ID 또는 'WALK'
   direction: "UP" | "DOWN" | "INNER" | "OUTER" | "NONE";
@@ -52,6 +61,8 @@ export interface PathSegmentDto {
   congestionRate: number;
   /** STATISTICS 서울교통공사 공표 통계, MOCK 통계가 없는 역·시간대의 추정값. 도보 구간은 없다 */
   congestionSource?: CongestionSource;
+  /** 이 구간 출발역의 칸별 예측 혼잡도. 추천 칸은 이 중 가장 한산한 칸. 도보 구간과 구버전 서버에는 없다 */
+  cars?: SegmentCar[];
   operationStatus: OperationStatus;
   operationNotice?: OperationNotice;
   isEstimated?: boolean;

@@ -32,3 +32,15 @@ export function formatMonthDayKst(iso: string): string {
   const day = String(kst.getUTCDate()).padStart(2, "0");
   return `${month}.${day}`;
 }
+
+/** ISO 시각을 한국 시간 기준 "오후 2:17"로. 기기의 시간대와 상관없이 같다 */
+export function formatClockKst(iso: string | number): string {
+  const time = typeof iso === "number" ? iso : Date.parse(iso);
+  if (Number.isNaN(time)) return "";
+  const kst = new Date(time + KST_OFFSET_MS);
+  const hours = kst.getUTCHours();
+  const minutes = String(kst.getUTCMinutes()).padStart(2, "0");
+  const period = hours < 12 ? "오전" : "오후";
+  const hour12 = hours % 12 === 0 ? 12 : hours % 12;
+  return `${period} ${hour12}:${minutes}`;
+}
