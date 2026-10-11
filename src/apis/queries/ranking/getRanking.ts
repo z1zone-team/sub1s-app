@@ -9,6 +9,8 @@ export interface LeaderboardItemDto {
   profileImageUrl?: string;
   totalPoints: number;
   totalDistanceKm: number;
+  isMe?: boolean;
+  isAnonymous?: boolean;
 }
 
 export interface RankingResponseDto {
@@ -17,6 +19,9 @@ export interface RankingResponseDto {
   friendsOnly: boolean;
   myRank: number;
   myPoints: number;
+  totalUsers?: number;
+  /** 상위 몇 %인지. 1~100이고 작을수록 상위. 해당 기간에 점수가 없으면 없다 */
+  myPercentile?: number;
   leaderboard: LeaderboardItemDto[];
 }
 

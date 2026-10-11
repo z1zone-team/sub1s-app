@@ -17,6 +17,15 @@ export interface TravelStatsResponseDto {
   totalRideDurationSec: number;
   mostVisitedStations: MostVisitedStationDto[];
   mostUsedLineId?: string;
+  /** 기간별 막대. key는 KST 날짜(주와 월은 일별, 연은 월별) */
+  buckets?: StatsBucketDto[];
+  lineBreakdown?: Array<{ lineId: string; distanceKm: number; rideDurationSec: number }>;
+}
+
+export interface StatsBucketDto {
+  key: string;
+  distanceKm: number;
+  rideCount: number;
 }
 
 export interface TravelStatsQueryDto {

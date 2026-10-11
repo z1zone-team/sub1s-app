@@ -14,11 +14,12 @@ describe("getMe query function", () => {
     const mockUser = {
       id: "user-1",
       clerkId: "clerk_123",
-      email: "test@sub1s.com",
+      name: "홍길동",
       nickname: "지하철마스터",
       totalDistanceMeters: 15400,
       currentStreakDays: 5,
       rankScore: 1250,
+      rankingVisibility: "PUBLIC",
       createdAt: "2026-10-01T00:00:00Z",
     };
 
