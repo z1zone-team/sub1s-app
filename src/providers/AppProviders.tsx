@@ -4,6 +4,7 @@ import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import * as SecureStore from "expo-secure-store";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { setTokenGetter } from "@/apis/client";
+import { setSocketTokenGetter } from "@/common/realtime/socket-client";
 import { ENV } from "@/constants/env";
 import { ErrorBoundary } from "@/common/components/ErrorBoundary";
 
@@ -46,8 +47,10 @@ function TokenBridge({ children }: { children: React.ReactNode }) {
 
   useLayoutEffect(() => {
     setTokenGetter(() => getToken());
+    setSocketTokenGetter(() => getToken());
     return () => {
       setTokenGetter(null);
+      setSocketTokenGetter(null);
     };
   }, [getToken]);
 

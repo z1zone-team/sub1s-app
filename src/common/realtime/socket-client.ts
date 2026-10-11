@@ -2,6 +2,7 @@ import { io, Socket } from "socket.io-client";
 import { AppState, AppStateStatus } from "react-native";
 import { ENV } from "../../constants/env";
 import { useRealtimeStore } from "./realtime-store";
+import { buildSocketOptions } from "./socketOptions";
 import type {
   ClientToServerEvents,
   ServerToClientEvents,
@@ -80,18 +81,7 @@ class SubwaySocketClient {
 
     const socketUrl = ENV.WS_URL;
 
-    this.socket = io(socketUrl, {
-      path: "/ws/subway",
-      transports: ["websocket"],
-      autoConnect: true,
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      auth: {
-        token: token ?? ENV.CLIENT_KEY,
-      },
-    }) as SubwaySocket;
+    this.socket = io(socketUrl, buildSocketOptions(token)) as SubwaySocket;
 
     this.bindSocketEvents();
   }
