@@ -12,6 +12,7 @@ import { useGuestStore } from "@/common/auth/guest-store";
 import { useAuthSync } from "@/common/auth/useAuthSync";
 import { OnboardingScreen } from "@/screens/OnboardingScreen";
 import { LoginScreen } from "@/screens/LoginScreen";
+import { OffRouteScreen } from "@/screens/OffRouteScreen";
 import { ArrivedScreen } from "@/screens/ArrivedScreen";
 import { LiveNavScreen } from "@/screens/LiveNavScreen";
 import { TimelineScreen } from "@/screens/TimelineScreen";
@@ -86,6 +87,11 @@ export function RootNavigator() {
           name="LiveNav"
           component={LiveNavScreen}
           options={{ title: "안내 중", headerBackVisible: false, gestureEnabled: false }}
+        />
+        <Stack.Screen
+          name="OffRoute"
+          component={OffRouteScreen}
+          options={{ headerShown: false, presentation: "fullScreenModal", animation: "fade", gestureEnabled: false }}
         />
         <Stack.Screen
           name="Arrived"
