@@ -7,12 +7,13 @@
 ## 🛠 기술 스택
 
 - **Framework**: Expo SDK 57 (React Native 0.86, React 19)
-- **Styling**: NativeWind v4 (Tailwind CSS 3.4)
+- **Styling**: NativeWind v4 (Tailwind CSS 3.4). `className`과 디자인 토큰(`tailwind.config.js`, 색은 `global.css`)을 쓰고 인라인 `style`은 값이 동적인 곳에만 쓴다. 클래스는 `cn`(`src/lib/cn.ts`)으로 합친다
 - **Navigation**: React Navigation v7 (Native Stack, Bottom Tabs, Deep Linking `sub1s://`)
 - **Server State**: TanStack React Query v5 (순수 fetch 함수 + 커스텀 훅 1:1 매핑)
 - **Global / Realtime State**: Zustand v5 (칸 단위 셀렉터 분리 구독)
 - **HTTP Client**: Axios with Clerk Auth Interceptor & AbortSignal 지원
-- **Realtime / Socket**: Socket.io Client (`/ws/subway` 네임스페이스, 지수 백오프 자동 재연결)
+- **Realtime / Socket**: Socket.io Client (주소에 `/ws/subway` 네임스페이스를 넣고 엔진 경로 `path`는 주지 않는다, 자동 재연결)
+- **Map**: V-World 지도를 `react-native-webview` 안에서 Leaflet으로 그림
 - **Notifications & Haptics**: Expo Notifications v57, Expo Haptics
 - **Device Capabilities**: Expo Location, Expo AV (오디오 녹음/재생), NetInfo
 - **Storage**: Expo SecureStore (민감 토큰) + AsyncStorage (일반 데이터)
@@ -75,6 +76,46 @@ pnpm start
 
 ---
 
+## ⚙️ 환경 변수
+
+앱이 읽는 값은 모두 `EXPO_PUBLIC_` 접두사입니다. `.env`에 두거나 실행할 때 지정합니다. **이 값들은 앱 번들에 들어가 누구나 볼 수 있으므로 비밀 키를 넣지 않습니다**(서버 전용 키는 서버에만 둡니다).
+
+| 변수 | 용도 | 없을 때 |
+| :--- | :--- | :--- |
+| `EXPO_PUBLIC_API_BASE_URL` | REST 서버 주소(`/api/v1`은 앱이 붙임). 운영은 `https://sub1s.devnoco.com` | 로컬 기본값 `http://10.0.2.2:3000`(안드로이드 에뮬레이터에서 호스트 PC) |
+| `EXPO_PUBLIC_WS_URL` | 소켓 주소. 운영은 `wss://sub1s.devnoco.com/ws/subway` | 로컬 기본값 `http://10.0.2.2:3000/ws/subway` |
+| `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk 로그인 공개 키 | 자리표시 값이라 **로그인이 되지 않음** |
+| `EXPO_PUBLIC_VWORLD_KEY` | V-World 지도 키(도메인 제한이 걸린 지도 전용 키) | 지도 대신 안내 문구가 보임 |
+| `EXPO_PUBLIC_VWORLD_REFERER` | 위 키에 등록한 도메인. 지도 요청의 Referer로 보냄 | 키의 도메인 제한에 걸려 타일이 안 뜰 수 있음 |
+| `EXPO_PUBLIC_EAS_PROJECT_ID` | Expo 푸시 토큰을 받는 EAS 프로젝트 ID(UUID) | 푸시 등록을 건너뜀(나머지 기능은 정상) |
+| `EXPO_PUBLIC_CLIENT_KEY` | 서버로 보내는 클라이언트 식별 헤더 | 개발용 기본값 |
+
+---
+
+## 📱 기기에서 실행
+
+- **서버 주소**: 안드로이드 에뮬레이터는 기본값(`10.0.2.2`)으로 호스트 PC의 서버에 닿습니다. 실기기는 PC의 같은 네트워크 주소(`http://192.168.x.x:3000`)나 운영 주소를 `EXPO_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_WS_URL`로 지정합니다.
+- **빌드**: 로그인(Clerk 소셜 로그인 리다이렉트 `sub1s://`), 푸시 토큰, 마이크, 위치를 쓰므로 **개발 빌드**(`npx expo run:android` 또는 EAS 개발 빌드)를 권장합니다. 네이티브 권한 문구(위치, 마이크)는 `app.config.ts`의 플러그인에 있어 바꾸면 다시 빌드해야 반영됩니다. Expo Go에서의 동작은 확인하지 않았습니다.
+- **로그인 제공자**: Clerk 대시보드에서 Google과 카카오(키가 `kakao`인 사용자 지정 OIDC 제공자)를 켜야 합니다.
+- **푸시**: Android는 FCM, iOS는 APNs 키를 EAS에 등록하고 서버에 `EXPO_ACCESS_TOKEN`이 있어야 도착합니다.
+
+---
+
+## 🧭 화면과 서버 의존
+
+| 화면 | 서버 API | 비고 |
+| :--- | :--- | :--- |
+| 홈, 검색, 경로 목록과 상세 | 장소 검색, 경로 탐색, 다음 열차, 편의시설 | 비로그인으로도 사용 |
+| 안내 시작, 안내 중, 이탈, 도착, 홈 복귀 | 주행 추적, 위치 보고(좌표), 이동 기록 | 로그인 필요 |
+| 로그인, 온보딩 설문, MY, 프로필 수정, 친구, 알림 설정 | 인증 동기화, 프로필, 설문, 친구, 알림 | 로그인 필요 |
+| 타임라인, 이동 지도, 랭킹 | 통계, 이동 기록, 노선도(좌표), 랭킹 | 로그인 필요, 지도는 V-World 키 필요 |
+| 음성 검색 | 음성 경로 추천 | 로그인 필요, 서버의 AI 서비스 연결이 있어야 실제 인식 |
+| 집, 학교 즐겨찾기 | 장소 저장 | 로그인 필요 |
+
+화면은 모두 타입 검사, 단위 테스트, 번들링까지만 확인했고 **실기기에서 눈으로 확인한 것은 아직 없습니다**.
+
+---
+
 ## 📖 모듈 사용 가이드 (팀원을 위한 치트시트)
 
 자세한 코드 스니펫 및 훅 시그니처는 [`docs/MOBILE_MODULE_GUIDE.md`](../docs/MOBILE_MODULE_GUIDE.md)를 참고하세요.
@@ -91,6 +132,7 @@ function ProfileHeader() {
 ```
 
 ### 2. 실시간 열차 혼잡도 (30초 스트림 & 칸 단위 렌더링 최적화)
+> 소켓은 아직 화면에서 쓰지 않습니다. 경로 상세의 칸별 혼잡도는 경로 응답의 `cars`를 쓰고, 안내 중 위치 보고는 REST입니다.
 ```typescript
 import { useRealtimeSubscription, useCarCongestion } from "@/common/realtime";
 
