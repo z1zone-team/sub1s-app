@@ -6,3 +6,4 @@ export { resolveScheme, useTheme } from "./useTheme";
 export type { Theme } from "./useTheme";
 export { congestionColor, levelOfRate } from "./congestion";
 export type { CongestionLevel } from "./congestion";
+export { paletteToCssVars } from "./cssVars";
