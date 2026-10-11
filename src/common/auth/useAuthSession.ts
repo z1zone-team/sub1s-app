@@ -2,13 +2,7 @@ import { useCallback, useEffect } from "react";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useAuthStore, type AuthUser } from "./auth-store";
 import { post } from "@/apis/client";
-
-export interface AuthSyncBody {
-  clerkId: string;
-  email: string;
-  nickname: string;
-  profileImageUrl?: string;
-}
+import { buildSyncBody } from "./syncBody";
 
 /**
  * Clerk 인증 상태를 구독하고 백엔드 DB와 세션을 동기화하는 훅
@@ -27,16 +21,7 @@ export function useAuthSession() {
       const token = await getToken();
       if (!token) return;
 
-      const synced = await post<AuthUser>("/auth/sync", {
-        clerkId: clerkUser.id,
-        email: clerkUser.primaryEmailAddress?.emailAddress ?? "",
-        nickname:
-          clerkUser.fullName ??
-          clerkUser.username ??
-          clerkUser.primaryEmailAddress?.emailAddress?.split("@")[0] ??
-          "SubwayRider",
-        profileImageUrl: clerkUser.imageUrl,
-      });
+      const synced = await post<AuthUser>("/auth/sync", buildSyncBody(clerkUser));
 
       setAuth(synced, token);
     } catch (err) {
