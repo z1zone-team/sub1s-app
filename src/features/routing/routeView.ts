@@ -42,7 +42,7 @@ const HIGHLIGHT_PHRASE: Record<RouteHighlight, string> = {
 /** 온보딩 설문(`routePrefs`)과 맞는 태그 (API_SPEC 2.2 대응표) */
 const PREF_TAGS: Record<string, { label: string; tags: RouteHighlight[] }> = {
   FAST: { label: "빠르게", tags: ["FASTEST"] },
-  FEWEST_TRANSFERS: { label: "환승 적게", tags: ["FEWEST_TRANSFERS", "NO_TRANSFER"] },
+  FEW_TRANSFERS: { label: "환승 적게", tags: ["FEWEST_TRANSFERS", "NO_TRANSFER"] },
   WEAK_AC: { label: "약냉방칸", tags: ["WEAK_AC_CAR"] },
   UNCROWDED: { label: "덜 붐비게", tags: ["LEAST_CROWDED"] },
   LESS_WALK: { label: "덜 걷게", tags: ["LEAST_WALK"] },
