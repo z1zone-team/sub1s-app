@@ -57,10 +57,9 @@ export function buildMapHtml(vworldKey: string): string {
     document.getElementById("map").style.display = "none";
     document.getElementById("error").style.display = "block";
   } else {
-    var map = L.map("map", { zoomControl: false, attributionControl: true }).setView([${DEFAULT_CENTER[0]}, ${DEFAULT_CENTER[1]}], ${DEFAULT_ZOOM});
+    var map = L.map("map", { zoomControl: false, attributionControl: false }).setView([${DEFAULT_CENTER[0]}, ${DEFAULT_CENTER[1]}], ${DEFAULT_ZOOM});
     L.tileLayer("https://api.vworld.kr/req/wmts/1.0.0/${key}/Base/{z}/{y}/{x}.png", {
-      maxZoom: 19,
-      attribution: "V-World"
+      maxZoom: 19
     }).addTo(map);
     var layer = L.layerGroup().addTo(map);
     window.updateMap = function (data) {

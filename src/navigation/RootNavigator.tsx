@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { useAuth } from "@clerk/clerk-expo";
 import { NavigationContainer, createNavigationContainerRef } from "@react-navigation/native";
@@ -33,6 +33,8 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
+const AUTH_LOAD_TIMEOUT_MS = 5000;
+
 export function RootNavigator() {
   const { scheme, colors } = useTheme();
   const { isLoaded, isSignedIn } = useAuth();
@@ -54,11 +56,20 @@ export function RootNavigator() {
     void hydrateGuest();
   }, [hydrateGuest]);
 
+  // 로그인 서비스가 응답하지 않아도 앱이 멈춘 것처럼 보이지 않게 일정 시간 뒤에는 로그인하지 않은 상태로 시작한다
+  const [authTimedOut, setAuthTimedOut] = useState(false);
+  useEffect(() => {
+    if (isLoaded) return;
+    const timer = setTimeout(() => setAuthTimedOut(true), AUTH_LOAD_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [isLoaded]);
+
   const start = resolveStartRoute({
     authLoaded: isLoaded,
     signedIn: !!isSignedIn,
     guestLoaded,
     guestChosen,
+    authTimedOut,
   });
 
   if (start === "LOADING") {
