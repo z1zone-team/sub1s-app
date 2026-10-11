@@ -38,6 +38,7 @@
     "react-native-css-interop": "0.2.7",
     "react-native-safe-area-context": "^5.10.1",
     "react-native-screens": "^4.28.0",
+    "react-native-webview": "13.16.1",
     "socket.io-client": "^4.8.4",
     "tailwind-merge": "^2.6.1",
     "zod": "^4.6.5",

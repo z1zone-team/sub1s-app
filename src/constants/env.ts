@@ -9,6 +9,9 @@ const envSchema = z.object({
   WS_URL: z.string().default("http://10.0.2.2:3000/ws/subway"),
   CLERK_PUBLISHABLE_KEY: z.string().min(1).default("pk_test_placeholder_key"),
   CLIENT_KEY: z.string().min(1).default("dev-mobile-client-key"),
+  /** V-World 지도 키와 그 키에 등록한 도메인(지도 요청에 Referer로 보낸다). 없으면 지도 대신 안내를 보여 준다 */
+  VWORLD_KEY: z.string().default(""),
+  VWORLD_REFERER: z.string().default(""),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;
@@ -31,6 +34,8 @@ const rawEnv = {
     process.env.EXPO_PUBLIC_CLIENT_KEY ||
     extra.clientKey ||
     "dev-mobile-client-key",
+  VWORLD_KEY: process.env.EXPO_PUBLIC_VWORLD_KEY || extra.vworldKey || "",
+  VWORLD_REFERER: process.env.EXPO_PUBLIC_VWORLD_REFERER || extra.vworldReferer || "",
 };
 
 export const parseEnv = (input: Record<string, unknown> = rawEnv): AppEnv => {

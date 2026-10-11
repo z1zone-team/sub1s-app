@@ -117,7 +117,7 @@ describe("Travel & Profile Domain APIs & Hooks", () => {
           lineName: "2호선",
           colorHex: "#00A84D",
           stations: [
-            { stationId: "0222", stationName: "강남", lineSeq: 1, visited: true },
+            { stationId: "0222", stationName: "강남", lineSeq: 1, lat: 37.4979, lng: 127.0276, visited: true },
           ],
         },
       ],
@@ -132,9 +132,15 @@ describe("Travel & Profile Domain APIs & Hooks", () => {
     useLineMapQuery("ALL");
     expect(mockUseQuery).toHaveBeenCalledWith(
       expect.objectContaining({
-        queryKey: ["linemap", "lines", "all", "all", "all"],
+        queryKey: ["linemap", "period", "ALL"],
         enabled: true,
       })
+    );
+
+    // 기간이 바뀌면 다른 캐시를 써야 한다
+    useLineMapQuery("WEEK");
+    expect(mockUseQuery).toHaveBeenLastCalledWith(
+      expect.objectContaining({ queryKey: ["linemap", "period", "WEEK"] })
     );
   });
 

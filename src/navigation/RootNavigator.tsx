@@ -20,6 +20,7 @@ import { LoginScreen } from "@/screens/LoginScreen";
 import { OffRouteScreen } from "@/screens/OffRouteScreen";
 import { ArrivedScreen } from "@/screens/ArrivedScreen";
 import { LiveNavScreen } from "@/screens/LiveNavScreen";
+import { MoveMapScreen } from "@/screens/MoveMapScreen";
 import { TimelineScreen } from "@/screens/TimelineScreen";
 import { useTheme } from "@/theme";
 import { buildNavigationTheme } from "@/theme/navigationTheme";
@@ -108,6 +109,7 @@ export function RootNavigator() {
           component={ArrivedScreen}
           options={{ title: "도착", headerBackVisible: false, gestureEnabled: false }}
         />
+        <Stack.Screen name="MoveMap" component={MoveMapScreen} options={{ title: "이동 지도" }} />
         <Stack.Screen
           name="Timeline"
           component={TimelineScreen}
