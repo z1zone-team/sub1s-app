@@ -20,6 +20,7 @@ describe("Deep Linking Configuration", () => {
     expect(screens.RouteResult.path).toBe("route");
     expect(screens.LiveNav).toBe("livenav/:sessionId");
     expect(screens.Timeline).toBe("timeline");
+    expect(screens.Invite).toBe("invite/:token");
   });
 
   describe("route deep link", () => {

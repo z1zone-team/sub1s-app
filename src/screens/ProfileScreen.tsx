@@ -4,6 +4,7 @@ import { useAuth } from "@clerk/clerk-expo";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useUpdateProfileMutation } from "@/apis/mutations/users/useUpdateProfileMutation";
+import { useFriendsQuery } from "@/apis/queries/users/useFriends";
 import { useGetMe } from "@/apis/queries/auth/useGetMe";
 import { useTravelStatsQuery } from "@/apis/queries/profile/useTravelStatsQuery";
 import { useRankingQuery } from "@/apis/queries/ranking/useRankingQuery";
@@ -49,6 +50,7 @@ export function ProfileScreen() {
   const week = useTravelStatsQuery("WEEK");
   const ranking = useRankingQuery({ periodType: "ALL", periodKey: "ALL", limit: 1 });
   const updateProfile = useUpdateProfileMutation();
+  const friends = useFriendsQuery();
 
   if (!isSignedIn) {
     return (
@@ -166,6 +168,12 @@ export function ProfileScreen() {
       </View>
 
       <View>
+        <Row
+          label="친구 관리"
+          value={friends.data ? `${friends.data.totalCount}명` : undefined}
+          onPress={() => navigation.navigate("Friends")}
+        />
+        <Row label="알림 설정" onPress={() => navigation.navigate("NotificationSettings")} />
         <Row label="관심 설문 다시 고치기" onPress={() => navigation.navigate("Onboarding", { editing: true })} />
         <Row label="이동 기록 타임라인" onPress={() => navigation.navigate("Timeline")} />
       </View>

@@ -15,6 +15,9 @@ export type RootStackParamList = {
   /** editing이면 저장된 답을 채워서 다시 고친다 */
   Onboarding: { editing?: boolean } | undefined;
   ProfileEdit: undefined;
+  Friends: undefined;
+  NotificationSettings: undefined;
+  Invite: { token: string };
   MainTabs: NavigatorScreenParams<BottomTabParamList>;
   Search: {
     /** 홈의 최근 도착지처럼 도착지를 미리 정해서 들어올 때 */

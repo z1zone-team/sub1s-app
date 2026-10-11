@@ -10,6 +10,9 @@ import { SearchScreen } from "@/screens/SearchScreen";
 import { resolveStartRoute } from "@/common/auth/startRoute";
 import { useGuestStore } from "@/common/auth/guest-store";
 import { useAuthSync } from "@/common/auth/useAuthSync";
+import { FriendsScreen } from "@/screens/FriendsScreen";
+import { InviteScreen } from "@/screens/InviteScreen";
+import { NotificationSettingsScreen } from "@/screens/NotificationSettingsScreen";
 import { ProfileEditScreen } from "@/screens/ProfileEditScreen";
 import { OnboardingScreen } from "@/screens/OnboardingScreen";
 import { LoginScreen } from "@/screens/LoginScreen";
@@ -63,6 +66,9 @@ export function RootNavigator() {
         }}
       >
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Friends" component={FriendsScreen} options={{ title: "친구 관리" }} />
+        <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} options={{ title: "알림 설정" }} />
+        <Stack.Screen name="Invite" component={InviteScreen} options={{ title: "친구 초대" }} />
         <Stack.Screen name="ProfileEdit" component={ProfileEditScreen} options={{ title: "프로필 수정" }} />
         <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
         <Stack.Screen
