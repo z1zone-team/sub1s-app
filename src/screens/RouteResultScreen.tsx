@@ -2,6 +2,8 @@ import React, { useMemo } from "react";
 import { ActivityIndicator, FlatList, Text, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { ApiError } from "@/apis/client";
+import { useAuth } from "@clerk/clerk-expo";
+import { usePreferencesQuery } from "@/apis/queries/users/usePreferencesQuery";
 import { useRouteSearchQuery } from "@/apis/queries/routing/useRouteSearchQuery";
 import { useStationsQuery } from "@/apis/queries/stations/useStationsQuery";
 import { Button } from "@/common/components/Button";
@@ -43,7 +45,12 @@ export function RouteResultScreen({
 
   const search = useRouteSearchQuery(toRouteSearchRequest(origin, destination, mode));
   const { originName, destinationName } = useEndpointNames(origin, destination);
-  const groups = useMemo(() => groupRouteOptions(search.data?.options ?? []), [search.data]);
+  const { isSignedIn } = useAuth();
+  const routePrefs = usePreferencesQuery(!!isSignedIn).data?.routePrefs;
+  const groups = useMemo(
+    () => groupRouteOptions(search.data?.options ?? [], routePrefs),
+    [search.data, routePrefs]
+  );
 
   return (
     <Screen edges={[]}>

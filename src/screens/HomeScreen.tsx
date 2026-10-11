@@ -6,12 +6,14 @@ import { LineBadge } from "@/common/components/LineBadge";
 import { Screen } from "@/common/components/Screen";
 import { formatMonthDayKst } from "@/common/utils/format";
 import { useRecentDestinations } from "@/features/routing/useRecentDestinations";
+import { useOnboardingPrompt } from "@/features/onboarding/useOnboardingPrompt";
 import type { RootStackParamList } from "@/navigation/navigation-types";
 import { useTheme } from "@/theme";
 
 export function HomeScreen() {
   const { colors } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  useOnboardingPrompt();
   const recent = useRecentDestinations();
 
   // 검색 화면에서 돌아오면 방금 검색한 도착지가 보이도록 다시 읽는다
