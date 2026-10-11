@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Audio, AVPlaybackStatus } from "expo-av";
+import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from "expo-audio";
 
 export function useAudioPlayer() {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -7,101 +7,82 @@ export function useAudioPlayer() {
   const [durationMillis, setDurationMillis] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
 
-  const soundRef = useRef<Audio.Sound | null>(null);
+  const playerRef = useRef<AudioPlayer | null>(null);
+  const subscriptionRef = useRef<{ remove: () => void } | null>(null);
 
-  const unloadSound = useCallback(async () => {
-    if (soundRef.current) {
+  const unloadSound = useCallback(() => {
+    subscriptionRef.current?.remove();
+    subscriptionRef.current = null;
+    if (playerRef.current) {
       try {
-        await soundRef.current.unloadAsync();
+        playerRef.current.remove();
       } catch {
         // ignore
       }
-      soundRef.current = null;
+      playerRef.current = null;
     }
     setIsPlaying(false);
     setPositionMillis(0);
     setDurationMillis(0);
   }, []);
 
-  const onPlaybackStatusUpdate = useCallback((status: AVPlaybackStatus) => {
-    if (!status.isLoaded) {
-      if (status.error) {
-        setError(status.error);
-      }
-      setIsPlaying(false);
-      return;
-    }
-
-    setIsPlaying(status.isPlaying);
-    setPositionMillis(status.positionMillis);
-    setDurationMillis(status.durationMillis ?? 0);
-
-    if (status.didJustFinish) {
-      setIsPlaying(false);
-      setPositionMillis(0);
-    }
-  }, []);
-
   const playAudio = useCallback(
     async (sourceUri: string): Promise<boolean> => {
       setError(null);
       try {
-        await unloadSound();
+        unloadSound();
 
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: false,
-          playsInSilentModeIOS: true,
+        await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
+
+        const player = createAudioPlayer({ uri: sourceUri });
+        playerRef.current = player;
+
+        subscriptionRef.current = player.addListener("playbackStatusUpdate", (status) => {
+          setIsPlaying(status.playing);
+          setPositionMillis(Math.round(status.currentTime * 1000));
+          setDurationMillis(Math.round(status.duration * 1000));
+          if (status.didJustFinish) {
+            setIsPlaying(false);
+            setPositionMillis(0);
+          }
         });
 
-        const { sound } = await Audio.Sound.createAsync(
-          { uri: sourceUri },
-          { shouldPlay: true },
-          onPlaybackStatusUpdate
-        );
-
-        soundRef.current = sound;
+        player.play();
         setIsPlaying(true);
         return true;
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Failed to play audio";
-        setError(msg);
+        setError(err instanceof Error ? err.message : "Failed to play audio");
         setIsPlaying(false);
         return false;
       }
     },
-    [unloadSound, onPlaybackStatusUpdate]
+    [unloadSound]
   );
 
   const pauseAudio = useCallback(async () => {
-    if (soundRef.current) {
-      try {
-        await soundRef.current.pauseAsync();
-        setIsPlaying(false);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : "Failed to pause audio";
-        setError(msg);
-      }
+    try {
+      playerRef.current?.pause();
+      setIsPlaying(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to pause audio");
     }
   }, []);
 
   const stopAudio = useCallback(async () => {
-    if (soundRef.current) {
-      try {
-        await soundRef.current.stopAsync();
-        setIsPlaying(false);
-        setPositionMillis(0);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : "Failed to stop audio";
-        setError(msg);
+    try {
+      const player = playerRef.current;
+      if (player) {
+        player.pause();
+        await player.seekTo(0);
       }
+      setIsPlaying(false);
+      setPositionMillis(0);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to stop audio");
     }
   }, []);
 
-  useEffect(() => {
-    return () => {
-      void unloadSound();
-    };
-  }, [unloadSound]);
+  useEffect(() => unloadSound, [unloadSound]);
 
   return {
     isPlaying,

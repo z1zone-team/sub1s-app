@@ -34,7 +34,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     plugins: [
       "expo-secure-store",
       [
-        "expo-av",
+        "expo-audio",
         { microphonePermission: "음성으로 목적지를 말해 경로를 찾는 데 마이크를 사용해요." },
       ],
       [
