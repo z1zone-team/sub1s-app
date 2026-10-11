@@ -18,6 +18,7 @@ import type { RootStackParamList } from "./navigation-types";
  * - `sub1s://route?origin=09_907&destination=02_222&mode=OPTIMAL` -> 경로 추천 결과 화면 (origin, destination은 역 ID)
  * - `sub1s://livenav/:sessionId` -> 실시간 주행 세션 화면
  * - `sub1s://timeline` -> 이동 타임라인 화면
+ * - `sub1s://invite/:token`, `https://sub1s.com/invite/:token` -> 친구 초대 수락
  */
 export const linking: LinkingOptions<RootStackParamList> = {
   prefixes: [
@@ -48,6 +49,7 @@ export const linking: LinkingOptions<RootStackParamList> = {
       },
       LiveNav: "livenav/:sessionId",
       Timeline: "timeline",
+      Invite: "invite/:token",
     },
   },
 };
