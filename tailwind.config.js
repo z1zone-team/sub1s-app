@@ -1,6 +1,6 @@
 /**
- * 디자인 토큰. 색 값은 src/theme/palette.ts가 단일 출처이고 ThemeVars가 CSS 변수로 내려보낸다.
- * 여기에는 변수 이름만 둔다. 이름이 palette와 어긋나지 않는지는 src/theme/tokens.test.ts가 확인한다.
+ * 디자인 토큰. 색 값은 global.css의 CSS 변수가 가지고 있고 여기서는 변수를 가리킨다.
+ * 변수 이름과 값이 src/theme/palette.ts와 어긋나지 않는지는 src/theme/tokens.test.ts가 확인한다.
  */
 const colorToken = (name) => `var(--color-${name})`;
 
@@ -12,6 +12,7 @@ module.exports = {
     "./src/**/*.{js,jsx,ts,tsx}",
   ],
   presets: [require("nativewind/preset")],
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
@@ -57,7 +58,7 @@ module.exports = {
           congested: "#EF4444",
         },
       },
-      /** 프로토타입에서 쓰는 글자 크기 */
+      /** 프로토타입에서 쓰는 글자 크기. src/lib/cn.ts의 병합 설정과 이름이 같아야 한다 */
       fontSize: {
         micro: "9px",
         tiny: "10px",
@@ -67,11 +68,15 @@ module.exports = {
         body: "14px",
         subtitle: "15px",
         base: "16px",
+        heading: "17px",
         title: "18px",
         "title-lg": "20px",
         headline: "22px",
+        "headline-md": "24px",
         "headline-lg": "26px",
+        "display-sm": "28px",
         display: "30px",
+        "display-md": "32px",
         "display-lg": "34px",
         hero: "40px",
       },
@@ -84,19 +89,34 @@ module.exports = {
         "sans-extrabold": ["Pretendard-ExtraBold"],
       },
       borderRadius: {
+        "3xs": "2px",
+        "2xs": "3px",
+        xs: "4px",
+        "xs-plus": "6px",
         sm: "8px",
+        "sm-plus": "10px",
         md: "12px",
         lg: "16px",
+        "lg-plus": "20px",
         xl: "24px",
         pill: "999px",
+      },
+      /** 기본 4px 눈금 사이에 있는 프로토타입 값 */
+      spacing: {
+        0.75: "3px",
+        5.5: "22px",
+        19: "76px",
+        27.5: "110px",
       },
       height: {
         control: "44px",
         "control-lg": "52px",
+        row: "48px",
       },
       minHeight: {
         control: "44px",
         "control-lg": "52px",
+        row: "48px",
       },
     },
   },

@@ -1,3 +1,38 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+ * 디자인 토큰 색. 라이트가 기본이고 다크는 .dark:root에서 바꾼 값만 둔다.
+ * tailwind.config.js의 colors가 이 변수를 가리키고, 값은 src/theme/palette.ts와 같아야 한다(tokens.test.ts가 확인).
+ */
+@layer base {
+  :root {
+    --color-primary: #002968;
+    --color-primary-dark: #001a45;
+    --color-primary-light: #3d5a99;
+    --color-primary-tint: #e8edf6;
+    --color-accent: #0072ce;
+    --color-bg: #ffffff;
+    --color-surface: #f5f7fa;
+    --color-border: #e1e5ec;
+    --color-text: #111827;
+    --color-text-secondary: #4b5563;
+    --color-text-disabled: #9ca3af;
+    --color-on-primary: #ffffff;
+    --color-success: #16a34a;
+    --color-warning: #f59e0b;
+    --color-error: #dc2626;
+    --color-info: #0072ce;
+  }
+
+  .dark:root {
+    --color-primary: #5b8def;
+    --color-primary-tint: #1b2a47;
+    --color-bg: #0b1220;
+    --color-surface: #151e2e;
+    --color-border: #263248;
+    --color-text: #f3f4f6;
+    --color-text-secondary: #9ca3af;
+  }
+}
