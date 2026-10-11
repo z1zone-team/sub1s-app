@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
@@ -46,6 +46,15 @@ function Guide({ navigation, sessionId, option, startedAtMs }: GuideProps) {
   const guide = useGuide({ option, sessionId, startedAtMs });
   const createLog = useCreateTravelLogMutation();
   const [picking, setPicking] = useState(false);
+
+  useEffect(() => {
+    if (!guide.alert) return;
+    navigation.navigate("OffRoute", {
+      alert: guide.alert,
+      remainingSec: guide.progress.remainingSec,
+    });
+    guide.clearAlert();
+  }, [guide.alert]);
 
   const { stops, info, progress, nowMs, segment, upcoming } = guide;
   const nameAt = (index: number) => info.get(stops[index]?.stationId ?? "")?.name ?? "";

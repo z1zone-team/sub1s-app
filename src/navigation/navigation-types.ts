@@ -1,6 +1,7 @@
 import type { NavigatorScreenParams } from "@react-navigation/native";
 import type { RouteMode, SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
 import type { TravelLogResponse } from "@/apis/mutations/travel/createTravelLog";
+import type { OffRouteAlert } from "@/apis/queries/tracking/getTrackingSession";
 import type { RouteEndpoint } from "@/features/routing/endpoint";
 
 export type BottomTabParamList = {
@@ -35,6 +36,11 @@ export type RootStackParamList = {
     /** 딥링크로만 들어오면 없어서 진행 중인 안내를 찾지 못했다고 보여 준다 */
     option?: SubwayRouteOptionDto;
     startedAtMs?: number;
+  };
+  OffRoute: {
+    alert: OffRouteAlert;
+    /** 이탈을 감지한 시점에 원래 경로에서 남아 있던 시간(초) */
+    remainingSec: number;
   };
   Arrived: {
     log: TravelLogResponse;
