@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { useAuth } from "@clerk/clerk-expo";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { usePreferencesQuery } from "@/apis/queries/users/usePreferencesQuery";
@@ -7,6 +7,7 @@ import { useUpdatePreferencesMutation } from "@/apis/mutations/users/useUpdatePr
 import { Button } from "@/common/components/Button";
 import { Chip } from "@/common/components/Chip";
 import { Screen } from "@/common/components/Screen";
+import { Text } from "@/common/components/Text";
 import {
   canProceed,
   PURPOSES,
@@ -16,13 +17,12 @@ import {
 } from "@/features/onboarding/options";
 import { useOnboardingSkipStore } from "@/features/onboarding/skip-store";
 import type { RootStackParamList } from "@/navigation/navigation-types";
-import { useTheme } from "@/theme";
+import { cn } from "@/lib/cn";
 
 export function OnboardingScreen({
   navigation,
   route,
 }: NativeStackScreenProps<RootStackParamList, "Onboarding">) {
-  const { colors } = useTheme();
   const { userId } = useAuth();
   const skip = useOnboardingSkipStore((state) => state.skip);
   const save = useUpdatePreferencesMutation();
@@ -62,9 +62,9 @@ export function OnboardingScreen({
   };
 
   return (
-    <Screen contentStyle={{ paddingHorizontal: 24, paddingTop: 8, gap: 16 }}>
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-        <Text style={{ fontSize: 13, fontWeight: "700", color: colors.textSecondary }}>{step} / 2</Text>
+    <Screen contentClassName="gap-4 px-6 pt-2">
+      <View className="flex-row items-center justify-between">
+        <Text className="text-body-sm font-sans-bold text-text-secondary">{step} / 2</Text>
         <Pressable
           accessibilityRole="button"
           onPress={() => {
@@ -72,31 +72,24 @@ export function OnboardingScreen({
             leave();
           }}
         >
-          <Text style={{ fontSize: 14, color: colors.textSecondary }}>{editing ? "닫기" : "건너뛰기"}</Text>
+          <Text className="text-body text-text-secondary">{editing ? "닫기" : "건너뛰기"}</Text>
         </Pressable>
       </View>
 
-      <View style={{ height: 4, borderRadius: 2, backgroundColor: colors.border }}>
-        <View
-          style={{
-            height: 4,
-            borderRadius: 2,
-            width: step === 1 ? "50%" : "100%",
-            backgroundColor: colors.primary,
-          }}
-        />
+      <View className="h-1 rounded-3xs bg-border">
+        <View className={cn("h-1 rounded-3xs bg-primary", step === 1 ? "w-1/2" : "w-full")} />
       </View>
 
-      <View style={{ gap: 6 }}>
-        <Text style={{ fontSize: 22, fontWeight: "800", color: colors.text }}>
+      <View className="gap-1.5">
+        <Text className="text-headline font-sans-extrabold">
           {step === 1 ? "주로 지하철을 어떤 용무로 타시나요?" : "어떤 경로를 좋아하세요?"}
         </Text>
-        <Text style={{ fontSize: 13, color: colors.textSecondary }}>
+        <Text className="text-body-sm text-text-secondary">
           {step === 1 ? "중복 선택 가능" : "골라주신 취향으로 AI가 경로를 맨 위에 추천해 드려요"}
         </Text>
       </View>
 
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+      <View className="flex-row flex-wrap gap-2">
         {options.map((option) => (
           <Chip
             key={option.code}
@@ -107,14 +100,12 @@ export function OnboardingScreen({
         ))}
       </View>
 
-      <View style={{ flex: 1 }} />
+      <View className="flex-1" />
 
       {save.error ? (
-        <Text style={{ fontSize: 13, textAlign: "center", color: colors.error }}>
-          저장하지 못했어요. 다시 시도해 주세요.
-        </Text>
+        <Text className="text-center text-body-sm text-error">저장하지 못했어요. 다시 시도해 주세요.</Text>
       ) : null}
-      <View style={{ gap: 8, paddingBottom: 16 }}>
+      <View className="gap-2 pb-4">
         <Button
           label={step === 1 ? "다음" : "시작하기"}
           onPress={next}

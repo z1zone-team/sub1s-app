@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { useAuth } from "@clerk/clerk-expo";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -8,6 +8,7 @@ import { useRankingQuery } from "@/apis/queries/ranking/useRankingQuery";
 import { Button } from "@/common/components/Button";
 import { Chip } from "@/common/components/Chip";
 import { Screen } from "@/common/components/Screen";
+import { Text } from "@/common/components/Text";
 import {
   captionText,
   kstYearMonth,
@@ -20,10 +21,11 @@ import {
   type RankingScope,
 } from "@/features/ranking/rankingView";
 import type { RootStackParamList } from "@/navigation/navigation-types";
-import { useTheme } from "@/theme";
+import { cn } from "@/lib/cn";
+
+const PODIUM_HEIGHT: Record<number, string> = { 1: "h-19", 2: "h-14", 3: "h-11" };
 
 export function RankingScreen() {
-  const { colors } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { isSignedIn } = useAuth();
   const [scope, setScope] = useState<RankingScope>("MONTHLY");
@@ -40,9 +42,9 @@ export function RankingScreen() {
 
   if (!isSignedIn) {
     return (
-      <Screen contentStyle={{ paddingHorizontal: 24, justifyContent: "center", gap: 16 }}>
-        <Text style={{ fontSize: 20, fontWeight: "800", color: colors.text }}>로그인이 필요해요</Text>
-        <Text style={{ color: colors.textSecondary }}>로그인하면 랭킹을 보고 친구와 겨룰 수 있어요</Text>
+      <Screen contentClassName="justify-center gap-4 px-6">
+        <Text className="text-title-lg font-sans-extrabold">로그인이 필요해요</Text>
+        <Text className="text-text-secondary">로그인하면 랭킹을 보고 친구와 겨룰 수 있어요</Text>
         <Button label="로그인" onPress={() => navigation.navigate("Login")} />
       </Screen>
     );
@@ -55,113 +57,83 @@ export function RankingScreen() {
   const order = [2, 1, 3];
 
   return (
-    <Screen scroll contentStyle={{ paddingHorizontal: 20, gap: 16 }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingTop: 16 }}>
+    <Screen scroll contentClassName="gap-4 px-5">
+      <View className="flex-row items-center gap-2 pt-4">
         {SCOPES.map((item) => (
           <Chip key={item.value} label={item.label} selected={item.value === scope} onPress={() => setScope(item.value)} />
         ))}
-        <View style={{ flex: 1 }} />
+        <View className="flex-1" />
         <Chip label="친구만 보기" selected={friendsOnly} onPress={() => setFriendsOnly((value) => !value)} />
       </View>
 
-      <Text style={{ fontSize: 13, color: colors.textSecondary }}>
+      <Text className="text-body-sm text-text-secondary">
         {captionText(scope, month, friendsOnly, data?.totalUsers)}
       </Text>
 
       {ranking.error ? (
-        <Text style={{ color: colors.error }}>랭킹을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</Text>
+        <Text className="text-error">랭킹을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</Text>
       ) : null}
 
       {top.length > 0 ? (
-        <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 8 }}>
+        <View className="flex-row items-end gap-2">
           {order.map((rank) => {
             const entry = top.find((item) => item.rank === rank);
-            if (!entry) return <View key={rank} style={{ flex: 1 }} />;
+            if (!entry) return <View key={rank} className="flex-1" />;
             return (
-              <View key={rank} style={{ flex: 1, alignItems: "center", gap: 4 }}>
-                <Text style={{ fontSize: 13, fontWeight: entry.isMe ? "800" : "600", color: colors.text }} numberOfLines={1}>
+              <View key={rank} className="flex-1 items-center gap-1">
+                <Text
+                  className={cn("text-body-sm", entry.isMe ? "font-sans-extrabold" : "font-sans-semibold")}
+                  numberOfLines={1}
+                >
                   {entry.name}
                 </Text>
-                <Text style={{ fontSize: 12, color: colors.textSecondary }}>{entry.km}</Text>
+                <Text className="text-small text-text-secondary">{entry.km}</Text>
                 <View
-                  style={{
-                    width: "100%",
-                    height: rank === 1 ? 76 : rank === 2 ? 56 : 44,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderTopLeftRadius: 12,
-                    borderTopRightRadius: 12,
-                    backgroundColor: entry.isMe ? colors.primaryTint : colors.surface,
-                    borderWidth: 1,
-                    borderBottomWidth: 0,
-                    borderColor: colors.border,
-                  }}
+                  className={cn("w-full items-center justify-center rounded-t-md border border-b-0 border-border", PODIUM_HEIGHT[rank], entry.isMe ? "bg-primary-tint" : "bg-surface")}
                 >
-                  <Text style={{ fontSize: 20, fontWeight: "800", color: colors.text }}>{rank}</Text>
+                  <Text className="text-title-lg font-sans-extrabold">{rank}</Text>
                 </View>
               </View>
             );
           })}
         </View>
       ) : !ranking.isLoading ? (
-        <Text style={{ paddingVertical: 24, textAlign: "center", color: colors.textSecondary }}>
-          아직 랭킹에 오른 사람이 없어요
-        </Text>
+        <Text className="py-6 text-center text-text-secondary">아직 랭킹에 오른 사람이 없어요</Text>
       ) : null}
 
       <View>
         {rows.map((row, index) =>
           row.kind === "GAP" ? (
-            <Text key={`gap-${index}`} style={{ textAlign: "center", paddingVertical: 6, color: colors.textSecondary }}>
+            <Text key={`gap-${index}`} className="py-1.5 text-center text-text-secondary">
               ···
             </Text>
           ) : (
             <View
               key={`${row.rank}-${index}`}
-              style={{
-                height: 48,
-                paddingHorizontal: 12,
-                flexDirection: "row",
-                alignItems: "center",
-                borderRadius: 10,
-                backgroundColor: row.isMe ? colors.primaryTint : "transparent",
-              }}
+              className={cn("h-row flex-row items-center rounded-sm-plus px-3", row.isMe ? "bg-primary-tint" : "")}
             >
-              <Text style={{ width: 40, fontSize: 14, color: row.isMe ? colors.text : colors.textSecondary }}>
-                {row.rank}
-              </Text>
-              <Text style={{ flex: 1, fontSize: 15, fontWeight: row.isMe ? "800" : "500", color: colors.text }}>
+              <Text className={cn("w-10 text-body", row.isMe ? "" : "text-text-secondary")}>{row.rank}</Text>
+              <Text className={cn("flex-1 text-subtitle", row.isMe ? "font-sans-extrabold" : "font-sans-medium")}>
                 {row.nickname}
                 {row.isMe ? "  나" : ""}
               </Text>
-              <Text style={{ fontSize: 14, color: colors.text }}>{row.value}</Text>
+              <Text className="text-body">{row.value}</Text>
             </View>
           )
         )}
       </View>
 
-      <View style={{ gap: 8 }}>
-        <Text style={{ fontSize: 13, fontWeight: "700", color: colors.text }}>
-          타는 만큼 표정이 바뀌어요 · 이번 달 기준
-        </Text>
-        <View style={{ flexDirection: "row", gap: 8 }}>
+      <View className="gap-2">
+        <Text className="text-body-sm font-sans-bold">타는 만큼 표정이 바뀌어요 · 이번 달 기준</Text>
+        <View className="flex-row gap-2">
           {MOOD_LEVELS.map((level) => (
             <View
               key={level.key}
-              style={{
-                flex: 1,
-                alignItems: "center",
-                gap: 4,
-                paddingVertical: 10,
-                borderRadius: 12,
-                backgroundColor: colors.surface,
-                borderWidth: level.key === mood.key ? 2 : 0,
-                borderColor: colors.primary,
-              }}
+              className={cn("flex-1 items-center gap-1 rounded-md bg-surface py-2.5", level.key === mood.key ? "border-2 border-primary" : "")}
             >
-              <Text style={{ fontSize: 24 }}>{level.face}</Text>
-              <Text style={{ fontSize: 13, fontWeight: "700", color: colors.text }}>{level.label}</Text>
-              <Text style={{ fontSize: 11, color: colors.textSecondary }}>
+              <Text className="text-headline-md">{level.face}</Text>
+              <Text className="text-body-sm font-sans-bold">{level.label}</Text>
+              <Text className="text-caption text-text-secondary">
                 {level.range}
                 {level.key === mood.key ? " · 나" : ""}
               </Text>
@@ -173,12 +145,10 @@ export function RankingScreen() {
       <Pressable
         accessibilityRole="button"
         onPress={() => navigation.navigate("Friends")}
-        style={{ padding: 16, gap: 2, borderRadius: 16, backgroundColor: colors.surface, marginBottom: 16 }}
+        className="mb-4 gap-0.5 rounded-lg bg-surface p-4"
       >
-        <Text style={{ fontSize: 15, fontWeight: "800", color: colors.text }}>친구 초대하기</Text>
-        <Text style={{ fontSize: 13, color: colors.textSecondary }}>
-          링크로 들어온 친구와 서로 랭킹을 볼 수 있어요
-        </Text>
+        <Text className="text-subtitle font-sans-extrabold">친구 초대하기</Text>
+        <Text className="text-body-sm text-text-secondary">링크로 들어온 친구와 서로 랭킹을 볼 수 있어요</Text>
       </Pressable>
     </Screen>
   );

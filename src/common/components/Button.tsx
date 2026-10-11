@@ -1,12 +1,8 @@
 import React from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  Text,
-  type StyleProp,
-  type ViewStyle,
-} from "react-native";
+import { ActivityIndicator, Pressable } from "react-native";
 import { useTheme } from "@/theme";
+import { Text } from "./Text";
+import { cn } from "@/lib/cn";
 
 type Variant = "primary" | "secondary" | "ghost";
 
@@ -16,8 +12,20 @@ interface ButtonProps {
   variant?: Variant;
   disabled?: boolean;
   loading?: boolean;
-  style?: StyleProp<ViewStyle>;
+  className?: string;
 }
+
+const CONTAINER: Record<Variant, string> = {
+  primary: "bg-primary",
+  secondary: "bg-bg border border-border",
+  ghost: "bg-transparent",
+};
+
+const LABEL: Record<Variant, string> = {
+  primary: "text-on-primary",
+  secondary: "text-text",
+  ghost: "text-text",
+};
 
 export function Button({
   label,
@@ -25,14 +33,10 @@ export function Button({
   variant = "primary",
   disabled = false,
   loading = false,
-  style,
+  className = "",
 }: ButtonProps) {
   const { colors } = useTheme();
   const inactive = disabled || loading;
-
-  const background =
-    variant === "primary" ? colors.primary : variant === "secondary" ? colors.bg : "transparent";
-  const foreground = variant === "primary" ? colors.onPrimary : colors.text;
 
   return (
     <Pressable
@@ -40,24 +44,12 @@ export function Button({
       accessibilityState={{ disabled: inactive, busy: loading }}
       disabled={inactive}
       onPress={onPress}
-      style={[
-        {
-          height: 52,
-          borderRadius: 12,
-          alignItems: "center",
-          justifyContent: "center",
-          flexDirection: "row",
-          gap: 8,
-          backgroundColor: background,
-          borderWidth: variant === "secondary" ? 1 : 0,
-          borderColor: colors.border,
-          opacity: inactive ? 0.5 : 1,
-        },
-        style,
-      ]}
+      className={cn("h-control-lg flex-row items-center justify-center gap-2 rounded-md", CONTAINER[variant], inactive ? "opacity-50" : "", className)}
     >
-      {loading ? <ActivityIndicator color={foreground} /> : null}
-      <Text style={{ fontSize: 16, fontWeight: "700", color: foreground }}>{label}</Text>
+      {loading ? (
+        <ActivityIndicator color={variant === "primary" ? colors.onPrimary : colors.text} />
+      ) : null}
+      <Text className={cn("text-base font-sans-bold", LABEL[variant])}>{label}</Text>
     </Pressable>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { ActivityIndicator, FlatList, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { ApiError } from "@/apis/client";
 import { useAuth } from "@clerk/clerk-expo";
@@ -8,6 +8,7 @@ import { useRouteSearchQuery } from "@/apis/queries/routing/useRouteSearchQuery"
 import { useStationsQuery } from "@/apis/queries/stations/useStationsQuery";
 import { Button } from "@/common/components/Button";
 import { Screen } from "@/common/components/Screen";
+import { Text } from "@/common/components/Text";
 import { toRouteSearchRequest, type RouteEndpoint } from "@/features/routing/endpoint";
 import { RouteCard } from "@/features/routing/components/RouteCard";
 import { groupRouteOptions } from "@/features/routing/routeView";
@@ -54,23 +55,21 @@ export function RouteResultScreen({
 
   return (
     <Screen edges={[]}>
-      <View style={{ paddingHorizontal: 20, paddingVertical: 12, gap: 2 }}>
-        <Text style={{ fontSize: 18, fontWeight: "800", color: colors.text }}>
+      <View className="gap-0.5 px-5 py-3">
+        <Text className="text-title font-sans-extrabold">
           {originName || "출발지"} → {destinationName || "도착지"}
         </Text>
-        <Text style={{ fontSize: 12, color: colors.textSecondary }}>
-          요금은 교통카드 기준이에요
-        </Text>
+        <Text className="text-small text-text-secondary">요금은 교통카드 기준이에요</Text>
       </View>
 
       {search.isLoading ? (
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12 }}>
+        <View className="flex-1 items-center justify-center gap-3">
           <ActivityIndicator color={colors.primary} />
-          <Text style={{ color: colors.textSecondary }}>경로를 찾는 중이에요</Text>
+          <Text className="text-text-secondary">경로를 찾는 중이에요</Text>
         </View>
       ) : search.error ? (
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 16, padding: 24 }}>
-          <Text style={{ textAlign: "center", color: colors.text }}>{errorMessage(search.error)}</Text>
+        <View className="flex-1 items-center justify-center gap-4 p-6">
+          <Text className="text-center">{errorMessage(search.error)}</Text>
           <Button label="다시 시도" variant="secondary" onPress={() => void search.refetch()} />
           <Button label="다시 검색" variant="ghost" onPress={() => navigation.navigate("Search")} />
         </View>
@@ -93,11 +92,9 @@ export function RouteResultScreen({
             />
           )}
           ListEmptyComponent={
-            <Text style={{ padding: 24, textAlign: "center", color: colors.textSecondary }}>
-              보여 줄 경로가 없어요
-            </Text>
+            <Text className="p-6 text-center text-text-secondary">보여 줄 경로가 없어요</Text>
           }
-          contentContainerStyle={{ paddingBottom: 24 }}
+          contentContainerClassName="pb-6"
         />
       )}
     </Screen>

@@ -1,9 +1,10 @@
 import React from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
 import type { PathSegmentDto } from "@/apis/queries/routing/searchRoutes";
 import { LineBadge } from "@/common/components/LineBadge";
+import { Text } from "@/common/components/Text";
 import { formatDurationSec, formatFare } from "@/common/utils/format";
-import { congestionColor, useTheme, WALK_LINE_ID } from "@/theme";
+import { CONGESTION_TEXT, WALK_LINE_ID } from "@/theme";
 import {
   MODE_TITLE,
   clockRange,
@@ -12,6 +13,7 @@ import {
   type RouteGroup,
 } from "../routeView";
 import { SegmentBar } from "./SegmentBar";
+import { cn } from "@/lib/cn";
 
 interface RouteCardProps {
   group: RouteGroup;
@@ -19,7 +21,6 @@ interface RouteCardProps {
 }
 
 export function RouteCard({ group, onPress }: RouteCardProps) {
-  const { colors } = useTheme();
   const { option } = group;
   const rides = option.segments.filter((segment) => segment.lineId !== WALK_LINE_ID);
   const walk = walkSeconds(option);
@@ -29,51 +30,29 @@ export function RouteCard({ group, onPress }: RouteCardProps) {
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
-      style={{
-        marginHorizontal: 16,
-        marginBottom: 12,
-        padding: 16,
-        gap: 12,
-        borderRadius: 16,
-        borderWidth: group.recommended ? 2 : 1,
-        borderColor: group.recommended ? colors.primary : colors.border,
-        backgroundColor: colors.bg,
-      }}
+      className={cn("mx-4 mb-3 gap-3 rounded-lg bg-bg p-4", group.recommended ? "border-2 border-primary" : "border border-border")}
     >
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+      <View className="flex-row flex-wrap items-center gap-1.5">
         <Text
-          style={{
-            paddingHorizontal: 10,
-            paddingVertical: 3,
-            borderRadius: 999,
-            overflow: "hidden",
-            fontSize: 12,
-            fontWeight: "800",
-            color: group.recommended ? colors.onPrimary : colors.primary,
-            backgroundColor: group.recommended ? colors.primary : colors.primaryTint,
-          }}
+          className={cn("overflow-hidden rounded-pill px-2.5 py-0.75 text-small font-sans-extrabold", group.recommended ? "bg-primary text-on-primary" : "bg-primary-tint text-primary")}
         >
           {group.title}
         </Text>
         {group.modes.slice(1).map((mode) => (
-          <Text key={mode} style={{ fontSize: 12, color: colors.textSecondary }}>
+          <Text key={mode} className="text-small text-text-secondary">
             {MODE_TITLE[mode]}
           </Text>
         ))}
       </View>
-      {group.tagline ? (
-        <Text style={{ fontSize: 13, color: colors.textSecondary }}>{group.tagline}</Text>
-      ) : null}
+      {group.tagline ? <Text className="text-body-sm text-text-secondary">{group.tagline}</Text> : null}
 
-      <View style={{ flexDirection: "row", alignItems: "baseline", justifyContent: "space-between" }}>
-        <Text style={{ fontSize: 28, fontWeight: "800", color: colors.text }}>
+      <View className="flex-row items-baseline justify-between">
+        <Text className="text-display-sm font-sans-extrabold">
           {formatDurationSec(option.totalDurationSec)}
         </Text>
-        <Text style={{ fontSize: 16, fontWeight: "700", color: colors.text }}>
-          {formatFare(option.totalFare)}
-        </Text>
+        <Text className="text-base font-sans-bold">{formatFare(option.totalFare)}</Text>
       </View>
-      <Text style={{ fontSize: 13, color: colors.textSecondary }}>
+      <Text className="text-body-sm text-text-secondary">
         {[
           clockRange(option),
           `환승 ${option.transferCount}회`,
@@ -85,7 +64,7 @@ export function RouteCard({ group, onPress }: RouteCardProps) {
 
       <SegmentBar option={option} />
 
-      <View style={{ gap: 6 }}>
+      <View className="gap-1.5">
         {rides.map((segment, index) => (
           <RideLine key={`${segment.lineId}-${index}`} segment={segment} />
         ))}
@@ -93,11 +72,7 @@ export function RouteCard({ group, onPress }: RouteCardProps) {
 
       {operation ? (
         <Text
-          style={{
-            fontSize: 12,
-            fontWeight: "600",
-            color: operation.tone === "warning" ? colors.error : colors.success,
-          }}
+          className={cn("text-small font-sans-semibold", operation.tone === "warning" ? "text-error" : "text-success")}
         >
           {operation.text}
         </Text>
@@ -107,21 +82,13 @@ export function RouteCard({ group, onPress }: RouteCardProps) {
 }
 
 function RideLine({ segment }: { segment: PathSegmentDto }) {
-  const { colors } = useTheme();
-
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+    <View className="flex-row items-center gap-2">
       <LineBadge lineId={segment.lineId} suffix={segment.isExpress ? "급행" : undefined} size="sm" />
-      <Text numberOfLines={1} style={{ flex: 1, fontSize: 13, color: colors.text }}>
+      <Text numberOfLines={1} className="flex-1 text-body-sm">
         {segment.fromStationName} → {segment.toStationName}
       </Text>
-      <Text
-        style={{
-          fontSize: 12,
-          fontWeight: "600",
-          color: congestionColor(segment.congestionLevel, colors),
-        }}
-      >
+      <Text className={cn("text-small font-sans-semibold", CONGESTION_TEXT[segment.congestionLevel])}>
         {segment.congestionLevel} {Math.round(segment.congestionRate)}%
       </Text>
     </View>

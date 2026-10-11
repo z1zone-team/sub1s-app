@@ -1,6 +1,8 @@
 import React from "react";
-import { Text, View } from "react-native";
-import { congestionColor, levelOfRate, useTheme } from "@/theme";
+import { View } from "react-native";
+import { CONGESTION_BG, levelOfRate } from "@/theme";
+import { Text } from "./Text";
+import { cn } from "@/lib/cn";
 
 export interface CarCongestion {
   carNo: number;
@@ -18,43 +20,31 @@ interface CongestionBarProps {
 const MAX_HEIGHT = 56;
 const MIN_HEIGHT = 8;
 
-/** 1~10번 칸의 혼잡도를 막대로 보여 주고 추천 칸과 약냉방칸을 표시한다 */
+/** 1~10번 칸의 혼잡도를 막대로 보여 주고 추천 칸과 약냉방칸을 표시한다. 막대 높이는 값마다 달라 style로 준다 */
 export function CongestionBar({
   cars,
   recommendedCarNo,
   weakAcCarNos = [],
 }: CongestionBarProps) {
-  const { colors } = useTheme();
-
   return (
-    <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 4 }}>
+    <View className="flex-row items-end gap-1">
       {cars.map((car) => {
         const rate = Math.min(Math.max(car.rate, 0), 100);
         const recommended = car.carNo === recommendedCarNo;
         const weakAc = weakAcCarNos.includes(car.carNo);
         return (
-          <View key={car.carNo} style={{ flex: 1, alignItems: "center", gap: 4 }}>
+          <View key={car.carNo} className="flex-1 items-center gap-1">
             <View
               accessibilityLabel={`${car.carNo}번째 칸 혼잡도 ${Math.round(rate)}%`}
-              style={{
-                width: "100%",
-                height: MIN_HEIGHT + ((MAX_HEIGHT - MIN_HEIGHT) * rate) / 100,
-                borderRadius: 4,
-                backgroundColor: congestionColor(levelOfRate(rate), colors),
-                borderWidth: recommended ? 2 : 0,
-                borderColor: colors.primary,
-              }}
+              className={cn("w-full rounded-xs", CONGESTION_BG[levelOfRate(rate)], recommended ? "border-2 border-primary" : "")}
+              style={{ height: MIN_HEIGHT + ((MAX_HEIGHT - MIN_HEIGHT) * rate) / 100 }}
             />
             <Text
-              style={{
-                fontSize: 11,
-                fontWeight: recommended ? "800" : "500",
-                color: recommended ? colors.primary : colors.textSecondary,
-              }}
+              className={cn("text-caption", recommended ? "font-sans-extrabold text-primary" : "font-sans-medium text-text-secondary")}
             >
               {car.carNo}
             </Text>
-            <Text style={{ fontSize: 10, color: colors.textSecondary, height: 12 }}>
+            <Text className="h-3 text-tiny text-text-secondary">
               {recommended ? "추천" : weakAc ? "약냉" : ""}
             </Text>
           </View>

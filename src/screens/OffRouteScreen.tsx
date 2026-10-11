@@ -1,21 +1,21 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useStartTrackingMutation } from "@/apis/mutations/tracking/useStartTrackingMutation";
 import { Button } from "@/common/components/Button";
 import { Screen } from "@/common/components/Screen";
+import { Text } from "@/common/components/Text";
 import { formatClockKst } from "@/common/utils/format";
 import { delayText } from "@/features/guide/offRoute";
 import { useOffRouteStore } from "@/features/guide/offroute-store";
 import { SegmentDetail } from "@/features/routing/components/SegmentDetail";
 import type { RootStackParamList } from "@/navigation/navigation-types";
-import { useTheme, WALK_LINE_ID } from "@/theme";
+import { WALK_LINE_ID } from "@/theme";
 
 export function OffRouteScreen({
   navigation,
   route,
 }: NativeStackScreenProps<RootStackParamList, "OffRoute">) {
-  const { colors } = useTheme();
   const { alert, remainingSec } = route.params;
   const option = alert.rerouteOption;
   const startTracking = useStartTrackingMutation();
@@ -49,24 +49,20 @@ export function OffRouteScreen({
   };
 
   return (
-    <Screen scroll contentStyle={{ paddingHorizontal: 24, gap: 16 }}>
-      <View style={{ alignItems: "center", gap: 8, paddingTop: 24 }}>
-        <Text style={{ fontSize: 40, fontWeight: "800", color: colors.error }}>!</Text>
-        <Text style={{ fontSize: 22, fontWeight: "800", color: colors.text }}>경로를 이탈했어요</Text>
-        <Text style={{ fontSize: 14, textAlign: "center", color: colors.textSecondary }}>
-          {alert.message}
-        </Text>
+    <Screen scroll contentClassName="gap-4 px-6">
+      <View className="items-center gap-2 pt-6">
+        <Text className="text-hero font-sans-extrabold text-error">!</Text>
+        <Text className="text-headline font-sans-extrabold">경로를 이탈했어요</Text>
+        <Text className="text-center text-body text-text-secondary">{alert.message}</Text>
       </View>
 
-      <View style={{ padding: 16, gap: 4, borderRadius: 16, backgroundColor: colors.surface }}>
-        <Text style={{ fontSize: 13, fontWeight: "700", color: colors.primary }}>새 경로</Text>
-        <Text style={{ fontSize: 18, fontWeight: "800", color: colors.text }}>
+      <View className="gap-1 rounded-lg bg-surface p-4">
+        <Text className="text-body-sm font-sans-bold text-primary">새 경로</Text>
+        <Text className="text-title font-sans-extrabold">
           {formatClockKst(option.estimatedArrivalTimestamp)} 도착 ·{" "}
           {delayText(option.totalDurationSec, remainingSec)}
         </Text>
-        <Text style={{ marginTop: 8, fontSize: 14, color: colors.text }}>
-          {alert.detectedStationName} 하차 · 맞은편 승강장으로 이동
-        </Text>
+        <Text className="mt-2 text-body">{alert.detectedStationName} 하차 · 맞은편 승강장으로 이동</Text>
         {option.segments.map((segment, index) =>
           segment.lineId === WALK_LINE_ID ? null : (
             <SegmentDetail
@@ -78,16 +74,14 @@ export function OffRouteScreen({
         )}
       </View>
 
-      <Text style={{ fontSize: 12, color: colors.textSecondary }}>
+      <Text className="text-small text-text-secondary">
         잘못 탄 게 아니라면 맞게 탔어요를 눌러 주세요. 다음 역 정차 정보로 다시 확인할게요.
       </Text>
       {startTracking.error ? (
-        <Text style={{ fontSize: 13, textAlign: "center", color: colors.error }}>
-          새 경로를 시작하지 못했어요. 다시 시도해 주세요.
-        </Text>
+        <Text className="text-center text-body-sm text-error">새 경로를 시작하지 못했어요. 다시 시도해 주세요.</Text>
       ) : null}
 
-      <View style={{ gap: 8, paddingBottom: 16 }}>
+      <View className="gap-2 pb-4">
         <Button label="새 경로로 안내" onPress={startReroute} loading={startTracking.isPending} />
         <Button label="맞게 탔어요" variant="secondary" onPress={keepRoute} />
       </View>

@@ -1,11 +1,12 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 import type { PathSegmentDto } from "@/apis/queries/routing/searchRoutes";
 import { useNextTrainsQuery } from "@/apis/queries/stations/useNextTrainsQuery";
 import { CongestionBar } from "@/common/components/CongestionBar";
 import { LineBadge } from "@/common/components/LineBadge";
+import { Text } from "@/common/components/Text";
 import { formatDistanceKm, formatDurationSec } from "@/common/utils/format";
-import { congestionColor, useTheme, WALK_LINE_ID } from "@/theme";
+import { CONGESTION_TEXT, WALK_LINE_ID } from "@/theme";
 import {
   carInsight,
   describeDoor,
@@ -13,6 +14,7 @@ import {
   operationLabel,
   pickNextTrain,
 } from "../routeView";
+import { cn } from "@/lib/cn";
 
 interface SegmentDetailProps {
   segment: PathSegmentDto;
@@ -26,11 +28,9 @@ export function SegmentDetail({ segment, showNextTrain }: SegmentDetailProps) {
 }
 
 function WalkDetail({ segment }: { segment: PathSegmentDto }) {
-  const { colors } = useTheme();
-
   return (
-    <View style={{ paddingVertical: 12 }}>
-      <Text style={{ fontSize: 14, color: colors.textSecondary }}>
+    <View className="py-3">
+      <Text className="text-body text-text-secondary">
         도보 {formatDurationSec(segment.durationSec)} · {formatDistanceKm(segment.distanceKm)}
         {segment.walkSteps ? ` · ${segment.walkSteps.toLocaleString("en-US")}걸음` : ""}
       </Text>
@@ -39,55 +39,41 @@ function WalkDetail({ segment }: { segment: PathSegmentDto }) {
 }
 
 function RideDetail({ segment, showNextTrain }: SegmentDetailProps) {
-  const { colors } = useTheme();
   const operation = operationLabel(segment.operationStatus, segment.operationNotice);
   const insight = carInsight(segment.cars, segment.recommendedCarNo);
   const weakAcCars = (segment.cars ?? []).filter((car) => car.isWeakAirConditioned).map((car) => car.carNo);
 
   return (
-    <View style={{ paddingVertical: 12, gap: 10 }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+    <View className="gap-2.5 py-3">
+      <View className="flex-row items-center gap-2">
         <LineBadge lineId={segment.lineId} suffix={segment.isExpress ? "급행" : "일반"} />
-        <Text style={{ fontSize: 17, fontWeight: "800", color: colors.text }}>
-          {segment.fromStationName}
-        </Text>
+        <Text className="text-heading font-sans-extrabold">{segment.fromStationName}</Text>
       </View>
 
       {showNextTrain ? <NextTrainLine segment={segment} /> : null}
 
-      <View
-        style={{
-          padding: 12,
-          gap: 8,
-          borderRadius: 12,
-          backgroundColor: colors.surface,
-        }}
-      >
+      <View className="gap-2 rounded-md bg-surface p-3">
         {weakAcCars.length > 0 ? (
-          <Text style={{ fontSize: 13, color: colors.text }}>
-            약냉방칸 <Text style={{ fontWeight: "800" }}>{weakAcCars.join("·")}번째 칸</Text>
+          <Text className="text-body-sm">
+            약냉방칸 <Text className="font-sans-extrabold">{weakAcCars.join("·")}번째 칸</Text>
           </Text>
         ) : null}
-        <Text style={{ fontSize: 13, color: colors.text }}>
+        <Text className="text-body-sm">
           {segment.stationCount}개 역 이동 ·{" "}
-          <Text style={{ fontWeight: "800" }}>{formatDurationSec(segment.durationSec)}</Text>
+          <Text className="font-sans-extrabold">{formatDurationSec(segment.durationSec)}</Text>
         </Text>
-        <Text style={{ fontSize: 13, color: colors.text }}>
+        <Text className="text-body-sm">
           혼잡도{" "}
-          <Text style={{ fontWeight: "800", color: congestionColor(segment.congestionLevel, colors) }}>
+          <Text className={cn("font-sans-extrabold", CONGESTION_TEXT[segment.congestionLevel])}>
             {segment.congestionLevel} {Math.round(segment.congestionRate)}%
           </Text>
           {segment.congestionSource === "MOCK" ? (
-            <Text style={{ color: colors.textSecondary }}> (추정)</Text>
+            <Text className="text-text-secondary"> (추정)</Text>
           ) : null}
         </Text>
         {operation ? (
           <Text
-            style={{
-              fontSize: 13,
-              fontWeight: "600",
-              color: operation.tone === "warning" ? colors.error : colors.success,
-            }}
+            className={cn("text-body-sm font-sans-semibold", operation.tone === "warning" ? "text-error" : "text-success")}
           >
             {operation.text}
           </Text>
@@ -95,14 +81,12 @@ function RideDetail({ segment, showNextTrain }: SegmentDetailProps) {
       </View>
 
       {segment.cars && segment.cars.length > 0 ? (
-        <View style={{ gap: 8 }}>
-          <Text style={{ fontSize: 14, fontWeight: "700", color: colors.text }}>칸별 혼잡도</Text>
+        <View className="gap-2">
+          <Text className="text-body font-sans-bold">칸별 혼잡도</Text>
           {insight?.betterThanAveragePercent ? (
-            <Text style={{ fontSize: 13, color: colors.textSecondary }}>
+            <Text className="text-body-sm text-text-secondary">
               {segment.recommendedCarNo}번째 칸이 평균보다{" "}
-              <Text style={{ fontWeight: "800", color: colors.primary }}>
-                {insight.betterThanAveragePercent}%
-              </Text>{" "}
+              <Text className="font-sans-extrabold text-primary">{insight.betterThanAveragePercent}%</Text>{" "}
               한산해요
             </Text>
           ) : null}
@@ -113,13 +97,11 @@ function RideDetail({ segment, showNextTrain }: SegmentDetailProps) {
           />
         </View>
       ) : (
-        <Text style={{ fontSize: 13, color: colors.textSecondary }}>
-          추천 탑승 {segment.recommendedCarNo}번째 칸
-        </Text>
+        <Text className="text-body-sm text-text-secondary">추천 탑승 {segment.recommendedCarNo}번째 칸</Text>
       )}
 
       {segment.recommendedDoors && segment.recommendedDoors.length > 0 ? (
-        <Text style={{ fontSize: 13, color: colors.textSecondary }}>
+        <Text className="text-body-sm text-text-secondary">
           {segment.toStationName}에서 갈아타기 빠른 문 {segment.recommendedDoors.map(describeDoor).join(", ")}
         </Text>
       ) : null}
@@ -128,7 +110,6 @@ function RideDetail({ segment, showNextTrain }: SegmentDetailProps) {
 }
 
 function NextTrainLine({ segment }: { segment: PathSegmentDto }) {
-  const { colors } = useTheme();
   const nextTrains = useNextTrainsQuery({ stationId: segment.fromStationId, limit: 3 });
 
   if (nextTrains.data?.status !== "OK") return null;
@@ -136,7 +117,7 @@ function NextTrainLine({ segment }: { segment: PathSegmentDto }) {
   if (!train) return null;
 
   return (
-    <Text style={{ fontSize: 13, color: colors.textSecondary }}>
+    <Text className="text-body-sm text-text-secondary">
       {train.headsign} 방면 · {formatWaiting(train.arrivalInSec)}
     </Text>
   );
