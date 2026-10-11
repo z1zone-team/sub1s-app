@@ -20,3 +20,15 @@ export function formatDistanceKm(km: number): string {
   if (km < 1) return `${Math.round(km * 1000)}m`;
   return `${(Math.round(km * 10) / 10).toFixed(1)}km`;
 }
+
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+
+/** ISO 시각을 한국 시간 기준 "10.06"으로. 기기의 시간대와 상관없이 같다 */
+export function formatMonthDayKst(iso: string): string {
+  const time = Date.parse(iso);
+  if (Number.isNaN(time)) return "";
+  const kst = new Date(time + KST_OFFSET_MS);
+  const month = String(kst.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(kst.getUTCDate()).padStart(2, "0");
+  return `${month}.${day}`;
+}

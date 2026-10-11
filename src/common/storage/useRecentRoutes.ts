@@ -8,8 +8,13 @@ export interface RecentRouteItem {
   id: string;
   origin: string;
   originStationId?: string;
+  originLat?: number;
+  originLng?: number;
   destination: string;
   destStationId?: string;
+  /** 장소처럼 역이 아닌 도착지의 좌표 */
+  destLat?: number;
+  destLng?: number;
   searchedAt: string;
 }
 

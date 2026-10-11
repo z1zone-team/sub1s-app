@@ -3,6 +3,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { BottomTabNavigator } from "./BottomTabNavigator";
 import { RouteResultScreen } from "@/screens/RouteResultScreen";
+import { SearchScreen } from "@/screens/SearchScreen";
 import { LiveNavScreen } from "@/screens/LiveNavScreen";
 import { TimelineScreen } from "@/screens/TimelineScreen";
 import { useTheme } from "@/theme";
@@ -29,6 +30,11 @@ export function RootNavigator() {
         <Stack.Screen
           name="MainTabs"
           component={BottomTabNavigator}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Search"
+          component={SearchScreen}
           options={{ headerShown: false }}
         />
         <Stack.Screen

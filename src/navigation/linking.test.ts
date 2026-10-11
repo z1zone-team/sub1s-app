@@ -16,8 +16,30 @@ describe("Deep Linking Configuration", () => {
     expect(screens.MainTabs.screens.ProfileTab).toBe("profile");
 
     // Stack mappings
-    expect(screens.RouteResult).toBe("route");
+    expect(screens.Search).toBe("search");
+    expect(screens.RouteResult.path).toBe("route");
     expect(screens.LiveNav).toBe("livenav/:sessionId");
     expect(screens.Timeline).toBe("timeline");
+  });
+
+  describe("route deep link", () => {
+    const routeConfig = () =>
+      (linking.config?.screens as any).RouteResult as {
+        parse: Record<string, (value: string) => unknown>;
+        stringify: Record<string, (value: any) => string>;
+      };
+
+    it("reads the origin and destination query values as station ids", () => {
+      const { parse } = routeConfig();
+
+      expect(parse.origin("09_907")).toEqual({ name: "", stationId: "09_907" });
+      expect(parse.destination("02_222")).toEqual({ name: "", stationId: "02_222" });
+    });
+
+    it("writes a station endpoint back as its id", () => {
+      const { stringify } = routeConfig();
+
+      expect(stringify.origin({ name: "가양", stationId: "09_907" })).toBe("09_907");
+    });
   });
 });
