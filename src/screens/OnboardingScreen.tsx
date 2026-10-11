@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useAuth } from "@clerk/clerk-expo";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { usePreferencesQuery } from "@/apis/queries/users/usePreferencesQuery";
 import { useUpdatePreferencesMutation } from "@/apis/mutations/users/useUpdatePreferencesMutation";
 import { Button } from "@/common/components/Button";
 import { Chip } from "@/common/components/Chip";
@@ -19,6 +20,7 @@ import { useTheme } from "@/theme";
 
 export function OnboardingScreen({
   navigation,
+  route,
 }: NativeStackScreenProps<RootStackParamList, "Onboarding">) {
   const { colors } = useTheme();
   const { userId } = useAuth();
@@ -28,6 +30,18 @@ export function OnboardingScreen({
   const [step, setStep] = useState<Step>(1);
   const [purposes, setPurposes] = useState<string[]>([]);
   const [routePrefs, setRoutePrefs] = useState<string[]>([]);
+
+  const editing = !!route.params?.editing;
+  const saved = usePreferencesQuery(editing).data;
+  const [seeded, setSeeded] = useState(false);
+
+  useEffect(() => {
+    if (editing && saved && !seeded) {
+      setPurposes(saved.purposes);
+      setRoutePrefs(saved.routePrefs);
+      setSeeded(true);
+    }
+  }, [editing, saved, seeded]);
 
   const leave = () => {
     if (navigation.canGoBack()) navigation.goBack();
@@ -54,11 +68,11 @@ export function OnboardingScreen({
         <Pressable
           accessibilityRole="button"
           onPress={() => {
-            if (userId) void skip(userId);
+            if (userId && !editing) void skip(userId);
             leave();
           }}
         >
-          <Text style={{ fontSize: 14, color: colors.textSecondary }}>건너뛰기</Text>
+          <Text style={{ fontSize: 14, color: colors.textSecondary }}>{editing ? "닫기" : "건너뛰기"}</Text>
         </Pressable>
       </View>
 

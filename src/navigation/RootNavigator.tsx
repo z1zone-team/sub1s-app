@@ -10,6 +10,7 @@ import { SearchScreen } from "@/screens/SearchScreen";
 import { resolveStartRoute } from "@/common/auth/startRoute";
 import { useGuestStore } from "@/common/auth/guest-store";
 import { useAuthSync } from "@/common/auth/useAuthSync";
+import { ProfileEditScreen } from "@/screens/ProfileEditScreen";
 import { OnboardingScreen } from "@/screens/OnboardingScreen";
 import { LoginScreen } from "@/screens/LoginScreen";
 import { OffRouteScreen } from "@/screens/OffRouteScreen";
@@ -62,6 +63,7 @@ export function RootNavigator() {
         }}
       >
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="ProfileEdit" component={ProfileEditScreen} options={{ title: "프로필 수정" }} />
         <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
         <Stack.Screen
           name="MainTabs"
