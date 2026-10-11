@@ -102,3 +102,11 @@ export function podium(data: RankingResponseDto | undefined): Array<{ rank: numb
       isMe: !!item.isMe,
     }));
 }
+
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+
+/** 한국 시간 기준 연, 월. 기기 시간대와 상관없다 */
+export function kstYearMonth(nowMs: number): { year: number; month: number } {
+  const kst = new Date(nowMs + KST_OFFSET_MS);
+  return { year: kst.getUTCFullYear(), month: kst.getUTCMonth() + 1 };
+}

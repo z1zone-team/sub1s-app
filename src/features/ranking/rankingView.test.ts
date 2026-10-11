@@ -1,6 +1,7 @@
 import type { RankingResponseDto } from "@/apis/queries/ranking/getRanking";
 import {
   captionText,
+  kstYearMonth,
   moodOf,
   periodKeyOf,
   podium,
@@ -26,6 +27,13 @@ const data = (leaderboard: ReturnType<typeof item>[], over: Partial<RankingRespo
   myPoints: 0,
   leaderboard,
   ...over,
+});
+
+describe("kstYearMonth", () => {
+  it("한국 시간 기준 연월을 돌려준다", () => {
+    expect(kstYearMonth(Date.parse("2026-09-30T16:00:00Z"))).toEqual({ year: 2026, month: 10 });
+    expect(kstYearMonth(Date.parse("2026-09-30T14:59:00Z"))).toEqual({ year: 2026, month: 9 });
+  });
 });
 
 describe("periodKeyOf", () => {
