@@ -1,4 +1,4 @@
-import { arrivalDeltaText, remainingText, upcomingMessage } from "./guideText";
+import { arrivalDeltaText, minutesLabel, remainingText, upcomingMessage } from "./guideText";
 
 describe("upcomingMessage", () => {
   it("바로 다음 역에서 내리면 내릴 준비를 안내한다", () => {
@@ -52,5 +52,13 @@ describe("arrivalDeltaText", () => {
 
   it("값이 없으면 빈 문구다", () => {
     expect(arrivalDeltaText(undefined)).toBe("");
+  });
+});
+
+describe("minutesLabel", () => {
+  it("분으로 반올림하고 1분 미만도 1분으로 보여 준다", () => {
+    expect(minutesLabel(31 * 60)).toBe("31분");
+    expect(minutesLabel(20)).toBe("1분");
+    expect(minutesLabel(0)).toBe("1분");
   });
 });

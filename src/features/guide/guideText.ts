@@ -20,6 +20,11 @@ export function remainingText(remainingSec: number, nowMs: number): string {
   return `${formatDurationSec(remainingSec)} 남음 · ${formatClockKst(nowMs + remainingSec * 1000)} 도착`;
 }
 
+/** 홈 복귀 버튼에 보이는 남은 분. 1분 미만이어도 1분으로 보여 준다 */
+export function minutesLabel(remainingSec: number): string {
+  return `${Math.max(1, Math.round(remainingSec / 60))}분`;
+}
+
 /** 예정보다 얼마나 빨랐는지. 값이 없으면 보여 주지 않는다 */
 export function arrivalDeltaText(deltaSec: number | undefined): string {
   if (deltaSec === undefined || !Number.isFinite(deltaSec)) return "";
