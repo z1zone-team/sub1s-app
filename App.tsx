@@ -7,7 +7,7 @@ import { RootNavigator } from "./src/navigation/RootNavigator";
 export default function App() {
   return (
     <AppProviders>
-      <StatusBar style="light" />
+      <StatusBar style="auto" />
       <RootNavigator />
     </AppProviders>
   );
