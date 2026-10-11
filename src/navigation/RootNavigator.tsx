@@ -1,7 +1,7 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { useAuth } from "@clerk/clerk-expo";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, createNavigationContainerRef } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { BottomTabNavigator } from "./BottomTabNavigator";
 import { RouteDetailScreen } from "@/screens/RouteDetailScreen";
@@ -10,6 +10,8 @@ import { SearchScreen } from "@/screens/SearchScreen";
 import { resolveStartRoute } from "@/common/auth/startRoute";
 import { useGuestStore } from "@/common/auth/guest-store";
 import { useAuthSync } from "@/common/auth/useAuthSync";
+import { usePushNavigation, usePushRegistration } from "@/common/notifications/pushRegistration";
+import type { PushTarget } from "@/common/notifications/pushRoute";
 import { FriendsScreen } from "@/screens/FriendsScreen";
 import { InviteScreen } from "@/screens/InviteScreen";
 import { NotificationSettingsScreen } from "@/screens/NotificationSettingsScreen";
@@ -29,6 +31,8 @@ import type { RootStackParamList } from "./navigation-types";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+const navigationRef = createNavigationContainerRef<RootStackParamList>();
+
 export function RootNavigator() {
   const { scheme, colors } = useTheme();
   const { isLoaded, isSignedIn } = useAuth();
@@ -36,6 +40,15 @@ export function RootNavigator() {
   const guestChosen = useGuestStore((state) => state.chosen);
   const hydrateGuest = useGuestStore((state) => state.hydrate);
   useAuthSync();
+  usePushRegistration();
+
+  // 앱이 꺼져 있다가 알림으로 열리면 내비게이션이 준비될 때까지 기다렸다가 이동한다
+  const pendingTarget = useRef<NonNullable<PushTarget> | null>(null);
+  const openTarget = useCallback((target: NonNullable<PushTarget>) => {
+    if (navigationRef.isReady()) navigationRef.navigate(target.screen);
+    else pendingTarget.current = target;
+  }, []);
+  usePushNavigation(openTarget);
 
   useEffect(() => {
     void hydrateGuest();
@@ -57,7 +70,17 @@ export function RootNavigator() {
   }
 
   return (
-    <NavigationContainer linking={linking} theme={buildNavigationTheme(scheme, colors)}>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={() => {
+        if (pendingTarget.current) {
+          navigationRef.navigate(pendingTarget.current.screen);
+          pendingTarget.current = null;
+        }
+      }}
+      linking={linking}
+      theme={buildNavigationTheme(scheme, colors)}
+    >
       <Stack.Navigator
         initialRouteName={start === "LOGIN" ? "Login" : "MainTabs"}
         screenOptions={{
