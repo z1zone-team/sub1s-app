@@ -9,6 +9,7 @@ import { useTimelineQuery } from "@/apis/queries/profile/useTimelineQuery";
 import { useTravelStatsQuery } from "@/apis/queries/profile/useTravelStatsQuery";
 import { Button } from "@/common/components/Button";
 import { Chip } from "@/common/components/Chip";
+import { LoginRequired } from "@/common/components/LoginRequired";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { formatDistanceKm } from "@/common/utils/format";
@@ -45,13 +46,7 @@ export function TimelineScreen() {
   const mapData = useMemo(() => visitedMapData(lineMap.data), [lineMap.data]);
 
   if (!isSignedIn) {
-    return (
-      <Screen edges={[]} contentClassName="justify-center gap-4 px-6">
-        <Text className="text-title font-sans-extrabold">로그인이 필요해요</Text>
-        <Text className="text-text-secondary">로그인하면 이동 기록이 여기에 쌓여요</Text>
-        <Button label="로그인" onPress={() => navigation.navigate("Login")} />
-      </Screen>
-    );
+    return <LoginRequired edges={[]} description="로그인하면 이동 기록이 여기에 쌓여요" />;
   }
 
   const data = stats.data;
