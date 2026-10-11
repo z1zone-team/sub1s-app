@@ -1,4 +1,6 @@
 import type { NavigatorScreenParams } from "@react-navigation/native";
+import type { RouteMode } from "@/apis/queries/routing/searchRoutes";
+import type { RouteEndpoint } from "@/features/routing/endpoint";
 
 export type BottomTabParamList = {
   RankingTab: undefined;
@@ -8,10 +10,14 @@ export type BottomTabParamList = {
 
 export type RootStackParamList = {
   MainTabs: NavigatorScreenParams<BottomTabParamList>;
+  Search: {
+    /** 홈의 최근 도착지처럼 도착지를 미리 정해서 들어올 때 */
+    destination?: RouteEndpoint;
+  } | undefined;
   RouteResult: {
-    origin: string;
-    destination: string;
-    mode?: string;
+    origin: RouteEndpoint;
+    destination: RouteEndpoint;
+    mode?: RouteMode;
   };
   LiveNav: {
     sessionId: string;
