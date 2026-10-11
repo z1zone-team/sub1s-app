@@ -3,6 +3,7 @@ import {
   buildStops,
   currentSegment,
   distanceMeters,
+  visibleStopIndexes,
   guideProgress,
   nearestStopIndex,
   upcomingAction,
@@ -66,6 +67,31 @@ describe("buildStops", () => {
 
   it("역이 없으면 빈 목록이다", () => {
     expect(buildStops(option, [])).toEqual([]);
+  });
+});
+
+describe("buildStops 환승 걷기 구간이 없는 경로", () => {
+  // 서버는 환승 걷기를 구간으로 주지 않을 수 있고 출발역이 첫 구간 앞에 있을 수 있다
+  const gapOption = {
+    totalDurationSec: 1050,
+    segments: [segment("07", "b", "c", 400), segment("SB", "d", "f", 500)],
+  } as unknown as SubwayRouteOptionDto;
+
+  it("구간 밖의 역은 앞뒤 역 사이를 나눠 시간을 채운다", () => {
+    const stops = buildStops(gapOption, ["a", "b", "c", "d", "e", "f"]);
+    expect(stops.map((stop) => stop.atSec)).toEqual([0, 0, 400, 400, 650, 900]);
+    expect(stops[2].event).toBe("TRANSFER");
+    expect(stops[5].event).toBe("ALIGHT");
+  });
+});
+
+describe("visibleStopIndexes", () => {
+  it("환승역처럼 이름이 연달아 같은 역은 하나만 남긴다", () => {
+    expect(visibleStopIndexes(["태릉입구", "태릉입구", "공릉", "공릉", "하계"])).toEqual([0, 2, 4]);
+  });
+
+  it("이름을 아직 모르면 모두 남긴다", () => {
+    expect(visibleStopIndexes(["", "", "하계"])).toEqual([0, 1, 2]);
   });
 });
 

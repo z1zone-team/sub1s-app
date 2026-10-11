@@ -16,6 +16,25 @@ function proportional(stationIds: string[], totalSec: number): number[] {
   return stationIds.map((_, index) => (totalSec * index) / last);
 }
 
+/** 구간에 속하지 않는 역(환승 걷기 등)은 앞뒤로 시간이 정해진 역 사이를 고르게 나눠 채운다 */
+function interpolate(times: Array<number | undefined>, totalSec: number): number[] {
+  const filled = [...times];
+  if (filled[0] === undefined) filled[0] = 0;
+  if (filled[filled.length - 1] === undefined) filled[filled.length - 1] = totalSec;
+
+  let previous = 0;
+  for (let index = 1; index < filled.length; index += 1) {
+    if (filled[index] === undefined) continue;
+    const gap = index - previous;
+    for (let step = 1; step < gap; step += 1) {
+      filled[previous + step] =
+        (filled[previous] as number) + (((filled[index] as number) - (filled[previous] as number)) * step) / gap;
+    }
+    previous = index;
+  }
+  return filled as number[];
+}
+
 /**
  * 경로의 역 목록에 도착 예상 시점을 붙인다. 구간이 지나는 역 사이에 구간 소요 시간을 고르게 나누고,
  * 구간이 역 목록과 맞지 않으면 전체 소요 시간을 역 수로 나눈다.
@@ -34,15 +53,15 @@ export function buildStops(option: SubwayRouteOptionDto, stationIds: string[]): 
 
   let cursor = 0;
   let startSec = 0;
-  let fits = true;
+  let matched = 0;
 
   option.segments.forEach((segment, segmentIndex) => {
     const from = stationIds.indexOf(segment.fromStationId, cursor);
     const to = stationIds.indexOf(segment.toStationId, Math.max(from, cursor));
     if (from < 0 || to < 0) {
-      fits = false;
       return;
     }
+    matched += 1;
     const steps = to - from;
     for (let step = 0; step <= steps; step += 1) {
       const index = from + step;
@@ -56,10 +75,7 @@ export function buildStops(option: SubwayRouteOptionDto, stationIds: string[]): 
     cursor = to;
   });
 
-  const filled =
-    fits && times.every((time) => time !== undefined)
-      ? (times as number[])
-      : proportional(stationIds, option.totalDurationSec);
+  const filled = matched === 0 ? proportional(stationIds, option.totalDurationSec) : interpolate(times, option.totalDurationSec);
 
   let previous = 0;
   return stationIds.map((stationId, index) => {
@@ -190,4 +206,16 @@ export function nearestStopIndex(
     }
   });
   return best;
+}
+
+/**
+ * 환승역은 호선마다 역 ID가 달라 목록에 같은 이름이 연달아 나온다. 보여 줄 때는 앞의 하나만 남기고,
+ * 남은 역 수도 이 기준으로 센다. 돌려주는 값은 보여 줄 역의 순번이다.
+ */
+export function visibleStopIndexes(names: string[]): number[] {
+  const visible: number[] = [];
+  names.forEach((name, index) => {
+    if (index === 0 || !name || name !== names[index - 1]) visible.push(index);
+  });
+  return visible;
 }

@@ -7,6 +7,7 @@ import { Button } from "@/common/components/Button";
 import { LineBadge } from "@/common/components/LineBadge";
 import { Screen } from "@/common/components/Screen";
 import { StopStrip } from "@/features/guide/components/StopStrip";
+import { visibleStopIndexes } from "@/features/guide/progress";
 import { remainingText, upcomingMessage } from "@/features/guide/guideText";
 import { useGuide } from "@/features/guide/useGuide";
 import { describeDoor } from "@/features/routing/routeView";
@@ -50,9 +51,16 @@ function Guide({ navigation, sessionId, option, startedAtMs }: GuideProps) {
   const nameAt = (index: number) => info.get(stops[index]?.stationId ?? "")?.name ?? "";
   const names = stops.map((_, index) => nameAt(index));
   const destination = nameAt(stops.length - 1);
+  const visible = visibleStopIndexes(names);
+  const stripCurrent = visible.filter((index) => index <= progress.currentIndex).length - 1;
+  const stopsLeft = visible.filter((index) => index > progress.currentIndex).length;
+  const nextVisible = visible.find((index) => index > progress.currentIndex) ?? progress.nextIndex;
+  const upcomingAway = upcoming
+    ? visible.filter((index) => index > progress.currentIndex && index <= upcoming.index).length
+    : 0;
   const weakAcCars = (segment?.cars ?? []).filter((car) => car.isWeakAirConditioned).map((car) => car.carNo);
   const doors = segment?.recommendedDoors ?? [];
-  const nearEnd = progress.stopsLeft <= 1;
+  const nearEnd = stopsLeft <= 1;
 
   const arrive = () => {
     const origin = stops[0]?.stationId;
@@ -77,21 +85,21 @@ function Guide({ navigation, sessionId, option, startedAtMs }: GuideProps) {
           <Text style={{ fontSize: 13, fontWeight: "700", color: colors.primary }}>안내 중</Text>
         </View>
         <Text style={{ fontSize: 22, fontWeight: "800", color: colors.text }}>
-          {destination || "도착역"}까지 {progress.stopsLeft}개 역
+          {destination || "도착역"}까지 {stopsLeft}개 역
         </Text>
         <Text style={{ fontSize: 14, color: colors.textSecondary }}>
           {remainingText(progress.remainingSec, nowMs)}
         </Text>
       </View>
 
-      <StopStrip names={names} currentIndex={progress.currentIndex} />
+      <StopStrip names={visible.map((index) => names[index])} currentIndex={stripCurrent} />
 
       <View style={{ marginTop: 20, padding: 16, gap: 8, borderRadius: 16, backgroundColor: colors.surface }}>
         <Text style={{ fontSize: 13, color: colors.textSecondary }}>다음 역</Text>
-        <Text style={{ fontSize: 24, fontWeight: "800", color: colors.text }}>{nameAt(progress.nextIndex)}</Text>
+        <Text style={{ fontSize: 24, fontWeight: "800", color: colors.text }}>{nameAt(nextVisible)}</Text>
         {upcoming ? (
           <Text style={{ fontSize: 14, fontWeight: "700", color: colors.primary }}>
-            {upcomingMessage(upcoming, nameAt(upcoming.index))}
+            {upcomingMessage({ ...upcoming, stopsAway: upcomingAway }, nameAt(upcoming.index))}
           </Text>
         ) : null}
         {weakAcCars.length > 0 ? (
@@ -135,9 +143,9 @@ function Guide({ navigation, sessionId, option, startedAtMs }: GuideProps) {
 
       {picking ? (
         <View style={{ marginTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
-          {stops.slice(0, -1).map((stop, index) => (
+          {visible.slice(0, -1).map((index) => (
             <Pressable
-              key={`${stop.stationId}-${index}`}
+              key={`${stops[index].stationId}-${index}`}
               accessibilityRole="button"
               onPress={() => {
                 guide.confirmStop(index);
@@ -148,13 +156,13 @@ function Guide({ navigation, sessionId, option, startedAtMs }: GuideProps) {
               <Text
                 style={{
                   fontSize: 15,
-                  fontWeight: index === progress.currentIndex ? "800" : "500",
+                  fontWeight: index === visible[stripCurrent] ? "800" : "500",
                   color: index < progress.currentIndex ? colors.textSecondary : colors.text,
                 }}
               >
                 {names[index]}
               </Text>
-              {index === progress.currentIndex ? (
+              {index === visible[stripCurrent] ? (
                 <Text style={{ fontSize: 12, color: colors.primary }}>현재 추정</Text>
               ) : null}
             </Pressable>
