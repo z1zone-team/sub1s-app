@@ -7,6 +7,20 @@ export const queryKeys = {
     all: ["auth"] as const,
     me: () => [...queryKeys.auth.all, "me"] as const,
   },
+  places: {
+    all: ["places"] as const,
+    search: (q: string, lat?: number, lng?: number) =>
+      [...queryKeys.places.all, "search", q, lat ?? null, lng ?? null] as const,
+  },
+  stations: {
+    all: ["stations"] as const,
+    lookup: (ids: string[]) =>
+      [...queryKeys.stations.all, "lookup", ids.join(",")] as const,
+    nextTrains: (stationId: string, limit?: number) =>
+      [...queryKeys.stations.all, "nextTrains", stationId, limit ?? null] as const,
+    facilities: (stationId: string) =>
+      [...queryKeys.stations.all, "facilities", stationId] as const,
+  },
   routes: {
     all: ["routes"] as const,
     optimal: (origin: string, destination: string, mode?: string) =>
