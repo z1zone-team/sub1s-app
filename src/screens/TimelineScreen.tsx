@@ -1,9 +1,10 @@
-import React, { useState } from "react";
-import { View } from "react-native";
+import React, { useMemo, useState } from "react";
+import { Pressable, View } from "react-native";
 import { useAuth } from "@clerk/clerk-expo";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { TravelStatsPeriod } from "@/apis/queries/profile/getTravelStats";
+import { useLineMapQuery } from "@/apis/queries/profile/useLineMapQuery";
 import { useTimelineQuery } from "@/apis/queries/profile/useTimelineQuery";
 import { useTravelStatsQuery } from "@/apis/queries/profile/useTravelStatsQuery";
 import { Button } from "@/common/components/Button";
@@ -11,6 +12,8 @@ import { Chip } from "@/common/components/Chip";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { formatDistanceKm } from "@/common/utils/format";
+import { visitedMapData } from "@/features/map/mapData";
+import { VWorldMap } from "@/features/map/VWorldMap";
 import {
   chartBars,
   formatHoursMinutes,
@@ -38,6 +41,8 @@ export function TimelineScreen() {
   const [period, setPeriod] = useState<TravelStatsPeriod>("WEEK");
   const stats = useTravelStatsQuery(period);
   const timeline = useTimelineQuery(kstYearMonth(Date.now()));
+  const lineMap = useLineMapQuery(period);
+  const mapData = useMemo(() => visitedMapData(lineMap.data), [lineMap.data]);
 
   if (!isSignedIn) {
     return (
@@ -102,6 +107,16 @@ export function TimelineScreen() {
                 </Text>
               </View>
             ))}
+          </View>
+
+          <View className="gap-2.5">
+            <View className="flex-row items-center justify-between">
+              <Text className="text-subtitle font-sans-bold">이동 지도</Text>
+              <Pressable accessibilityRole="button" onPress={() => navigation.navigate("MoveMap")}>
+                <Text className="text-body-sm text-primary">크게 보기</Text>
+              </Pressable>
+            </View>
+            <VWorldMap data={mapData} className="h-48 rounded-md" />
           </View>
 
           {lines.length > 0 ? (

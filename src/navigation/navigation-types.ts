@@ -53,4 +53,5 @@ export type RootStackParamList = {
     arrivedAtMs: number;
   };
   Timeline: undefined;
+  MoveMap: undefined;
 };

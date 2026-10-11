@@ -7,6 +7,8 @@ import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { formatMonthDayKst } from "@/common/utils/format";
 import { useRecentDestinations } from "@/features/routing/useRecentDestinations";
+import { VWorldMap } from "@/features/map/VWorldMap";
+import { useHomeMapData } from "@/features/map/useHomeMapData";
 import { useOnboardingPrompt } from "@/features/onboarding/useOnboardingPrompt";
 import type { RootStackParamList } from "@/navigation/navigation-types";
 
@@ -14,6 +16,7 @@ export function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   useOnboardingPrompt();
   const recent = useRecentDestinations();
+  const mapData = useHomeMapData(recent.destinations);
 
   // 검색 화면에서 돌아오면 방금 검색한 도착지가 보이도록 다시 읽는다
   const { reload } = recent;
@@ -26,9 +29,7 @@ export function HomeScreen() {
   return (
     <Screen>
       <View className="flex-1 bg-surface">
-        <View className="flex-1 items-center justify-center">
-          <Text className="text-body text-text-secondary">지도는 준비 중이에요</Text>
-        </View>
+        <VWorldMap data={mapData} className="flex-1" />
 
         <Pressable
           accessibilityRole="button"
