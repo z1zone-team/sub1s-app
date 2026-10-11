@@ -30,14 +30,24 @@ export function HomeScreen() {
           <Text className="text-body text-text-secondary">지도는 준비 중이에요</Text>
         </View>
 
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="역, 장소 검색"
-          onPress={() => navigation.navigate("Search")}
-          className="absolute left-4 right-4 top-3 h-control-lg justify-center rounded-md border border-border bg-bg px-4"
-        >
-          <Text className="text-base text-text-disabled">역, 장소 검색</Text>
-        </Pressable>
+        <View className="absolute left-4 right-4 top-3 h-control-lg flex-row items-center rounded-md border border-border bg-bg">
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="역, 장소 검색"
+            onPress={() => navigation.navigate("Search")}
+            className="h-full flex-1 justify-center px-4"
+          >
+            <Text className="text-base text-text-disabled">역, 장소 검색</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="음성 검색"
+            onPress={() => navigation.navigate("Voice")}
+            className="h-full items-center justify-center px-4"
+          >
+            <Text className="text-body font-sans-bold text-primary">음성</Text>
+          </Pressable>
+        </View>
       </View>
 
       <View className="max-h-[50%] rounded-t-lg-plus border-t border-border bg-bg">

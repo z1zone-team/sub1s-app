@@ -13,6 +13,7 @@ export type BottomTabParamList = {
 export type RootStackParamList = {
   Login: undefined;
   /** editing이면 저장된 답을 채워서 다시 고친다 */
+  Voice: undefined;
   Onboarding: { editing?: boolean } | undefined;
   ProfileEdit: undefined;
   Friends: undefined;
