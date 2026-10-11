@@ -1,5 +1,5 @@
 import type { NavigatorScreenParams } from "@react-navigation/native";
-import type { RouteMode } from "@/apis/queries/routing/searchRoutes";
+import type { RouteMode, SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
 import type { RouteEndpoint } from "@/features/routing/endpoint";
 
 export type BottomTabParamList = {
@@ -18,6 +18,14 @@ export type RootStackParamList = {
     origin: RouteEndpoint;
     destination: RouteEndpoint;
     mode?: RouteMode;
+  };
+  RouteDetail: {
+    origin: RouteEndpoint;
+    destination: RouteEndpoint;
+    option: SubwayRouteOptionDto;
+    /** 목록 카드의 제목과 한 줄 설명 */
+    title: string;
+    tagline?: string;
   };
   LiveNav: {
     sessionId: string;

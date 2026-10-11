@@ -2,6 +2,7 @@ import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { BottomTabNavigator } from "./BottomTabNavigator";
+import { RouteDetailScreen } from "@/screens/RouteDetailScreen";
 import { RouteResultScreen } from "@/screens/RouteResultScreen";
 import { SearchScreen } from "@/screens/SearchScreen";
 import { LiveNavScreen } from "@/screens/LiveNavScreen";
@@ -41,6 +42,11 @@ export function RootNavigator() {
           name="RouteResult"
           component={RouteResultScreen}
           options={{ title: "추천 경로" }}
+        />
+        <Stack.Screen
+          name="RouteDetail"
+          component={RouteDetailScreen}
+          options={{ title: "경로 상세" }}
         />
         <Stack.Screen
           name="LiveNav"
