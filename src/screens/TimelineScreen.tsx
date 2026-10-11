@@ -97,7 +97,7 @@ export function TimelineScreen() {
                   className={cn("w-full rounded-2xs", bar.ratio > 0 ? "bg-primary" : "bg-border")}
                   style={{ height: Math.max(3, Math.round(bar.ratio * 84)) }}
                 />
-                <Text className={cn("text-text-secondary", period === "MONTH" ? "text-micro" : "text-caption")}>
+                <Text className={cn("text-text-secondary", period === "MONTH" ? "text-nano" : "text-caption")}>
                   {bar.label}
                 </Text>
               </View>

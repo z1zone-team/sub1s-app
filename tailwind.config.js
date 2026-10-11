@@ -60,6 +60,7 @@ module.exports = {
       },
       /** 프로토타입에서 쓰는 글자 크기. src/lib/cn.ts의 병합 설정과 이름이 같아야 한다 */
       fontSize: {
+        nano: "8px",
         micro: "9px",
         tiny: "10px",
         caption: "11px",

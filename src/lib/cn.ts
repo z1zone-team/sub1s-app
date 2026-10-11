@@ -3,6 +3,7 @@ import { extendTailwindMerge } from "tailwind-merge";
 
 /** tailwind.config.js의 fontSize, fontFamily, borderRadius 토큰 이름. 설정과 어긋나지 않는지는 cn.test.ts가 확인한다 */
 export const FONT_SIZE_TOKENS = [
+  "nano",
   "micro",
   "tiny",
   "caption",
