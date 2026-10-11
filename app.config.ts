@@ -60,6 +60,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       clerkPublishableKey:
         process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ||
         "pk_test_placeholder_key",
+      vworldKey: process.env.EXPO_PUBLIC_VWORLD_KEY || "",
+      vworldReferer: process.env.EXPO_PUBLIC_VWORLD_REFERER || "",
       clientKey:
         process.env.EXPO_PUBLIC_CLIENT_KEY || "dev-mobile-client-key",
       eas: {

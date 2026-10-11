@@ -85,6 +85,8 @@ export const queryKeys = {
   },
   linemap: {
     all: ["linemap"] as const,
+    period: (period: "WEEK" | "MONTH" | "YEAR" | "ALL") =>
+      [...queryKeys.linemap.all, "period", period] as const,
     lines: (lineId?: string, year?: number, month?: number) =>
       [
         ...queryKeys.linemap.all,
