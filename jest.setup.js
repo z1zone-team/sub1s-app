@@ -93,33 +93,26 @@ jest.mock("expo-location", () => ({
   watchPositionAsync: jest.fn().mockResolvedValue({ remove: jest.fn() }),
 }));
 
-// Mock expo-av
-jest.mock("expo-av", () => ({
-  Audio: {
-    requestPermissionsAsync: jest.fn().mockResolvedValue({ granted: true }),
-    setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
-    RecordingOptionsPresets: {
-      HIGH_QUALITY: {},
-    },
-    Recording: jest.fn().mockImplementation(() => ({
-      prepareToRecordAsync: jest.fn().mockResolvedValue(undefined),
-      startAsync: jest.fn().mockResolvedValue(undefined),
-      stopAndUnloadAsync: jest.fn().mockResolvedValue(undefined),
-      getStatusAsync: jest.fn().mockResolvedValue({ durationMillis: 2500 }),
-      getURI: jest.fn().mockReturnValue("file:///data/voice_query.m4a"),
-    })),
-    Sound: {
-      createAsync: jest.fn().mockResolvedValue({
-        sound: {
-          playAsync: jest.fn().mockResolvedValue(undefined),
-          pauseAsync: jest.fn().mockResolvedValue(undefined),
-          stopAsync: jest.fn().mockResolvedValue(undefined),
-          unloadAsync: jest.fn().mockResolvedValue(undefined),
-        },
-        status: { isLoaded: true },
-      }),
-    },
-  },
+// Mock expo-audio
+jest.mock("expo-audio", () => ({
+  RecordingPresets: { HIGH_QUALITY: {} },
+  requestRecordingPermissionsAsync: jest.fn().mockResolvedValue({ granted: true }),
+  setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
+  useAudioRecorder: jest.fn(() => ({
+    currentTime: 2.5,
+    isRecording: false,
+    uri: "file:///data/voice_query.m4a",
+    prepareToRecordAsync: jest.fn().mockResolvedValue(undefined),
+    record: jest.fn(),
+    stop: jest.fn().mockResolvedValue(undefined),
+  })),
+  createAudioPlayer: jest.fn(() => ({
+    play: jest.fn(),
+    pause: jest.fn(),
+    seekTo: jest.fn().mockResolvedValue(undefined),
+    remove: jest.fn(),
+    addListener: jest.fn(() => ({ remove: jest.fn() })),
+  })),
 }));
 
 // Mock @react-native-community/netinfo

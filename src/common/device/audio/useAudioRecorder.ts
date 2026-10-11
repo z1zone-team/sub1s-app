@@ -1,5 +1,10 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Audio } from "expo-av";
+import {
+  RecordingPresets,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+  useAudioRecorder as useExpoAudioRecorder,
+} from "expo-audio";
 
 export const MAX_RECORDING_DURATION_MS = 30_000; // 최대 30초
 export const MAX_AUDIO_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 최대 5MB
@@ -11,12 +16,14 @@ export interface AudioRecordingResult {
 }
 
 export function useAudioRecorder() {
+  const recorder = useExpoAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [durationMillis, setDurationMillis] = useState<number>(0);
   const [recordingResult, setRecordingResult] = useState<AudioRecordingResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const recordingRef = useRef<Audio.Recording | null>(null);
+  const startedAtRef = useRef<number>(0);
+  const activeRef = useRef<boolean>(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const clearTimer = useCallback(() => {
@@ -28,18 +35,16 @@ export function useAudioRecorder() {
 
   const stopRecording = useCallback(async (): Promise<AudioRecordingResult | null> => {
     clearTimer();
-    const recording = recordingRef.current;
-    if (!recording) {
+    if (!activeRef.current) {
       setIsRecording(false);
       return null;
     }
+    activeRef.current = false;
 
     try {
-      const status = await recording.getStatusAsync();
-      await recording.stopAndUnloadAsync();
-      const uri = recording.getURI();
-
-      recordingRef.current = null;
+      const measured = Math.round(recorder.currentTime * 1000);
+      await recorder.stop();
+      const uri = recorder.uri;
       setIsRecording(false);
 
       if (!uri) {
@@ -49,19 +54,16 @@ export function useAudioRecorder() {
 
       const result: AudioRecordingResult = {
         uri,
-        durationMillis: status.durationMillis,
+        durationMillis: measured > 0 ? measured : Date.now() - startedAtRef.current,
       };
-
       setRecordingResult(result);
       return result;
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to stop recording";
-      setError(msg);
+      setError(err instanceof Error ? err.message : "Failed to stop recording");
       setIsRecording(false);
-      recordingRef.current = null;
       return null;
     }
-  }, [clearTimer]);
+  }, [clearTimer, recorder]);
 
   const startRecording = useCallback(async (): Promise<boolean> => {
     setError(null);
@@ -69,27 +71,23 @@ export function useAudioRecorder() {
     setDurationMillis(0);
 
     try {
-      const permission = await Audio.requestPermissionsAsync();
+      const permission = await requestRecordingPermissionsAsync();
       if (!permission.granted) {
         setError("AUDIO_PERMISSION_DENIED");
         return false;
       }
 
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
+      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
 
-      const recording = new Audio.Recording();
-      await recording.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-      await recording.startAsync();
+      await recorder.prepareToRecordAsync();
+      recorder.record();
 
-      recordingRef.current = recording;
+      activeRef.current = true;
+      startedAtRef.current = Date.now();
       setIsRecording(true);
 
-      const startTime = Date.now();
       timerRef.current = setInterval(() => {
-        const elapsed = Date.now() - startTime;
+        const elapsed = Date.now() - startedAtRef.current;
         setDurationMillis(elapsed);
 
         // 30초 초과 시 자동 중지
@@ -100,22 +98,23 @@ export function useAudioRecorder() {
 
       return true;
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to start recording";
-      setError(msg);
+      setError(err instanceof Error ? err.message : "Failed to start recording");
       setIsRecording(false);
+      activeRef.current = false;
       clearTimer();
       return false;
     }
-  }, [clearTimer, stopRecording]);
+  }, [clearTimer, recorder, stopRecording]);
 
   useEffect(() => {
     return () => {
       clearTimer();
-      if (recordingRef.current) {
-        void recordingRef.current.stopAndUnloadAsync().catch(() => {});
+      if (activeRef.current) {
+        activeRef.current = false;
+        void recorder.stop().catch(() => undefined);
       }
     };
-  }, [clearTimer]);
+  }, [clearTimer, recorder]);
 
   return {
     isRecording,
