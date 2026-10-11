@@ -1,7 +1,8 @@
 import React from "react";
-import { Alert, FlatList, Pressable, Share, Text, View } from "react-native";
+import { Alert, FlatList, Pressable, Share, View } from "react-native";
 import { Button } from "@/common/components/Button";
 import { Screen } from "@/common/components/Screen";
+import { Text } from "@/common/components/Text";
 import { formatMonthDayKst } from "@/common/utils/format";
 import {
   useFriendsQuery,
@@ -10,10 +11,8 @@ import {
   useResetInviteMutation,
 } from "@/apis/queries/users/useFriends";
 import { inviteLink, inviteMessage } from "@/features/friends/invite";
-import { useTheme } from "@/theme";
 
 export function FriendsScreen() {
-  const { colors } = useTheme();
   const friends = useFriendsQuery();
   const invite = useInviteTokenQuery(true);
   const remove = useRemoveFriendMutation();
@@ -43,56 +42,35 @@ export function FriendsScreen() {
       <FlatList
         data={friends.data?.friends ?? []}
         keyExtractor={(friend) => friend.userId}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
+        contentContainerClassName="px-5 pb-6"
         ListHeaderComponent={
-          <View style={{ gap: 12, paddingVertical: 16 }}>
-            <Text style={{ fontSize: 20, fontWeight: "800", color: colors.text }}>
-              친구 {friends.data?.totalCount ?? 0}명
-            </Text>
+          <View className="gap-3 py-4">
+            <Text className="text-title-lg font-sans-extrabold">친구 {friends.data?.totalCount ?? 0}명</Text>
             <Button label="친구 초대하기" onPress={share} disabled={!invite.data} />
             <Pressable accessibilityRole="button" onPress={confirmReset} disabled={reset.isPending}>
-              <Text style={{ fontSize: 13, textAlign: "center", color: colors.textSecondary }}>
-                초대 링크 새로 만들기
-              </Text>
+              <Text className="text-center text-body-sm text-text-secondary">초대 링크 새로 만들기</Text>
             </Pressable>
-            {friends.error ? (
-              <Text style={{ color: colors.error }}>친구 목록을 불러오지 못했어요.</Text>
-            ) : null}
-            {remove.error ? (
-              <Text style={{ color: colors.error }}>친구를 끊지 못했어요. 다시 시도해 주세요.</Text>
-            ) : null}
+            {friends.error ? <Text className="text-error">친구 목록을 불러오지 못했어요.</Text> : null}
+            {remove.error ? <Text className="text-error">친구를 끊지 못했어요. 다시 시도해 주세요.</Text> : null}
           </View>
         }
         ListEmptyComponent={
           friends.isLoading ? null : (
-            <Text style={{ paddingVertical: 24, textAlign: "center", color: colors.textSecondary }}>
-              아직 친구가 없어요. 초대 링크를 보내 보세요
-            </Text>
+            <Text className="py-6 text-center text-text-secondary">아직 친구가 없어요. 초대 링크를 보내 보세요</Text>
           )
         }
         renderItem={({ item }) => (
-          <View
-            style={{
-              height: 56,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderBottomWidth: 1,
-              borderBottomColor: colors.border,
-            }}
-          >
+          <View className="min-h-row flex-row items-center justify-between border-b border-border py-2">
             <View>
-              <Text style={{ fontSize: 15, fontWeight: "700", color: colors.text }}>{item.nickname}</Text>
-              <Text style={{ fontSize: 12, color: colors.textSecondary }}>
-                {formatMonthDayKst(item.friendedAt)}부터 친구
-              </Text>
+              <Text className="text-subtitle font-sans-bold">{item.nickname}</Text>
+              <Text className="text-small text-text-secondary">{formatMonthDayKst(item.friendedAt)}부터 친구</Text>
             </View>
             <Pressable
               accessibilityRole="button"
               onPress={() => confirmRemove(item.userId, item.nickname)}
               disabled={remove.isPending}
             >
-              <Text style={{ fontSize: 13, color: colors.error }}>끊기</Text>
+              <Text className="text-body-sm text-error">끊기</Text>
             </Pressable>
           </View>
         )}

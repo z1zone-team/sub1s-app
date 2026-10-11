@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Pressable, Text, TextInput, View } from "react-native";
+import { FlatList, Pressable, TextInput, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { ApiError } from "@/apis/client";
 import { usePlaceSearchQuery } from "@/apis/queries/places/usePlaceSearchQuery";
 import { Screen } from "@/common/components/Screen";
 import { LineBadge } from "@/common/components/LineBadge";
+import { Text } from "@/common/components/Text";
 import { useForegroundLocation } from "@/common/device";
 import { formatMonthDayKst } from "@/common/utils/format";
 import {
@@ -17,7 +18,7 @@ import { toSearchRows, type SearchRow } from "@/features/routing/searchRows";
 import { useRecentDestinations } from "@/features/routing/useRecentDestinations";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import type { RootStackParamList } from "@/navigation/navigation-types";
-import { useTheme } from "@/theme";
+import { cn } from "@/lib/cn";
 
 type Field = "origin" | "destination";
 
@@ -27,7 +28,6 @@ export function SearchScreen({
   navigation,
   route,
 }: NativeStackScreenProps<RootStackParamList, "Search">) {
-  const { colors } = useTheme();
   const presetDestination = route.params?.destination;
 
   const [origin, setOrigin] = useState<RouteEndpoint | undefined>();
@@ -111,14 +111,14 @@ export function SearchScreen({
 
   return (
     <Screen>
-      <View style={{ paddingHorizontal: 16, paddingTop: 8, gap: 8 }}>
+      <View className="gap-2 px-4 pt-2">
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="뒤로"
           onPress={() => navigation.goBack()}
-          style={{ height: 40, justifyContent: "center" }}
+          className="h-control justify-center"
         >
-          <Text style={{ fontSize: 22, color: colors.text }}>{"‹"}</Text>
+          <Text className="text-headline">{"‹"}</Text>
         </Pressable>
 
         <FieldRow
@@ -146,19 +146,15 @@ export function SearchScreen({
           }}
         />
         {locationDenied ? (
-          <Text style={{ fontSize: 12, color: colors.textSecondary }}>
-            위치 권한이 없어 출발지를 직접 입력해야 해요.
-          </Text>
+          <Text className="text-small text-text-secondary">위치 권한이 없어 출발지를 직접 입력해야 해요.</Text>
         ) : null}
         {sameStationWarning ? (
-          <Text style={{ fontSize: 12, color: colors.error }}>
-            출발지와 도착지가 같아요. 다른 곳을 골라 주세요.
-          </Text>
+          <Text className="text-small text-error">출발지와 도착지가 같아요. 다른 곳을 골라 주세요.</Text>
         ) : null}
       </View>
 
       <FlatList
-        style={{ flex: 1, marginTop: 8 }}
+        className="mt-2 flex-1"
         keyboardShouldPersistTaps="handled"
         data={showRecent ? [] : rows}
         keyExtractor={(row) => row.key}
@@ -173,7 +169,7 @@ export function SearchScreen({
         }
         ListEmptyComponent={
           showRecent ? null : (
-            <Text style={{ padding: 24, textAlign: "center", color: colors.textSecondary }}>
+            <Text className="p-6 text-center text-text-secondary">
               {errorMessage ?? (typing || search.isFetching ? "검색 중..." : "검색 결과가 없어요")}
             </Text>
           )
@@ -202,44 +198,24 @@ function FieldRow({
   onChangeText,
   onActivate,
 }: FieldRowProps) {
-  const { colors } = useTheme();
-
   return (
     <View
-      style={{
-        height: 48,
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 12,
-        paddingHorizontal: 14,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: active ? colors.primary : colors.border,
-        backgroundColor: colors.surface,
-      }}
+      className={cn("h-row flex-row items-center gap-3 rounded-md border bg-surface px-3.5", active ? "border-primary" : "border-border")}
     >
-      <Text style={{ width: 28, fontSize: 13, fontWeight: "700", color: colors.textSecondary }}>
-        {label}
-      </Text>
+      <Text className="w-7 text-body-sm font-sans-bold text-text-secondary">{label}</Text>
       {active ? (
         <TextInput
           autoFocus
           value={text}
           onChangeText={onChangeText}
           placeholder={endpoint?.name || placeholder}
-          placeholderTextColor={colors.textDisabled}
+          placeholderClassName="text-text-disabled"
           returnKeyType="search"
-          style={{ flex: 1, fontSize: 16, color: colors.text, padding: 0 }}
+          className="flex-1 p-0 font-sans text-base text-text"
         />
       ) : (
-        <Pressable accessibilityRole="button" onPress={onActivate} style={{ flex: 1 }}>
-          <Text
-            numberOfLines={1}
-            style={{
-              fontSize: 16,
-              color: endpoint ? colors.text : colors.textDisabled,
-            }}
-          >
+        <Pressable accessibilityRole="button" onPress={onActivate} className="flex-1">
+          <Text numberOfLines={1} className={cn("text-base", endpoint ? "text-text" : "text-text-disabled")}>
             {endpoint?.name || placeholder}
           </Text>
         </Pressable>
@@ -249,33 +225,23 @@ function FieldRow({
 }
 
 function ResultRow({ row, onPress }: { row: SearchRow; onPress: () => void }) {
-  const { colors } = useTheme();
-
   return (
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
-      style={{
-        paddingHorizontal: 20,
-        paddingVertical: 14,
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-      }}
+      className="flex-row items-center gap-3 border-b border-border px-5 py-3.5"
     >
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text numberOfLines={1} style={{ fontSize: 16, fontWeight: "600", color: colors.text }}>
+      <View className="flex-1 gap-0.5">
+        <Text numberOfLines={1} className="text-base font-sans-semibold">
           {row.title}
         </Text>
         {row.subtitle ? (
-          <Text numberOfLines={1} style={{ fontSize: 13, color: colors.textSecondary }}>
+          <Text numberOfLines={1} className="text-body-sm text-text-secondary">
             {row.subtitle}
           </Text>
         ) : null}
         {row.hint ? (
-          <Text numberOfLines={1} style={{ fontSize: 12, color: colors.textSecondary }}>
+          <Text numberOfLines={1} className="text-small text-text-secondary">
             {row.hint}
           </Text>
         ) : null}
@@ -294,29 +260,16 @@ function RecentList({
   recent: ReturnType<typeof useRecentDestinations>;
   onSelect: (endpoint: RouteEndpoint) => void;
 }) {
-  const { colors } = useTheme();
-
   if (recent.destinations.length === 0) {
-    return (
-      <Text style={{ padding: 24, textAlign: "center", color: colors.textSecondary }}>
-        최근 검색 기록이 없어요
-      </Text>
-    );
+    return <Text className="p-6 text-center text-text-secondary">최근 검색 기록이 없어요</Text>;
   }
 
   return (
     <View>
-      <View
-        style={{
-          paddingHorizontal: 20,
-          paddingVertical: 8,
-          flexDirection: "row",
-          justifyContent: "space-between",
-        }}
-      >
-        <Text style={{ fontSize: 13, fontWeight: "700", color: colors.textSecondary }}>최근 검색</Text>
+      <View className="flex-row justify-between px-5 py-2">
+        <Text className="text-body-sm font-sans-bold text-text-secondary">최근 검색</Text>
         <Pressable accessibilityRole="button" onPress={() => void recent.clear()}>
-          <Text style={{ fontSize: 13, color: colors.textSecondary }}>전체 삭제</Text>
+          <Text className="text-body-sm text-text-secondary">전체 삭제</Text>
         </Pressable>
       </View>
       {recent.destinations.map((destination) => {
@@ -324,34 +277,19 @@ function RecentList({
           ? recent.linesOfStation.get(destination.endpoint.stationId) ?? []
           : [];
         return (
-          <View
-            key={destination.routeIds[0]}
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              borderBottomWidth: 1,
-              borderBottomColor: colors.border,
-            }}
-          >
+          <View key={destination.routeIds[0]} className="flex-row items-center border-b border-border">
             <Pressable
               accessibilityRole="button"
               onPress={() => onSelect(destination.endpoint)}
-              style={{
-                flex: 1,
-                paddingLeft: 20,
-                paddingVertical: 14,
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 8,
-              }}
+              className="flex-1 flex-row items-center gap-2 py-3.5 pl-5"
             >
-              <Text numberOfLines={1} style={{ fontSize: 16, color: colors.text }}>
+              <Text numberOfLines={1} className="text-base">
                 {destination.endpoint.name}
               </Text>
               {lineIds.map((lineId) => (
                 <LineBadge key={lineId} lineId={lineId} size="sm" />
               ))}
-              <Text style={{ marginLeft: "auto", fontSize: 12, color: colors.textSecondary }}>
+              <Text className="ml-auto text-small text-text-secondary">
                 {formatMonthDayKst(destination.searchedAt)}
               </Text>
             </Pressable>
@@ -359,9 +297,9 @@ function RecentList({
               accessibilityRole="button"
               accessibilityLabel="기록 삭제"
               onPress={() => recent.remove(destination)}
-              style={{ paddingHorizontal: 16, paddingVertical: 14 }}
+              className="px-4 py-3.5"
             >
-              <Text style={{ color: colors.textDisabled }}>{"✕"}</Text>
+              <Text className="text-text-disabled">{"✕"}</Text>
             </Pressable>
           </View>
         );

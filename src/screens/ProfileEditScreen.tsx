@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { Text, TextInput, View } from "react-native";
+import { TextInput, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { ApiError } from "@/apis/client";
 import { useUpdateProfileMutation } from "@/apis/mutations/users/useUpdateProfileMutation";
 import { useGetMe } from "@/apis/queries/auth/useGetMe";
 import { Button } from "@/common/components/Button";
 import { Screen } from "@/common/components/Screen";
+import { Text } from "@/common/components/Text";
 import { nameError, nicknameError } from "@/features/profile/profileView";
 import type { RootStackParamList } from "@/navigation/navigation-types";
-import { useTheme } from "@/theme";
+
+const INPUT = "h-row rounded-md border border-border px-3.5 font-sans text-base text-text";
 
 function serverMessage(error: Error): string {
   if (error instanceof ApiError && error.code === "NICKNAME_TAKEN") return "이미 사용 중인 닉네임이에요";
@@ -19,7 +21,6 @@ function serverMessage(error: Error): string {
 export function ProfileEditScreen({
   navigation,
 }: NativeStackScreenProps<RootStackParamList, "ProfileEdit">) {
-  const { colors } = useTheme();
   const me = useGetMe();
   const save = useUpdateProfileMutation();
   const [name, setName] = useState("");
@@ -46,48 +47,36 @@ export function ProfileEditScreen({
     );
   };
 
-  const inputStyle = {
-    height: 48,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    color: colors.text,
-    fontSize: 16,
-  } as const;
-
   return (
-    <Screen edges={[]} scroll contentStyle={{ paddingHorizontal: 24, paddingTop: 16, gap: 16 }}>
-      <View style={{ gap: 6 }}>
-        <Text style={{ fontSize: 13, color: colors.textSecondary }}>이름</Text>
+    <Screen edges={[]} scroll contentClassName="gap-4 px-6 pt-4">
+      <View className="gap-1.5">
+        <Text className="text-body-sm text-text-secondary">이름</Text>
         <TextInput
           value={name}
           onChangeText={setName}
           placeholder="이름 (선택)"
-          placeholderTextColor={colors.textDisabled}
+          placeholderClassName="text-text-disabled"
           maxLength={40}
-          style={inputStyle}
+          className={INPUT}
         />
-        {nmError ? <Text style={{ fontSize: 12, color: colors.error }}>{nmError}</Text> : null}
+        {nmError ? <Text className="text-small text-error">{nmError}</Text> : null}
       </View>
 
-      <View style={{ gap: 6 }}>
-        <Text style={{ fontSize: 13, color: colors.textSecondary }}>닉네임</Text>
+      <View className="gap-1.5">
+        <Text className="text-body-sm text-text-secondary">닉네임</Text>
         <TextInput
           value={nickname}
           onChangeText={setNickname}
           placeholder="2~20자"
-          placeholderTextColor={colors.textDisabled}
+          placeholderClassName="text-text-disabled"
           autoCapitalize="none"
           autoCorrect={false}
-          style={inputStyle}
+          className={INPUT}
         />
-        {nickError ? <Text style={{ fontSize: 12, color: colors.error }}>{nickError}</Text> : null}
+        {nickError ? <Text className="text-small text-error">{nickError}</Text> : null}
       </View>
 
-      {save.error ? (
-        <Text style={{ fontSize: 13, color: colors.error }}>{serverMessage(save.error)}</Text>
-      ) : null}
+      {save.error ? <Text className="text-body-sm text-error">{serverMessage(save.error)}</Text> : null}
 
       <Button label="저장" onPress={submit} disabled={!canSave} loading={save.isPending} />
     </Screen>

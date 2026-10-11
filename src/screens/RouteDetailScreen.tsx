@@ -1,22 +1,22 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 import { useAuth } from "@clerk/clerk-expo";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useStationFacilitiesQuery } from "@/apis/queries/stations/useStationFacilitiesQuery";
 import { useStartTrackingMutation } from "@/apis/mutations/tracking/useStartTrackingMutation";
 import { Button } from "@/common/components/Button";
 import { Screen } from "@/common/components/Screen";
+import { Text } from "@/common/components/Text";
 import { formatDurationSec, formatFare } from "@/common/utils/format";
 import { SegmentDetail } from "@/features/routing/components/SegmentDetail";
 import { clockRange, describeDoor, walkSeconds } from "@/features/routing/routeView";
 import type { RootStackParamList } from "@/navigation/navigation-types";
-import { useTheme, WALK_LINE_ID } from "@/theme";
+import { WALK_LINE_ID } from "@/theme";
 
 export function RouteDetailScreen({
   navigation,
   route,
 }: NativeStackScreenProps<RootStackParamList, "RouteDetail">) {
-  const { colors } = useTheme();
   const { option, title, tagline, destination } = route.params;
 
   const lastRide = [...option.segments].reverse().find((segment) => segment.lineId !== WALK_LINE_ID);
@@ -47,14 +47,14 @@ export function RouteDetailScreen({
   };
 
   return (
-    <Screen edges={[]} scroll contentStyle={{ paddingHorizontal: 20 }}>
-      <View style={{ paddingVertical: 16, gap: 6 }}>
-        <Text style={{ fontSize: 13, fontWeight: "800", color: colors.primary }}>{title}</Text>
-        {tagline ? <Text style={{ fontSize: 13, color: colors.textSecondary }}>{tagline}</Text> : null}
-        <Text style={{ fontSize: 28, fontWeight: "800", color: colors.text }}>
+    <Screen edges={[]} scroll contentClassName="px-5">
+      <View className="gap-1.5 py-4">
+        <Text className="text-body-sm font-sans-extrabold text-primary">{title}</Text>
+        {tagline ? <Text className="text-body-sm text-text-secondary">{tagline}</Text> : null}
+        <Text className="text-display-sm font-sans-extrabold">
           {formatDurationSec(option.totalDurationSec)}
         </Text>
-        <Text style={{ fontSize: 13, color: colors.textSecondary }}>
+        <Text className="text-body-sm text-text-secondary">
           {[
             clockRange(option),
             `환승 ${option.transferCount}회`,
@@ -67,36 +67,33 @@ export function RouteDetailScreen({
       </View>
 
       {option.segments.map((segment, index) => (
-        <View
-          key={`${segment.lineId}-${index}`}
-          style={{ borderTopWidth: index === 0 ? 0 : 1, borderTopColor: colors.border }}
-        >
+        <View key={`${segment.lineId}-${index}`} className={index === 0 ? "" : "border-t border-border"}>
           <SegmentDetail segment={segment} showNextTrain={index === firstRideIndex} />
         </View>
       ))}
 
-      <View style={{ paddingVertical: 16, gap: 6, borderTopWidth: 1, borderTopColor: colors.border }}>
-        <Text style={{ fontSize: 17, fontWeight: "800", color: colors.text }}>
+      <View className="gap-1.5 border-t border-border py-4">
+        <Text className="text-heading font-sans-extrabold">
           {destination.name || lastRide?.toStationName || "도착"} 도착
         </Text>
         {lastRide && facilities.data?.available && facilities.data.elevatorDoors.length > 0 ? (
-          <Text style={{ fontSize: 13, color: colors.textSecondary }}>
+          <Text className="text-body-sm text-text-secondary">
             {lastRide.toStationName}역 엘리베이터와 가까운 문{" "}
             {facilities.data.elevatorDoors.map(describeDoor).join(", ")}
           </Text>
         ) : null}
         {lastRide && facilities.data?.available && facilities.data.exits.length > 0 ? (
-          <Text style={{ fontSize: 13, color: colors.textSecondary }}>
+          <Text className="text-body-sm text-text-secondary">
             출구 {facilities.data.exits.map((exit) => exit.exitNo).join(", ")}번
           </Text>
         ) : null}
       </View>
 
       {canGuide ? (
-        <View style={{ gap: 8, paddingBottom: 8 }}>
+        <View className="gap-2 pb-2">
           <Button label="안내 시작" onPress={startGuide} loading={startTracking.isPending} />
           {startTracking.error ? (
-            <Text style={{ fontSize: 13, textAlign: "center", color: colors.error }}>
+            <Text className="text-center text-body-sm text-error">
               안내를 시작하지 못했어요. 다시 시도해 주세요.
             </Text>
           ) : null}

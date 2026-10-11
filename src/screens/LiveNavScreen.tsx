@@ -1,29 +1,29 @@
 import React, { useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
 import { useCreateTravelLogMutation } from "@/apis/mutations/travel/useCreateTravelLogMutation";
 import { Button } from "@/common/components/Button";
 import { LineBadge } from "@/common/components/LineBadge";
 import { Screen } from "@/common/components/Screen";
+import { Text } from "@/common/components/Text";
 import { StopStrip } from "@/features/guide/components/StopStrip";
 import { visibleStopIndexes } from "@/features/guide/progress";
 import { remainingText, upcomingMessage } from "@/features/guide/guideText";
 import { useGuide } from "@/features/guide/useGuide";
 import { describeDoor } from "@/features/routing/routeView";
 import type { RootStackParamList } from "@/navigation/navigation-types";
-import { useTheme } from "@/theme";
+import { cn } from "@/lib/cn";
 
 type Props = NativeStackScreenProps<RootStackParamList, "LiveNav">;
 
 export function LiveNavScreen({ navigation, route }: Props) {
-  const { colors } = useTheme();
   const { sessionId, option, startedAtMs } = route.params;
 
   if (!option || !startedAtMs) {
     return (
-      <Screen edges={[]} contentStyle={{ alignItems: "center", justifyContent: "center", gap: 16, padding: 24 }}>
-        <Text style={{ textAlign: "center", color: colors.text }}>진행 중인 안내를 찾지 못했어요.</Text>
+      <Screen edges={[]} contentClassName="items-center justify-center gap-4 p-6">
+        <Text className="text-center">진행 중인 안내를 찾지 못했어요.</Text>
         <Button label="홈으로" onPress={() => navigation.navigate("MainTabs", { screen: "HomeTab" })} />
       </Screen>
     );
@@ -42,7 +42,6 @@ interface GuideProps {
 }
 
 function Guide({ navigation, sessionId, option, startedAtMs }: GuideProps) {
-  const { colors } = useTheme();
   const guide = useGuide({ option, sessionId, startedAtMs });
   const createLog = useCreateTravelLogMutation();
   const [picking, setPicking] = useState(false);
@@ -85,60 +84,56 @@ function Guide({ navigation, sessionId, option, startedAtMs }: GuideProps) {
   };
 
   return (
-    <Screen edges={[]} scroll contentStyle={{ paddingHorizontal: 20 }}>
-      <View style={{ paddingVertical: 16, gap: 8 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+    <Screen edges={[]} scroll contentClassName="px-5">
+      <View className="gap-2 py-4">
+        <View className="flex-row items-center gap-2">
           {segment ? (
             <LineBadge lineId={segment.lineId} suffix={segment.isExpress ? "급행" : undefined} />
           ) : null}
-          <Text style={{ fontSize: 13, fontWeight: "700", color: colors.primary }}>안내 중</Text>
+          <Text className="text-body-sm font-sans-bold text-primary">안내 중</Text>
         </View>
-        <Text style={{ fontSize: 22, fontWeight: "800", color: colors.text }}>
+        <Text className="text-headline font-sans-extrabold">
           {destination || "도착역"}까지 {stopsLeft}개 역
         </Text>
-        <Text style={{ fontSize: 14, color: colors.textSecondary }}>
-          {remainingText(progress.remainingSec, nowMs)}
-        </Text>
+        <Text className="text-body text-text-secondary">{remainingText(progress.remainingSec, nowMs)}</Text>
       </View>
 
       <StopStrip names={visible.map((index) => names[index])} currentIndex={stripCurrent} />
 
-      <View style={{ marginTop: 20, padding: 16, gap: 8, borderRadius: 16, backgroundColor: colors.surface }}>
-        <Text style={{ fontSize: 13, color: colors.textSecondary }}>다음 역</Text>
-        <Text style={{ fontSize: 24, fontWeight: "800", color: colors.text }}>{nameAt(nextVisible)}</Text>
+      <View className="mt-5 gap-2 rounded-lg bg-surface p-4">
+        <Text className="text-body-sm text-text-secondary">다음 역</Text>
+        <Text className="text-headline-md font-sans-extrabold">{nameAt(nextVisible)}</Text>
         {upcoming ? (
-          <Text style={{ fontSize: 14, fontWeight: "700", color: colors.primary }}>
+          <Text className="text-body font-sans-bold text-primary">
             {upcomingMessage({ ...upcoming, stopsAway: upcomingAway }, nameAt(upcoming.index))}
           </Text>
         ) : null}
         {weakAcCars.length > 0 ? (
-          <Text style={{ fontSize: 13, color: colors.text }}>
-            약냉방칸 <Text style={{ fontWeight: "800" }}>{weakAcCars.join("·")}번째 칸</Text>
+          <Text className="text-body-sm">
+            약냉방칸 <Text className="font-sans-extrabold">{weakAcCars.join("·")}번째 칸</Text>
           </Text>
         ) : null}
         {doors.length > 0 ? (
-          <Text style={{ fontSize: 13, color: colors.text }}>
-            갈아타기 빠른 문 <Text style={{ fontWeight: "800" }}>{doors.map(describeDoor).join(", ")}</Text>
+          <Text className="text-body-sm">
+            갈아타기 빠른 문 <Text className="font-sans-extrabold">{doors.map(describeDoor).join(", ")}</Text>
           </Text>
         ) : null}
       </View>
 
       {!guide.locationGranted ? (
-        <Text style={{ marginTop: 12, fontSize: 12, color: colors.textSecondary }}>
+        <Text className="mt-3 text-small text-text-secondary">
           위치 권한이 없어 시간표로 위치를 추정하고 있어요. 지금 있는 역을 눌러 알려 주면 더 정확해져요.
         </Text>
       ) : null}
 
-      <View style={{ marginTop: 20, gap: 10 }}>
+      <View className="mt-5 gap-2.5">
         <Button
           label={nearEnd ? `${destination || "도착역"}에 도착했어요` : "지금 있는 역 알려주기"}
           onPress={nearEnd ? arrive : () => setPicking((value) => !value)}
           loading={createLog.isPending}
         />
         {createLog.error ? (
-          <Text style={{ fontSize: 13, textAlign: "center", color: colors.error }}>
-            이동 기록을 저장하지 못했어요. 다시 시도해 주세요.
-          </Text>
+          <Text className="text-center text-body-sm text-error">이동 기록을 저장하지 못했어요. 다시 시도해 주세요.</Text>
         ) : null}
         {nearEnd ? (
           <Button label="아직 도착하지 않았어요" variant="ghost" onPress={() => setPicking((value) => !value)} />
@@ -151,7 +146,7 @@ function Guide({ navigation, sessionId, option, startedAtMs }: GuideProps) {
       </View>
 
       {picking ? (
-        <View style={{ marginTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
+        <View className="mt-2 border-t border-border">
           {visible.slice(0, -1).map((index) => (
             <Pressable
               key={`${stops[index].stationId}-${index}`}
@@ -160,19 +155,15 @@ function Guide({ navigation, sessionId, option, startedAtMs }: GuideProps) {
                 guide.confirmStop(index);
                 setPicking(false);
               }}
-              style={{ paddingVertical: 12, flexDirection: "row", justifyContent: "space-between" }}
+              className="flex-row justify-between py-3"
             >
               <Text
-                style={{
-                  fontSize: 15,
-                  fontWeight: index === visible[stripCurrent] ? "800" : "500",
-                  color: index < progress.currentIndex ? colors.textSecondary : colors.text,
-                }}
+                className={cn("text-subtitle", index === visible[stripCurrent] ? "font-sans-extrabold" : "font-sans-medium", index < progress.currentIndex ? "text-text-secondary" : "text-text")}
               >
                 {names[index]}
               </Text>
               {index === visible[stripCurrent] ? (
-                <Text style={{ fontSize: 12, color: colors.primary }}>현재 추정</Text>
+                <Text className="text-small text-primary">현재 추정</Text>
               ) : null}
             </Pressable>
           ))}

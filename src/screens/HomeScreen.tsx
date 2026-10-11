@@ -1,17 +1,16 @@
 import React, { useCallback } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LineBadge } from "@/common/components/LineBadge";
 import { Screen } from "@/common/components/Screen";
+import { Text } from "@/common/components/Text";
 import { formatMonthDayKst } from "@/common/utils/format";
 import { useRecentDestinations } from "@/features/routing/useRecentDestinations";
 import { useOnboardingPrompt } from "@/features/onboarding/useOnboardingPrompt";
 import type { RootStackParamList } from "@/navigation/navigation-types";
-import { useTheme } from "@/theme";
 
 export function HomeScreen() {
-  const { colors } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   useOnboardingPrompt();
   const recent = useRecentDestinations();
@@ -26,60 +25,26 @@ export function HomeScreen() {
 
   return (
     <Screen>
-      <View style={{ flex: 1, backgroundColor: colors.surface }}>
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <Text style={{ fontSize: 14, color: colors.textSecondary }}>지도는 준비 중이에요</Text>
+      <View className="flex-1 bg-surface">
+        <View className="flex-1 items-center justify-center">
+          <Text className="text-body text-text-secondary">지도는 준비 중이에요</Text>
         </View>
 
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="역, 장소 검색"
           onPress={() => navigation.navigate("Search")}
-          style={{
-            position: "absolute",
-            top: 12,
-            left: 16,
-            right: 16,
-            height: 52,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: colors.border,
-            backgroundColor: colors.bg,
-            paddingHorizontal: 16,
-            justifyContent: "center",
-          }}
+          className="absolute left-4 right-4 top-3 h-control-lg justify-center rounded-md border border-border bg-bg px-4"
         >
-          <Text style={{ fontSize: 16, color: colors.textDisabled }}>역, 장소 검색</Text>
+          <Text className="text-base text-text-disabled">역, 장소 검색</Text>
         </Pressable>
       </View>
 
-      <View
-        style={{
-          maxHeight: "50%",
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
-          backgroundColor: colors.bg,
-          borderTopWidth: 1,
-          borderColor: colors.border,
-        }}
-      >
-        <Text
-          style={{
-            paddingHorizontal: 20,
-            paddingTop: 16,
-            paddingBottom: 8,
-            fontSize: 15,
-            fontWeight: "700",
-            color: colors.text,
-          }}
-        >
-          최근 도착지
-        </Text>
+      <View className="max-h-[50%] rounded-t-lg-plus border-t border-border bg-bg">
+        <Text className="px-5 pb-2 pt-4 text-subtitle font-sans-bold">최근 도착지</Text>
         <ScrollView keyboardShouldPersistTaps="handled">
           {recent.destinations.length === 0 ? (
-            <Text style={{ padding: 24, textAlign: "center", color: colors.textSecondary }}>
-              아직 검색한 도착지가 없어요
-            </Text>
+            <Text className="p-6 text-center text-text-secondary">아직 검색한 도착지가 없어요</Text>
           ) : (
             recent.destinations.map((destination) => {
               const lineIds = destination.endpoint.stationId
@@ -92,26 +57,15 @@ export function HomeScreen() {
                   onPress={() =>
                     navigation.navigate("Search", { destination: destination.endpoint })
                   }
-                  style={{
-                    paddingHorizontal: 20,
-                    paddingVertical: 14,
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 8,
-                    borderBottomWidth: 1,
-                    borderBottomColor: colors.border,
-                  }}
+                  className="flex-row items-center gap-2 border-b border-border px-5 py-3.5"
                 >
-                  <Text
-                    numberOfLines={1}
-                    style={{ flexShrink: 1, fontSize: 16, fontWeight: "600", color: colors.text }}
-                  >
+                  <Text numberOfLines={1} className="shrink text-base font-sans-semibold">
                     {destination.endpoint.name}
                   </Text>
                   {lineIds.map((lineId) => (
                     <LineBadge key={lineId} lineId={lineId} size="sm" />
                   ))}
-                  <Text style={{ marginLeft: "auto", fontSize: 12, color: colors.textSecondary }}>
+                  <Text className="ml-auto text-small text-text-secondary">
                     {formatMonthDayKst(destination.searchedAt)}
                   </Text>
                 </Pressable>
