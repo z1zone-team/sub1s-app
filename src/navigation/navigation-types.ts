@@ -2,6 +2,7 @@ import type { NavigatorScreenParams } from "@react-navigation/native";
 import type { RouteMode, SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
 import type { TravelLogResponse } from "@/apis/mutations/travel/createTravelLog";
 import type { OffRouteAlert } from "@/apis/queries/tracking/getTrackingSession";
+import type { PlaceKind } from "@/apis/queries/users/places";
 import type { RouteEndpoint } from "@/features/routing/endpoint";
 
 export type BottomTabParamList = {
@@ -23,6 +24,8 @@ export type RootStackParamList = {
   Search: {
     /** 홈의 최근 도착지처럼 도착지를 미리 정해서 들어올 때 */
     destination?: RouteEndpoint;
+    /** 집이나 학교로 저장할 장소를 고르는 모드. 고르면 저장하고 돌아간다 */
+    pickPlace?: PlaceKind;
   } | undefined;
   RouteResult: {
     origin: RouteEndpoint;

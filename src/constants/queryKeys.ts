@@ -61,6 +61,7 @@ export const queryKeys = {
     all: ["users"] as const,
     preferences: () => [...queryKeys.users.all, "preferences"] as const,
     friends: () => [...queryKeys.users.all, "friends"] as const,
+    places: () => [...queryKeys.users.all, "places"] as const,
     inviteToken: () => [...queryKeys.users.all, "inviteToken"] as const,
     notificationSettings: () => [...queryKeys.users.all, "notificationSettings"] as const,
   },
