@@ -1,7 +1,7 @@
 import React from "react";
-import { ScrollView, View, type StyleProp, type ViewStyle } from "react-native";
+import { ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTheme } from "@/theme";
+import { cn } from "@/lib/cn";
 
 interface ScreenProps {
   children: React.ReactNode;
@@ -9,31 +9,27 @@ interface ScreenProps {
   scroll?: boolean;
   /** 하단 탭이 이미 아래 여백을 처리하는 화면에서는 아래쪽 안전 영역을 뺀다 */
   edges?: ("top" | "bottom")[];
-  contentStyle?: StyleProp<ViewStyle>;
+  /** 내용 영역에 붙는 클래스(여백, 간격, 정렬) */
+  contentClassName?: string;
 }
 
 export function Screen({
   children,
   scroll = false,
   edges = ["top"],
-  contentStyle,
+  contentClassName = "",
 }: ScreenProps) {
-  const { colors } = useTheme();
-
   return (
-    <SafeAreaView
-      edges={edges}
-      style={{ flex: 1, backgroundColor: colors.bg }}
-    >
+    <SafeAreaView edges={edges} className="flex-1 bg-bg">
       {scroll ? (
         <ScrollView
-          contentContainerStyle={[{ paddingBottom: 24 }, contentStyle]}
+          contentContainerClassName={cn("pb-6", contentClassName)}
           keyboardShouldPersistTaps="handled"
         >
           {children}
         </ScrollView>
       ) : (
-        <View style={[{ flex: 1 }, contentStyle]}>{children}</View>
+        <View className={cn("flex-1", contentClassName)}>{children}</View>
       )}
     </SafeAreaView>
   );
