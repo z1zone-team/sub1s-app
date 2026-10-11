@@ -1,4 +1,4 @@
-import { formatDistanceKm, formatDurationSec, formatFare } from "./format";
+import { formatDistanceKm, formatDurationSec, formatFare, formatMonthDayKst } from "./format";
 
 describe("format", () => {
   describe("formatFare", () => {
@@ -47,6 +47,26 @@ describe("format", () => {
     it("handles zero and invalid input", () => {
       expect(formatDistanceKm(0)).toBe("0m");
       expect(formatDistanceKm(Number.NaN)).toBe("0m");
+    });
+  });
+
+  describe("formatMonthDayKst", () => {
+    it("writes the month and day in Korean time", () => {
+      expect(formatMonthDayKst("2026-10-06T03:00:00.000Z")).toBe("10.06");
+    });
+
+    it("rolls over to the next day after 15:00 UTC, which is midnight in Korea", () => {
+      expect(formatMonthDayKst("2026-10-06T14:59:59.000Z")).toBe("10.06");
+      expect(formatMonthDayKst("2026-10-06T15:00:00.000Z")).toBe("10.07");
+    });
+
+    it("crosses a year boundary and accepts an explicit offset", () => {
+      expect(formatMonthDayKst("2026-12-31T15:30:00.000Z")).toBe("01.01");
+      expect(formatMonthDayKst("2026-10-06T23:30:00+09:00")).toBe("10.06");
+    });
+
+    it("returns an empty string for an invalid value", () => {
+      expect(formatMonthDayKst("not-a-date")).toBe("");
     });
   });
 });
