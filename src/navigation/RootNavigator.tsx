@@ -1,10 +1,16 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { ActivityIndicator, View } from "react-native";
+import { useAuth } from "@clerk/clerk-expo";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { BottomTabNavigator } from "./BottomTabNavigator";
 import { RouteDetailScreen } from "@/screens/RouteDetailScreen";
 import { RouteResultScreen } from "@/screens/RouteResultScreen";
 import { SearchScreen } from "@/screens/SearchScreen";
+import { resolveStartRoute } from "@/common/auth/startRoute";
+import { useGuestStore } from "@/common/auth/guest-store";
+import { useAuthSync } from "@/common/auth/useAuthSync";
+import { LoginScreen } from "@/screens/LoginScreen";
 import { ArrivedScreen } from "@/screens/ArrivedScreen";
 import { LiveNavScreen } from "@/screens/LiveNavScreen";
 import { TimelineScreen } from "@/screens/TimelineScreen";
@@ -17,11 +23,35 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
   const { scheme, colors } = useTheme();
+  const { isLoaded, isSignedIn } = useAuth();
+  const guestLoaded = useGuestStore((state) => state.loaded);
+  const guestChosen = useGuestStore((state) => state.chosen);
+  const hydrateGuest = useGuestStore((state) => state.hydrate);
+  useAuthSync();
+
+  useEffect(() => {
+    void hydrateGuest();
+  }, [hydrateGuest]);
+
+  const start = resolveStartRoute({
+    authLoaded: isLoaded,
+    signedIn: !!isSignedIn,
+    guestLoaded,
+    guestChosen,
+  });
+
+  if (start === "LOADING") {
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.bg }}>
+        <ActivityIndicator color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <NavigationContainer linking={linking} theme={buildNavigationTheme(scheme, colors)}>
       <Stack.Navigator
-        initialRouteName="MainTabs"
+        initialRouteName={start === "LOGIN" ? "Login" : "MainTabs"}
         screenOptions={{
           headerStyle: { backgroundColor: colors.bg },
           headerTintColor: colors.text,
@@ -29,6 +59,7 @@ export function RootNavigator() {
           contentStyle: { backgroundColor: colors.bg },
         }}
       >
+        <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
         <Stack.Screen
           name="MainTabs"
           component={BottomTabNavigator}

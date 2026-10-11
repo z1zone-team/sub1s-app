@@ -1,5 +1,6 @@
 import React from "react";
 import { Text, View } from "react-native";
+import { useAuth } from "@clerk/clerk-expo";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useStationFacilitiesQuery } from "@/apis/queries/stations/useStationFacilitiesQuery";
 import { useStartTrackingMutation } from "@/apis/mutations/tracking/useStartTrackingMutation";
@@ -22,11 +23,16 @@ export function RouteDetailScreen({
   const firstRideIndex = option.segments.findIndex((segment) => segment.lineId !== WALK_LINE_ID);
   const facilities = useStationFacilitiesQuery(lastRide?.toStationId);
   const walk = walkSeconds(option);
+  const { isSignedIn } = useAuth();
   const startTracking = useStartTrackingMutation();
   const canGuide = firstRideIndex >= 0 && (option.stationIds?.length ?? 0) > 1;
 
   const startGuide = () => {
     if (startTracking.isPending) return;
+    if (!isSignedIn) {
+      navigation.navigate("Login");
+      return;
+    }
     startTracking.mutate(
       { routeOption: option, stationIds: option.stationIds },
       {
