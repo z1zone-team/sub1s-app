@@ -53,18 +53,19 @@ describe("Travel & Profile Domain APIs & Hooks", () => {
           id: "log-1",
           originStationName: "강남",
           destStationName: "시청",
-          totalDistanceKm: 12.5,
-          transferCount: 1,
-          earnedPoints: 120,
-          createdAt: "2026-10-07T10:00:00Z",
+          distanceKm: 12.5,
+          traveledAt: "2026-10-07T10:00:00+09:00",
+          lineIds: ["02"],
+          isExpress: false,
+          durationSec: 1200,
         },
       ],
-      totalCount: 1,
+      totalLogsCount: 1,
       totalDistanceKm: 12.5,
     };
     (client.get as jest.Mock).mockResolvedValue(mockTimeline);
 
-    const query = { year: 2026, month: 10, page: 1, limit: 10 };
+    const query = { year: 2026, month: 10 };
     const result = await getTimeline(query);
 
     expect(client.get).toHaveBeenCalledWith("/travel/timeline", query, undefined);
@@ -74,7 +75,7 @@ describe("Travel & Profile Domain APIs & Hooks", () => {
     useTimelineQuery(query);
     expect(mockUseQuery).toHaveBeenCalledWith(
       expect.objectContaining({
-        queryKey: ["profile", "timeline", 2026, 10, 1, 10],
+        queryKey: ["profile", "timeline", 2026, 10, 1, 20],
         enabled: true,
       })
     );
