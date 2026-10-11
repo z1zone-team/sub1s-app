@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { HomeScreen } from "@/screens/HomeScreen";
 import { RankingScreen } from "@/screens/RankingScreen";
 import { ProfileScreen } from "@/screens/ProfileScreen";
+import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/theme";
 import type { BottomTabParamList } from "./navigation-types";
 
@@ -26,17 +27,32 @@ export function BottomTabNavigator() {
       <Tab.Screen
         name="RankingTab"
         component={RankingScreen}
-        options={{ title: "랭킹" }}
+        options={{
+          title: "랭킹",
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? "trophy" : "trophy-outline"} size={size} color={color} />
+          ),
+        }}
       />
       <Tab.Screen
         name="HomeTab"
         component={HomeScreen}
-        options={{ title: "홈" }}
+        options={{
+          title: "홈",
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? "home" : "home-outline"} size={size} color={color} />
+          ),
+        }}
       />
       <Tab.Screen
         name="ProfileTab"
         component={ProfileScreen}
-        options={{ title: "프로필" }}
+        options={{
+          title: "프로필",
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? "person" : "person-outline"} size={size} color={color} />
+          ),
+        }}
       />
     </Tab.Navigator>
   );

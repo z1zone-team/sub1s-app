@@ -7,6 +7,7 @@ import {
   type VoiceRouteRecommendResponseDto,
 } from "@/apis/mutations/voice/useVoiceRouteRecommendMutation";
 import { Button } from "@/common/components/Button";
+import { Icon } from "@/common/components/Icon";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { useAudioRecorder, type AudioRecordingResult } from "@/common/device/audio/useAudioRecorder";
@@ -187,7 +188,7 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
           processing && "opacity-50"
         )}
       >
-        <Text className="text-title-lg font-sans-extrabold text-on-primary">{processing ? "…" : "■"}</Text>
+        {processing ? <Icon name="ellipsis-horizontal" size={32} tone="onPrimary" /> : <Icon name="stop" size={32} tone="onPrimary" />}
       </Pressable>
 
       <Text className="text-body-sm text-text-secondary">

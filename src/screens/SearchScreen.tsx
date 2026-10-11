@@ -4,6 +4,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { ApiError } from "@/apis/client";
 import { usePlaceSearchQuery } from "@/apis/queries/places/usePlaceSearchQuery";
 import { Screen } from "@/common/components/Screen";
+import { Icon } from "@/common/components/Icon";
 import { LineBadge } from "@/common/components/LineBadge";
 import { Text } from "@/common/components/Text";
 import { useForegroundLocation } from "@/common/device";
@@ -127,7 +128,7 @@ export function SearchScreen({
           onPress={() => navigation.goBack()}
           className="h-control justify-center"
         >
-          <Text className="text-headline">{"‹"}</Text>
+          <Icon name="chevron-back" size={26} />
         </Pressable>
 
         {pickPlace ? (
@@ -313,7 +314,7 @@ function RecentList({
               onPress={() => recent.remove(destination)}
               className="px-4 py-3.5"
             >
-              <Text className="text-text-disabled">{"✕"}</Text>
+              <Icon name="close" size={18} tone="disabled" />
             </Pressable>
           </View>
         );

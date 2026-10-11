@@ -10,6 +10,7 @@ import { useTravelStatsQuery } from "@/apis/queries/profile/useTravelStatsQuery"
 import { useRankingQuery } from "@/apis/queries/ranking/useRankingQuery";
 import { unregisterCurrentPushToken } from "@/common/notifications/pushRegistration";
 import { Button } from "@/common/components/Button";
+import { Icon } from "@/common/components/Icon";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { formatDistanceKm } from "@/common/utils/format";
@@ -30,7 +31,10 @@ function Row({ label, value, onPress }: { label: string; value?: string; onPress
       className="h-row flex-row items-center justify-between border-b border-border"
     >
       <Text className="text-subtitle">{label}</Text>
-      <Text className="text-body text-text-secondary">{value ? `${value}  >` : ">"}</Text>
+      <View className="flex-row items-center gap-1">
+        {value ? <Text className="text-body text-text-secondary">{value}</Text> : null}
+        <Icon name="chevron-forward" size={18} tone="secondary" />
+      </View>
     </Pressable>
   );
 }
