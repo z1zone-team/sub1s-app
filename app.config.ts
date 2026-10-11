@@ -33,6 +33,13 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     plugins: [
       "expo-secure-store",
+      [
+        "expo-location",
+        {
+          locationWhenInUsePermission:
+            "안내 중에 가까운 지하철역을 찾아 현재 위치를 보정하는 데 사용해요.",
+        },
+      ],
     ],
     extra: {
       appEnv,

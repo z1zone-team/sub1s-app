@@ -19,3 +19,11 @@ export function remainingText(remainingSec: number, nowMs: number): string {
   if (remainingSec <= 0) return "곧 도착해요";
   return `${formatDurationSec(remainingSec)} 남음 · ${formatClockKst(nowMs + remainingSec * 1000)} 도착`;
 }
+
+/** 예정보다 얼마나 빨랐는지. 값이 없으면 보여 주지 않는다 */
+export function arrivalDeltaText(deltaSec: number | undefined): string {
+  if (deltaSec === undefined || !Number.isFinite(deltaSec)) return "";
+  if (Math.abs(deltaSec) < 30) return "예정대로 도착";
+  const minutes = Math.max(1, Math.round(Math.abs(deltaSec) / 60));
+  return deltaSec < 0 ? `${minutes}분 일찍 도착` : `${minutes}분 늦게 도착`;
+}

@@ -1,4 +1,4 @@
-import { remainingText, upcomingMessage } from "./guideText";
+import { arrivalDeltaText, remainingText, upcomingMessage } from "./guideText";
 
 describe("upcomingMessage", () => {
   it("바로 다음 역에서 내리면 내릴 준비를 안내한다", () => {
@@ -36,5 +36,21 @@ describe("remainingText", () => {
 
   it("다 지나면 곧 도착한다고 한다", () => {
     expect(remainingText(0, 0)).toBe("곧 도착해요");
+  });
+});
+
+describe("arrivalDeltaText", () => {
+  it("일찍과 늦게를 구분한다", () => {
+    expect(arrivalDeltaText(-60)).toBe("1분 일찍 도착");
+    expect(arrivalDeltaText(300)).toBe("5분 늦게 도착");
+  });
+
+  it("30초 안이면 예정대로라고 한다", () => {
+    expect(arrivalDeltaText(20)).toBe("예정대로 도착");
+    expect(arrivalDeltaText(-29)).toBe("예정대로 도착");
+  });
+
+  it("값이 없으면 빈 문구다", () => {
+    expect(arrivalDeltaText(undefined)).toBe("");
   });
 });

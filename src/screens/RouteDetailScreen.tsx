@@ -2,6 +2,8 @@ import React from "react";
 import { Text, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useStationFacilitiesQuery } from "@/apis/queries/stations/useStationFacilitiesQuery";
+import { useStartTrackingMutation } from "@/apis/mutations/tracking/useStartTrackingMutation";
+import { Button } from "@/common/components/Button";
 import { Screen } from "@/common/components/Screen";
 import { formatDurationSec, formatFare } from "@/common/utils/format";
 import { SegmentDetail } from "@/features/routing/components/SegmentDetail";
@@ -10,6 +12,7 @@ import type { RootStackParamList } from "@/navigation/navigation-types";
 import { useTheme, WALK_LINE_ID } from "@/theme";
 
 export function RouteDetailScreen({
+  navigation,
   route,
 }: NativeStackScreenProps<RootStackParamList, "RouteDetail">) {
   const { colors } = useTheme();
@@ -19,6 +22,23 @@ export function RouteDetailScreen({
   const firstRideIndex = option.segments.findIndex((segment) => segment.lineId !== WALK_LINE_ID);
   const facilities = useStationFacilitiesQuery(lastRide?.toStationId);
   const walk = walkSeconds(option);
+  const startTracking = useStartTrackingMutation();
+  const canGuide = firstRideIndex >= 0 && (option.stationIds?.length ?? 0) > 1;
+
+  const startGuide = () => {
+    if (startTracking.isPending) return;
+    startTracking.mutate(
+      { routeOption: option, stationIds: option.stationIds },
+      {
+        onSuccess: (session) =>
+          navigation.navigate("LiveNav", {
+            sessionId: session.sessionId,
+            option,
+            startedAtMs: Date.now(),
+          }),
+      }
+    );
+  };
 
   return (
     <Screen edges={[]} scroll contentStyle={{ paddingHorizontal: 20 }}>
@@ -65,6 +85,17 @@ export function RouteDetailScreen({
           </Text>
         ) : null}
       </View>
+
+      {canGuide ? (
+        <View style={{ gap: 8, paddingBottom: 8 }}>
+          <Button label="안내 시작" onPress={startGuide} loading={startTracking.isPending} />
+          {startTracking.error ? (
+            <Text style={{ fontSize: 13, textAlign: "center", color: colors.error }}>
+              안내를 시작하지 못했어요. 다시 시도해 주세요.
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
     </Screen>
   );
 }

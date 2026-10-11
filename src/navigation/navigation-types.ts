@@ -1,5 +1,6 @@
 import type { NavigatorScreenParams } from "@react-navigation/native";
 import type { RouteMode, SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
+import type { TravelLogResponse } from "@/apis/mutations/travel/createTravelLog";
 import type { RouteEndpoint } from "@/features/routing/endpoint";
 
 export type BottomTabParamList = {
@@ -29,6 +30,14 @@ export type RootStackParamList = {
   };
   LiveNav: {
     sessionId: string;
+    /** 딥링크로만 들어오면 없어서 진행 중인 안내를 찾지 못했다고 보여 준다 */
+    option?: SubwayRouteOptionDto;
+    startedAtMs?: number;
+  };
+  Arrived: {
+    log: TravelLogResponse;
+    destinationName: string;
+    arrivedAtMs: number;
   };
   Timeline: undefined;
 };
