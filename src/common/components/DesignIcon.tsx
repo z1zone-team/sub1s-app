@@ -20,7 +20,9 @@ export type DesignIconName =
   | "walk"
   | "train"
   | "check"
-  | "arrow";
+  | "arrow"
+  | "snow"
+  | "navigate";
 
 interface DesignIconProps {
   name: DesignIconName;
@@ -157,6 +159,19 @@ export function DesignIcon({
       break;
     case "arrow":
       shapes = <Path d="M5 12h14M13 6l6 6-6 6" fill="none" strokeWidth={strokeWidth ?? 2} {...common} />;
+      break;
+    case "snow":
+      shapes = (
+        <Path
+          d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7M9 4l3 2 3-2M9 20l3-2 3 2"
+          fill="none"
+          strokeWidth={strokeWidth ?? 2}
+          {...common}
+        />
+      );
+      break;
+    case "navigate":
+      shapes = <Path d="M3 11l18-8-8 18-2-8z" fill={paint} stroke={paint} strokeWidth={strokeWidth ?? 1} strokeLinejoin="round" />;
       break;
     case "person":
       shapes = (
