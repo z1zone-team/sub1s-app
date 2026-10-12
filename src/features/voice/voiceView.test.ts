@@ -1,6 +1,15 @@
 import { ApiError } from "@/apis/client";
 import type { SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
-import { endpointsOfOption, failureOf, FAILURE_TEXT, modeReasonText } from "./voiceView";
+import {
+  destinationLineId,
+  endpointsOfOption,
+  failureOf,
+  FAILURE_TEXT,
+  modeLabel,
+  modeReasonText,
+  WAVE_HEIGHTS,
+  waveDelayMs,
+} from "./voiceView";
 
 const segment = (lineId: string, from: string, to: string) =>
   ({ lineId, fromStationId: from, fromStationName: from + "역", toStationId: to, toStationName: to + "역" }) as never;
@@ -30,6 +39,40 @@ describe("modeReasonText", () => {
   it("모드마다 문구가 다르다", () => {
     expect(modeReasonText("PERSONAL")).toBe("취향에 맞춘 경로로 찾았어요");
     expect(modeReasonText("OPTIMAL")).toBe("가장 빠른 경로로 찾았어요");
+  });
+});
+
+describe("modeLabel", () => {
+  it("굵게 보일 경로 종류만 돌려준다", () => {
+    expect(modeLabel("PERSONAL")).toBe("취향에 맞춘 경로");
+    expect(modeReasonText("PERSONAL")).toBe(`${modeLabel("PERSONAL")}로 찾았어요`);
+  });
+});
+
+describe("destinationLineId", () => {
+  it("마지막 탑승 구간의 호선을 돌려준다 (도보는 뺀다)", () => {
+    const option = {
+      segments: [segment("09", "가양", "고속터미널"), segment("03", "고속터미널", "충무로"), segment("WALK", "충무로", "목적지")],
+    } as unknown as SubwayRouteOptionDto;
+    expect(destinationLineId(option)).toBe("03");
+  });
+
+  it("탑승 구간이 없으면 없다", () => {
+    const option = { segments: [segment("WALK", "집", "목적지")] } as unknown as SubwayRouteOptionDto;
+    expect(destinationLineId(option)).toBeUndefined();
+  });
+});
+
+describe("파형", () => {
+  it("막대는 24개다", () => {
+    expect(WAVE_HEIGHTS).toHaveLength(24);
+  });
+
+  it("막대마다 시작이 0.07초씩 어긋나고 0.9초를 넘으면 처음으로 돈다", () => {
+    expect(waveDelayMs(0)).toBe(0);
+    expect(waveDelayMs(1)).toBe(70);
+    expect(waveDelayMs(12)).toBe(840);
+    expect(waveDelayMs(13)).toBe(10);
   });
 });
 
