@@ -15,6 +15,14 @@ export function delayText(newTotalSec: number, previousRemainingSec: number): st
   return minutes > 0 ? `+${minutes}분` : `${-minutes}분 빨라요`;
 }
 
+/** 지연 문구와, 새 경로가 더 늦은지 (늦으면 빨간색으로 강조한다) */
+export function delayParts(newTotalSec: number, previousRemainingSec: number): { text: string; late: boolean } {
+  return {
+    text: delayText(newTotalSec, previousRemainingSec),
+    late: Math.round((newTotalSec - previousRemainingSec) / 60) > 0,
+  };
+}
+
 /** 사용자가 "맞게 탔어요"를 눌렀으면 경로 위의 역이 다시 확인될 때까지 같은 알림을 띄우지 않는다 */
 export function shouldShowAlert(dismissed: boolean): boolean {
   return !dismissed;
