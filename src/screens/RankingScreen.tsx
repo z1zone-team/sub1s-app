@@ -4,6 +4,7 @@ import { useAuth } from "@clerk/expo";
 import { useTravelStatsQuery } from "@/apis/queries/profile/useTravelStatsQuery";
 import { useRankingQuery } from "@/apis/queries/ranking/useRankingQuery";
 import { DesignIcon } from "@/common/components/DesignIcon";
+import { LoadFailView } from "@/common/components/LoadFailView";
 import { LoadingGhost } from "@/common/components/LoadingGhost";
 import { LoginRequired } from "@/common/components/LoginRequired";
 import { Screen } from "@/common/components/Screen";
@@ -48,6 +49,7 @@ export function RankingScreen() {
   }
 
   const data = ranking.data;
+  const loadFailed = !!ranking.error && !data;
   const top = podium(data);
   const rows = rowsAfterPodium(data);
   const mood = moodOf(monthStats.data?.totalDistanceKm ?? 0);
@@ -100,12 +102,20 @@ export function RankingScreen() {
         </Pressable>
       </View>
 
-      <ScrollView className="flex-1" contentContainerClassName="pb-6" showsVerticalScrollIndicator={false}>
-        <Text className="mx-5 mt-2.5 text-small text-text-secondary">
-          {captionText(scope, month, friendsOnly, data?.totalUsers)}
-        </Text>
+      <ScrollView className="flex-1" contentContainerClassName="flex-grow pb-6" showsVerticalScrollIndicator={false}>
+        {loadFailed ? null : (
+          <Text className="mx-5 mt-2.5 text-small text-text-secondary">
+            {captionText(scope, month, friendsOnly, data?.totalUsers)}
+          </Text>
+        )}
 
-        {ranking.isLoading ? (
+        {loadFailed ? (
+          <LoadFailView
+            title="랭킹을 불러오지 못했어요"
+            body={"인터넷 연결을 확인하고 다시 시도해 주세요.\n지하 구간에서는 연결이 잠시 끊길 수 있어요."}
+            onRetry={() => void ranking.refetch()}
+          />
+        ) : ranking.isLoading ? (
           <LoadingGhost minHeight={460} />
         ) : (
           <>
