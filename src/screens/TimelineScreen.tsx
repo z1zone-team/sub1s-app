@@ -9,6 +9,7 @@ import { useTimelineQuery } from "@/apis/queries/profile/useTimelineQuery";
 import { useTravelStatsQuery } from "@/apis/queries/profile/useTravelStatsQuery";
 import { Bob } from "@/common/components/Bob";
 import { DesignIcon } from "@/common/components/DesignIcon";
+import { LoadingGhost } from "@/common/components/LoadingGhost";
 import { LoginRequired } from "@/common/components/LoginRequired";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
@@ -137,6 +138,10 @@ export function TimelineScreen() {
       <ScrollView className="flex-1" contentContainerClassName="pb-12" showsVerticalScrollIndicator={false}>
         {title}
         {tabs}
+        {stats.isLoading ? (
+          <LoadingGhost minHeight={420} />
+        ) : (
+          <>
         <Text className="mx-5 mt-5.5 text-base font-sans-bold">{name}</Text>
 
         <View className="mx-5 mt-1.5">
@@ -208,6 +213,9 @@ export function TimelineScreen() {
             </View>
           </>
         ) : null}
+
+          </>
+        )}
 
         {stats.error ? (
           <Text className="mx-5 mt-4 text-error">기록을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</Text>

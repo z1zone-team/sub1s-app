@@ -11,6 +11,7 @@ import { useRankingQuery } from "@/apis/queries/ranking/useRankingQuery";
 import { Bob } from "@/common/components/Bob";
 import { DesignIcon, type DesignIconName } from "@/common/components/DesignIcon";
 import { Icon } from "@/common/components/Icon";
+import { LoadingGhost } from "@/common/components/LoadingGhost";
 import { LoginRequired } from "@/common/components/LoginRequired";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
@@ -101,6 +102,12 @@ export function ProfileScreen() {
         </Pressable>
       </View>
 
+      {me.isLoading || all.isLoading ? (
+        <View className="mt-4">
+          <LoadingGhost minHeight={460} tone="surface" />
+        </View>
+      ) : (
+        <>
       <View className="mx-4 mt-4 overflow-hidden rounded-lg border border-border">
         <View className="flex-row items-center gap-4 p-5">
           <View className="h-19 w-19 items-center justify-center rounded-pill bg-surface">
@@ -165,6 +172,8 @@ export function ProfileScreen() {
           <Text className="px-5 text-small text-error">변경하지 못했어요. 다시 시도해 주세요.</Text>
         ) : null}
       </View>
+        </>
+      )}
     </Screen>
   );
 }

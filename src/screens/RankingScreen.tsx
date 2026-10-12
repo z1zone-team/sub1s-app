@@ -4,6 +4,7 @@ import { useAuth } from "@clerk/expo";
 import { useTravelStatsQuery } from "@/apis/queries/profile/useTravelStatsQuery";
 import { useRankingQuery } from "@/apis/queries/ranking/useRankingQuery";
 import { DesignIcon } from "@/common/components/DesignIcon";
+import { LoadingGhost } from "@/common/components/LoadingGhost";
 import { LoginRequired } from "@/common/components/LoginRequired";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
@@ -104,6 +105,10 @@ export function RankingScreen() {
           {captionText(scope, month, friendsOnly, data?.totalUsers)}
         </Text>
 
+        {ranking.isLoading ? (
+          <LoadingGhost minHeight={460} />
+        ) : (
+          <>
         {ranking.error ? (
           <Text className="mx-5 mt-3 text-error">랭킹을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</Text>
         ) : null}
@@ -155,6 +160,8 @@ export function RankingScreen() {
             ))}
           </View>
         </View>
+          </>
+        )}
       </ScrollView>
 
       <InviteSheet visible={inviteOpen} onClose={() => setInviteOpen(false)} />
