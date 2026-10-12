@@ -15,7 +15,7 @@ export const FONT_SIZE_TOKENS = [
   "title",
   "title-lg",
   "headline",
-  "headline-md",
+  "headline-md", "headline-sm",
   "headline-lg",
   "display-sm",
   "display",
