@@ -35,10 +35,10 @@ export function nameError(name: string): string {
   return name.trim().length > 30 ? "이름은 30자까지 입력할 수 있어요" : "";
 }
 
-/** 상위 N% 문구. 값이 없으면 보여 주지 않는다 */
+/** 이번 달 상위 N% 문구(월간 랭킹의 내 백분위). 값이 없으면 보여 주지 않는다 */
 export function percentileText(percentile: number | undefined): string {
   if (percentile === undefined || !Number.isFinite(percentile)) return "";
-  return `지하철 이용 상위 ${Math.round(percentile)}%`;
+  return `이번 달 상위 ${Math.round(percentile)}%`;
 }
 
 export interface WeekBar {

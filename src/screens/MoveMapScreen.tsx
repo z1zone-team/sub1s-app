@@ -81,7 +81,7 @@ export function MoveMapScreen({ navigation, route }: NativeStackScreenProps<Root
         <View className="mt-0.5 flex-row items-baseline">
           <Text
             className="text-hero font-sans-bold"
-            style={{ letterSpacing: -1.5, transform: [{ skewX: "-4deg" }], transformOrigin: "left" }}
+            style={{ letterSpacing: -1.5 }}
           >
             {distance.number}
           </Text>
@@ -93,7 +93,7 @@ export function MoveMapScreen({ navigation, route }: NativeStackScreenProps<Root
             accessibilityRole="button"
             accessibilityState={{ selected: !focus }}
             onPress={() => setFocus(undefined)}
-            className={cn("h-8.5 justify-center rounded-pill border px-3.5", !focus ? "border-primary bg-primary" : "border-border bg-bg")}
+            className={cn("h-11 justify-center rounded-pill border px-3.5", !focus ? "border-primary bg-primary" : "border-border bg-bg")}
           >
             <Text className={cn("text-body-sm font-sans-bold", !focus ? "text-on-primary" : "text-text")}>전체</Text>
           </Pressable>
@@ -103,7 +103,7 @@ export function MoveMapScreen({ navigation, route }: NativeStackScreenProps<Root
               accessibilityRole="button"
               accessibilityState={{ selected: focus === row.lineId }}
               onPress={() => setFocus(row.lineId)}
-              className="h-8.5 justify-center rounded-pill border px-3.5"
+              className="h-11 justify-center rounded-pill border px-3.5"
               style={{ backgroundColor: row.color, borderColor: focus === row.lineId ? colors.text : "transparent" }}
             >
               <Text className="text-body-sm font-sans-bold" style={{ color: lineTextColor(row.color) }}>
@@ -114,7 +114,9 @@ export function MoveMapScreen({ navigation, route }: NativeStackScreenProps<Root
         </View>
 
         {logs.length > 0 ? (
-          <ScrollView className="mt-4" style={{ maxHeight: height * SHEET_MAX_RATIO - 220 }} showsVerticalScrollIndicator={false}>
+          <>
+          <Text className="mt-4.5 text-body-sm font-sans-semibold text-text-secondary">최근 이동</Text>
+          <ScrollView className="mt-1" style={{ maxHeight: height * SHEET_MAX_RATIO - 250 }} showsVerticalScrollIndicator={false}>
             {logs.map((log, index) => (
               <View key={log.id} style={{ opacity: logMatchesLine(log, focus) ? 1 : 0.25 }}>
                 <ActivityRow
@@ -129,6 +131,7 @@ export function MoveMapScreen({ navigation, route }: NativeStackScreenProps<Root
               </View>
             ))}
           </ScrollView>
+          </>
         ) : (
           <Text className="mt-4 text-body-sm text-text-secondary">이 기간에는 이동 기록이 없어요</Text>
         )}

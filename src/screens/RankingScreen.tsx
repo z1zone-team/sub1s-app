@@ -58,11 +58,11 @@ export function RankingScreen() {
   return (
     <Screen>
       <View className="flex-row items-center justify-between px-5 pt-2">
-        <Text className="text-headline-lg font-sans-bold">랭킹</Text>
+        <Text className="text-display-sm font-sans-bold">랭킹</Text>
         <Pressable
           accessibilityRole="button"
           onPress={() => setInviteOpen(true)}
-          className="h-9 flex-row items-center gap-1 rounded-pill border border-border bg-bg px-3.5"
+          className="h-11 flex-row items-center gap-1 rounded-pill border border-border bg-bg px-3.5"
         >
           <DesignIcon name="plus" size={16} />
           <Text className="text-body font-sans-bold">친구</Text>
@@ -79,9 +79,9 @@ export function RankingScreen() {
                 accessibilityRole="button"
                 accessibilityState={{ selected }}
                 onPress={() => setScope(item.value)}
-                className={cn("h-10 justify-center border-b-2", selected ? "border-primary" : "border-transparent")}
+                className={cn("h-11 justify-center border-b-[2.5px]", selected ? "border-primary" : "border-transparent")}
               >
-                <Text className={cn("text-heading font-sans-bold", selected ? "text-text" : "text-text-disabled")}>
+                <Text className={cn("text-heading font-sans-bold", selected ? "text-text" : "text-text-secondary")}>
                   {item.label}
                 </Text>
               </Pressable>
@@ -93,7 +93,7 @@ export function RankingScreen() {
           accessibilityState={{ checked: friendsOnly }}
           onPress={() => setFriendsOnly((value) => !value)}
           className={cn(
-            "h-8.5 flex-row items-center gap-1.5 rounded-pill border px-3",
+            "h-11 flex-row items-center gap-1.5 rounded-pill border px-3",
             friendsOnly ? "border-primary bg-primary" : "border-border bg-bg"
           )}
         >
@@ -136,7 +136,7 @@ export function RankingScreen() {
         ) : null}
 
         {rows.length > 0 ? (
-          <View className="mx-4 border-t border-border pt-1.5">
+          <View className="mx-3 mt-2">
             {rows.map((row, index) =>
               row.kind === "GAP" ? (
                 <Text key={`gap-${index}`} className="py-1.5 text-center text-text-secondary">
@@ -149,7 +149,7 @@ export function RankingScreen() {
           </View>
         ) : null}
 
-        <View className="mx-4 mt-6 rounded-lg border border-border p-4.5">
+        <View className="mx-3 mt-6 rounded-xl bg-surface px-5 py-5.5">
           <View className="flex-row items-baseline justify-between">
             <Text className="text-subtitle font-sans-bold">타는 만큼 표정이 바뀌어요</Text>
             <Text className="text-small text-text-secondary">월간 기준</Text>
@@ -158,7 +158,7 @@ export function RankingScreen() {
             {MOOD_LEVELS.map((level) => (
               <View
                 key={level.key}
-                className={cn("flex-1 items-center gap-1 rounded-md py-2.5", level.key === mood.key ? "bg-surface" : "")}
+                className={cn("flex-1 items-center gap-1 rounded-md py-2.5", level.key === mood.key ? "bg-bg" : "")}
               >
                 <MoodFace mood={level.key} size={44} />
                 <Text className="text-body-sm font-sans-bold">{level.label}</Text>
