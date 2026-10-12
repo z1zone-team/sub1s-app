@@ -47,7 +47,7 @@ export function InviteSheet({ visible, onClose }: InviteSheetProps) {
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <View className="flex-1 justify-end" style={{ backgroundColor: "rgba(0,26,69,0.4)" }}>
+      <View className="flex-1 justify-end" style={{ backgroundColor: "rgba(0,0,0,0.56)" }}>
         <Pressable accessibilityRole="button" accessibilityLabel="닫기" onPress={onClose} className="absolute inset-0" />
         <RiseIn from={80} durationMs={300}>
           <View
