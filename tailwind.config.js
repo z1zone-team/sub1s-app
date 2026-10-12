@@ -81,6 +81,7 @@ module.exports = {
         "display-md": "32px",
         "display-lg": "34px",
         hero: "40px",
+        "hero-lg": "44px",
       },
       /** 굵기마다 글꼴 파일이 달라서(안드로이드) 굵기는 font-weight 대신 글꼴 이름으로 고른다 */
       fontFamily: {
