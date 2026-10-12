@@ -149,6 +149,7 @@ export function RouteResultCard({ group, boarding, onPress }: RouteResultCardPro
             {group.tagline}
           </Text>
         ) : null}
+        {group.alias ? <Text className="text-small font-sans-semibold text-text-secondary">· {group.alias}</Text> : null}
       </View>
 
       <View className="mt-3 flex-row items-baseline justify-between">

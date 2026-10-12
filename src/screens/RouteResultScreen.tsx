@@ -55,7 +55,7 @@ export function RouteResultScreen({
   const { isSignedIn } = useAuth();
   const routePrefs = usePreferencesQuery(!!isSignedIn).data?.routePrefs;
   const groups = useMemo(
-    () => groupRouteOptions(search.data?.options ?? [], routePrefs),
+    () => groupRouteOptions(search.data?.options ?? [], routePrefs, search.data?.recommendation),
     [search.data, routePrefs]
   );
 

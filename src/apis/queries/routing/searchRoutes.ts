@@ -89,9 +89,22 @@ export interface SubwayRouteOptionDto {
   totalSteps?: number;
 }
 
+/** 서버가 추천(PERSONAL)의 가중치를 만든 근거. 로그인한 사용자에게만 온다 (API_SPEC 2.2) */
+export interface RecommendationMeta {
+  /** 출발 시각의 상황: WEEKDAY_MORNING_RUSH, WEEKDAY_MIDDAY, WEEKDAY_EVENING_RUSH, WEEKDAY_NIGHT, LATE_NIGHT, EARLY_MORNING, WEEKEND_DAYTIME, WEEKEND_OTHER */
+  context: string;
+  /** 근거 코드: PREF_*(설문), PURPOSE_*(이동 목적), CONTEXT_*(시간대), HISTORY_*(이전에 고른 모드) */
+  reasons: string[];
+  usedHistory: boolean;
+  /** 최소 비용을 자주 골랐는가. 서버 엔진은 요금을 가중치로 다루지 못해 앱이 후보를 고를 때 더 본다 */
+  fareSensitive: boolean;
+  weights: { congestion: number; transferSec: number };
+}
+
 export interface RouteSearchResult {
   options: SubwayRouteOptionDto[];
   aiBriefingText?: string;
+  recommendation?: RecommendationMeta;
 }
 
 export interface RouteSearchRequest {
