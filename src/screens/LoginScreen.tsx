@@ -65,7 +65,7 @@ export function LoginScreen({ navigation }: NativeStackScreenProps<RootStackPara
   }, [isSignedIn]);
 
   return (
-    <Screen>
+    <Screen edges={["top", "bottom"]}>
       <View className="flex-1 items-center justify-center px-7">
         <RiseIn from={RISE_FROM} durationMs={RISE_MS}>
           <BrandLogo size={104} radius={24} />

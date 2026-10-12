@@ -69,7 +69,7 @@ export function OnboardingScreen({
   const label = step === 1 ? "다음" : "시작하기";
 
   return (
-    <Screen contentClassName="px-3">
+    <Screen edges={["top", "bottom"]} contentClassName="px-3">
       <View className="flex-row items-center justify-between">
         <Pressable
           accessibilityRole="button"
