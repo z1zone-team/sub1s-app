@@ -22,7 +22,7 @@ export const FONT_SIZE_TOKENS = [
   "display-md",
   "display-lg",
   "hero",
-  "hero-lg", "display-xl",
+  "hero-lg", "hero-xl", "display-xl",
 ] as const;
 
 export const FONT_FAMILY_TOKENS = ["sans-medium", "sans-semibold", "sans-bold"] as const;

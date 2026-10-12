@@ -44,13 +44,13 @@ function NextTrainLine({ segment }: { segment: PathSegmentDto }) {
   );
 }
 
-/** 도착 행 부제: 엘리베이터와 가까운 문과 뒤따르는 도보 */
+/** 도착 행 부제: 엘리베이터와 가까운 문과 뒤따르는 걷기 */
 function ArriveDetail({ row }: { row: Extract<RerouteRow, { kind: "arrive" }> }) {
   const facilities = useStationFacilitiesQuery(row.stationId);
   const doors = facilities.data?.available ? facilities.data.elevatorDoors : [];
   const text = [
-    doors.length > 0 ? `엘리베이터와 가까운 문 ${doors.map(describeDoor).join(", ")}` : "",
-    row.walkTo && row.walkMinutes ? `${row.walkTo}까지 도보 ${row.walkMinutes}분` : "",
+    doors.length > 0 ? `${doors.map(describeDoor).join(", ")} 문에서 내리면 엘리베이터가 가까워요` : "",
+    row.walkTo && row.walkMinutes ? `${row.walkTo}까지 걸어서 ${row.walkMinutes}분` : "",
   ]
     .filter(Boolean)
     .join(" · ");
@@ -69,9 +69,9 @@ export function RerouteCard({ option, detectedStationName, previousRemainingSec 
 
   return (
     <RiseIn from={24} durationMs={400} delayMs={200}>
-      <View className="rounded-lg border border-border bg-bg px-4 py-4.5">
+      <View className="rounded-xl bg-bg px-5 py-5.5">
         <View className="flex-row items-baseline justify-between">
-          <Text className="text-base font-sans-bold">새 경로</Text>
+          <Text className="text-base font-sans-bold">이렇게 돌아가면 돼요</Text>
           <Text className="text-body-sm text-text-secondary">
             {!Number.isNaN(arrival) ? `${formatClockKst(arrival)} 도착 · ` : ""}
             <Text className={cn("text-body-sm font-sans-bold", delay.late ? "text-error" : "text-text")}>{delay.text}</Text>
@@ -86,7 +86,7 @@ export function RerouteCard({ option, detectedStationName, previousRemainingSec 
                 <Row key={row.key} rail={<><FilledNode color={colors.error} /><DottedBar /></>}>
                   <Text className="text-subtitle font-sans-bold">{row.stationName} 하차</Text>
                   <Text className="mt-0.75 text-body-sm text-text-secondary">
-                    맞은편 승강장으로 이동{row.walkMinutes ? ` (${formatDurationSec(row.walkMinutes * 60)})` : ""}
+                    {row.walkMinutes ? `맞은편 승강장까지 ${formatDurationSec(row.walkMinutes * 60)}` : "맞은편 승강장으로"}
                   </Text>
                 </Row>
               );

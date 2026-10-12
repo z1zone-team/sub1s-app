@@ -11,6 +11,8 @@ interface ScreenProps {
   edges?: ("top" | "bottom")[];
   /** 내용 영역에 붙는 클래스(여백, 간격, 정렬) */
   contentClassName?: string;
+  /** 바탕을 면(surface) 색으로 깐다. 이탈 화면처럼 흰 카드가 떠 보여야 할 때 */
+  surface?: boolean;
 }
 
 export function Screen({
@@ -18,9 +20,10 @@ export function Screen({
   scroll = false,
   edges = ["top"],
   contentClassName = "",
+  surface = false,
 }: ScreenProps) {
   return (
-    <SafeAreaView edges={edges} className="flex-1 bg-bg">
+    <SafeAreaView edges={edges} className={surface ? "flex-1 bg-surface" : "flex-1 bg-bg"}>
       {scroll ? (
         <ScrollView
           contentContainerClassName={cn("pb-6", contentClassName)}

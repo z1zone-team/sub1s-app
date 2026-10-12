@@ -123,7 +123,7 @@ function Guide({ navigation, sessionId, option, startedAtMs }: GuideProps) {
   const alightExits = facilities.data?.available ? facilities.data.exits : [];
   const popupDetail = showAlight
     ? [
-        alightDoors.length > 0 ? `엘리베이터와 가까운 문 ${alightDoors.map(describeDoor).join(", ")}` : "",
+        alightDoors.length > 0 ? `${alightDoors.map(describeDoor).join(", ")} 문에서 내리면 엘리베이터가 가까워요` : "",
         alightExits.length > 0 ? `출구 ${alightExits.map((exit) => exit.exitNo).join(", ")}번` : "",
       ]
         .filter(Boolean)
@@ -254,9 +254,9 @@ function Guide({ navigation, sessionId, option, startedAtMs }: GuideProps) {
             <Pressable
               accessibilityRole="button"
               onPress={() => navigation.navigate("MainTabs", { screen: "HomeTab" })}
-              className="h-12.5 flex-1 items-center justify-center rounded-md border border-border"
+              className="h-14 flex-1 items-center justify-center rounded-lg bg-surface"
             >
-              <Text className="text-subtitle font-sans-bold">홈 보기</Text>
+              <Text className="text-base font-sans-semibold">홈 보기</Text>
             </Pressable>
             <Pressable
               accessibilityRole="button"
@@ -264,10 +264,9 @@ function Guide({ navigation, sessionId, option, startedAtMs }: GuideProps) {
                 useActiveGuideStore.getState().end();
                 navigation.navigate("MainTabs", { screen: "HomeTab" });
               }}
-              style={{ flex: 1.4 }}
-              className="h-12.5 items-center justify-center rounded-md bg-text"
+              className="h-14 flex-1 items-center justify-center rounded-lg bg-surface"
             >
-              <Text className="text-subtitle font-sans-bold text-on-primary">안내 종료</Text>
+              <Text className="text-base font-sans-semibold text-error">안내 끝내기</Text>
             </Pressable>
           </View>
         </View>

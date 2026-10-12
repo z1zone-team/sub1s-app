@@ -29,12 +29,12 @@ function Up({ step, children }: { step: number; children: React.ReactNode }) {
 /** "14.6km"를 큰 숫자 "14.6"과 작은 단위 "km"로 그린 통계 칸 */
 function StatTile({ label, value }: { label: string; value: string }) {
   return (
-    <View className="flex-1 rounded-md bg-surface px-3 py-3.5">
+    <View className="flex-1 rounded-lg bg-surface px-3.5 py-4">
       <View className="flex-row flex-wrap items-baseline">
         {valueParts(value).map((part, index) => (
-          <Text key={`${part.number}-${index}`} className="text-title-lg font-sans-bold">
+          <Text key={`${part.number}-${index}`} className="text-headline-lg font-sans-bold" style={{ fontVariant: ["tabular-nums"] }}>
             {part.number}
-            <Text className="text-small font-sans-bold">{part.unit}</Text>
+            <Text className="ml-0.5 text-body-sm font-sans-semibold text-text-secondary">{part.unit}</Text>
             {index < valueParts(value).length - 1 ? " " : ""}
           </Text>
         ))}
@@ -44,7 +44,7 @@ function StatTile({ label, value }: { label: string; value: string }) {
   );
 }
 
-/** 프로토타입의 도착 화면. 떠다니는 캐릭터, 점수 카드, 통계 3칸, 이번 달 누적이 차례로 올라온다 */
+/** 프로토타입의 도착 화면. 떠다니는 캐릭터, 점수 카드, 통계 3칸, 이번 달 모은 점수가 차례로 올라온다 */
 export function ArrivedScreen({
   navigation,
   route,
@@ -88,13 +88,13 @@ export function ArrivedScreen({
 
         <View className="mx-5 mt-7">
           <Up step={2}>
-            <View className="rounded-lg bg-primary p-5">
-              <Text className="text-body-sm font-sans-semibold text-on-primary opacity-85">이번 이동으로 받은 점수</Text>
+            <View className="rounded-xl bg-primary p-6">
+              <Text className="text-body-sm font-sans-semibold text-on-primary opacity-85">이번에 받은 점수</Text>
               <View className="mt-1 flex-row items-baseline gap-1">
-                <Text className="text-hero-lg font-sans-bold italic text-on-primary">
+                <Text className="text-hero-xl font-sans-bold text-on-primary" style={{ fontVariant: ["tabular-nums"] }}>
                   +{log.earnedPoints.toLocaleString("en-US")}
                 </Text>
-                <Text className="text-base font-sans-bold text-on-primary">점</Text>
+                <Text className="text-title font-sans-semibold text-on-primary opacity-85">점</Text>
               </View>
               <View
                 className="mt-3.5 gap-1.5 border-t pt-3.5"
@@ -110,7 +110,7 @@ export function ArrivedScreen({
                 </View>
                 {log.onTimeBonus > 0 ? (
                   <View className="flex-row justify-between">
-                    <Text className="text-body-sm text-on-primary opacity-85">예상 시간 ±5분 안에 도착</Text>
+                    <Text className="text-body-sm text-on-primary opacity-85">예상 시간에 맞춰 도착했어요</Text>
                     <Text className="text-body-sm font-sans-bold text-on-primary">+{log.onTimeBonus}점</Text>
                   </View>
                 ) : null}
@@ -133,28 +133,29 @@ export function ArrivedScreen({
 
         <View className="mx-5 mt-3">
           <Up step={4}>
-            <View className="flex-row items-center justify-between rounded-md border border-border px-4 py-3.5">
-              <Text className="text-body text-text-secondary">이번 달 누적</Text>
-              <Text className="text-body font-sans-bold">{log.monthlyTotalPoints.toLocaleString("en-US")}점</Text>
+            <View className="flex-row items-center justify-between rounded-lg bg-surface px-4 py-3.5">
+              <Text className="text-subtitle text-text-secondary">이번 달 모은 점수</Text>
+              <Text className="text-subtitle font-sans-bold">{log.monthlyTotalPoints.toLocaleString("en-US")}점</Text>
             </View>
           </Up>
         </View>
       </ScrollView>
 
-      <View style={{ paddingBottom: Math.max(insets.bottom, 12) + 10 }} className="gap-2 px-5">
+      <View style={{ paddingBottom: Math.max(insets.bottom, 12) + 10 }} className="flex-row gap-2 px-4">
         <Pressable
           accessibilityRole="button"
           onPress={() => navigation.replace("Timeline")}
-          className="h-14 items-center justify-center rounded-md bg-primary"
+          style={{ flex: 1.4 }}
+          className="h-14 items-center justify-center rounded-lg bg-primary"
         >
           <Text className="text-base font-sans-bold text-on-primary">타임라인에서 보기</Text>
         </Pressable>
         <Pressable
           accessibilityRole="button"
           onPress={goHome}
-          className="h-13 items-center justify-center rounded-md border border-border bg-bg"
+          className="h-14 flex-1 items-center justify-center rounded-lg bg-surface"
         >
-          <Text className="text-subtitle font-sans-semibold">홈으로</Text>
+          <Text className="text-base font-sans-semibold">홈으로</Text>
         </Pressable>
       </View>
     </Screen>
