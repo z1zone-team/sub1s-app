@@ -24,7 +24,8 @@ export type DesignIconName =
   | "snow"
   | "navigate"
   | "bell"
-  | "undo";
+  | "undo"
+  | "warning";
 
 interface DesignIconProps {
   name: DesignIconName;
@@ -178,6 +179,14 @@ export function DesignIcon({
     case "bell":
       shapes = (
         <Path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0" fill="none" strokeWidth={strokeWidth ?? 2} {...common} />
+      );
+      break;
+    case "warning":
+      shapes = (
+        <>
+          <Path d="M12 3l10 18H2z" fill="none" strokeWidth={strokeWidth ?? 2.2} {...common} />
+          <Path d="M12 10v5M12 18v.5" fill="none" strokeWidth={strokeWidth ?? 2.2} {...common} />
+        </>
       );
       break;
     case "undo":

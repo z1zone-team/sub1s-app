@@ -1,25 +1,26 @@
 import React from "react";
-import { View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useStartTrackingMutation } from "@/apis/mutations/tracking/useStartTrackingMutation";
-import { Button } from "@/common/components/Button";
+import { DesignIcon } from "@/common/components/DesignIcon";
+import { RiseIn } from "@/common/components/RiseIn";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
-import { formatClockKst } from "@/common/utils/format";
-import { delayText } from "@/features/guide/offRoute";
+import { OffRouteBanner } from "@/features/guide/components/OffRouteBanner";
+import { RerouteCard } from "@/features/guide/components/RerouteCard";
 import { useOffRouteStore } from "@/features/guide/offroute-store";
-import { SegmentDetail } from "@/features/routing/components/SegmentDetail";
 import type { RootStackParamList } from "@/navigation/navigation-types";
-import { WALK_LINE_ID } from "@/theme";
 
+/** 프로토타입 OffRoute.dc.html의 경로 이탈 화면. 경고 배너, 새 경로 카드, 안내 박스, 두 버튼 */
 export function OffRouteScreen({
   navigation,
   route,
 }: NativeStackScreenProps<RootStackParamList, "OffRoute">) {
   const { alert, remainingSec } = route.params;
   const option = alert.rerouteOption;
+  const insets = useSafeAreaInsets();
   const startTracking = useStartTrackingMutation();
-  const firstRideIndex = option.segments.findIndex((segment) => segment.lineId !== WALK_LINE_ID);
 
   const startReroute = () => {
     if (startTracking.isPending) return;
@@ -48,42 +49,46 @@ export function OffRouteScreen({
     navigation.goBack();
   };
 
+  // 새 경로는 이탈을 알아챈 역에서 시작하므로 그 역에서 내려 맞은편 열차를 타라고 안내한다
+  const stationName = alert.detectedStationName;
+  const message = stationName ? `${stationName}에서 내려 맞은편 열차를 타세요.` : alert.message;
+
   return (
-    <Screen scroll contentClassName="gap-4 px-6">
-      <View className="items-center gap-2 pt-6">
-        <Text className="text-hero font-sans-extrabold text-error">!</Text>
-        <Text className="text-headline font-sans-extrabold">경로를 이탈했어요</Text>
-        <Text className="text-center text-body text-text-secondary">{alert.message}</Text>
-      </View>
+    <Screen>
+      <ScrollView className="flex-1" contentContainerClassName="gap-3 px-3 pb-4 pt-2">
+        <OffRouteBanner message={message} />
+        <RerouteCard option={option} detectedStationName={stationName} previousRemainingSec={remainingSec} />
+        <RiseIn from={24} durationMs={400} delayMs={200}>
+          <View className="rounded-lg bg-error-tint px-4 py-3.5">
+            <Text className="text-body-sm">
+              잘못 탄 게 아니라면 <Text className="text-body-sm font-sans-bold">맞게 탔어요</Text>를 눌러 주세요. 다음 역 정차 정보로 다시
+              확인할게요.
+            </Text>
+          </View>
+        </RiseIn>
+        {startTracking.error ? (
+          <Text className="text-center text-body-sm text-error">새 경로를 시작하지 못했어요. 다시 시도해 주세요.</Text>
+        ) : null}
+      </ScrollView>
 
-      <View className="gap-1 rounded-lg bg-surface p-4">
-        <Text className="text-body-sm font-sans-bold text-primary">새 경로</Text>
-        <Text className="text-title font-sans-extrabold">
-          {formatClockKst(option.estimatedArrivalTimestamp)} 도착 ·{" "}
-          {delayText(option.totalDurationSec, remainingSec)}
-        </Text>
-        <Text className="mt-2 text-body">{alert.detectedStationName} 하차 · 맞은편 승강장으로 이동</Text>
-        {option.segments.map((segment, index) =>
-          segment.lineId === WALK_LINE_ID ? null : (
-            <SegmentDetail
-              key={`${segment.lineId}-${index}`}
-              segment={segment}
-              showNextTrain={index === firstRideIndex}
-            />
-          )
-        )}
-      </View>
-
-      <Text className="text-small text-text-secondary">
-        잘못 탄 게 아니라면 맞게 탔어요를 눌러 주세요. 다음 역 정차 정보로 다시 확인할게요.
-      </Text>
-      {startTracking.error ? (
-        <Text className="text-center text-body-sm text-error">새 경로를 시작하지 못했어요. 다시 시도해 주세요.</Text>
-      ) : null}
-
-      <View className="gap-2 pb-4">
-        <Button label="새 경로로 안내" onPress={startReroute} loading={startTracking.isPending} />
-        <Button label="맞게 탔어요" variant="secondary" onPress={keepRoute} />
+      <View style={{ paddingBottom: Math.max(insets.bottom, 12) + 10 }} className="gap-2 px-5">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ busy: startTracking.isPending }}
+          disabled={startTracking.isPending}
+          onPress={startReroute}
+          className="h-14 flex-row items-center justify-center gap-2 rounded-md bg-primary"
+        >
+          <DesignIcon name="navigate" size={18} tone="onPrimary" />
+          <Text className="text-base font-sans-bold text-on-primary">새 경로로 안내</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          onPress={keepRoute}
+          className="h-13 items-center justify-center rounded-md border border-border bg-bg"
+        >
+          <Text className="text-subtitle font-sans-semibold">맞게 탔어요</Text>
+        </Pressable>
       </View>
     </Screen>
   );

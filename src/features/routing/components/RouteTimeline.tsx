@@ -23,7 +23,7 @@ interface RouteTimelineProps {
 const NODE_SIZE = "h-3.5 w-3.5";
 
 /** 속이 빈 점 (승차, 하차, 출발). 호선 색 테두리 3px, 호선이 없으면 글자색 */
-function RingNode({ color }: { color?: string }) {
+export function RingNode({ color }: { color?: string }) {
   return (
     <View
       className={cn(NODE_SIZE, "mt-0.5 rounded-pill border-3", color ? "" : "border-text")}
@@ -32,18 +32,18 @@ function RingNode({ color }: { color?: string }) {
   );
 }
 
-/** 속이 찬 점 (도착) */
-function FilledNode() {
-  return <View className={cn(NODE_SIZE, "mt-0.5 rounded-pill bg-text")} />;
+/** 속이 찬 점 (도착). 색을 주면 그 색으로 채운다 (이탈 화면의 빨간 점) */
+export function FilledNode({ color }: { color?: string }) {
+  return <View className={cn(NODE_SIZE, "mt-0.5 rounded-pill", color ? "" : "bg-text")} style={color ? { backgroundColor: color } : undefined} />;
 }
 
 /** 열차를 타는 동안 이어지는 호선 색 막대 (너비 6px) */
-function SolidBar({ color }: { color: string }) {
+export function SolidBar({ color }: { color: string }) {
   return <View className="mx-auto my-0.5 w-1.5 flex-1 rounded-pill" style={{ backgroundColor: color }} />;
 }
 
 /** 걷거나 내린 뒤에 이어지는 점선 */
-function DottedBar() {
+export function DottedBar() {
   const { colors } = useTheme();
   return (
     <View className="my-1 flex-1 items-center">
