@@ -108,6 +108,8 @@ module.exports = {
         0.75: "3px",
         1.25: "5px",
         1.75: "7px",
+        2.25: "9px",
+        12.5: "50px",
         4.5: "18px",
         5.5: "22px",
         6.5: "26px",
@@ -128,6 +130,7 @@ module.exports = {
       borderWidth: {
         1.5: "1.5px",
         2.5: "2.5px",
+        3: "3px",
       },
       height: {
         control: "44px",

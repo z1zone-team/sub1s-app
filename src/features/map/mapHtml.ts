@@ -18,6 +18,8 @@ export interface MapLine {
   points: Array<[number, number]>;
   weight?: number;
   opacity?: number;
+  /** 점선. 도보 구간처럼 열차가 아닌 이동을 나타낸다 */
+  dashed?: boolean;
 }
 
 export interface MapData {
@@ -95,7 +97,7 @@ export function buildMapHtml(vworldKey: string): string {
       var bounds = [];
       (data.lines || []).forEach(function (line) {
         if (line.points.length < 2) return;
-        L.polyline(line.points, { color: line.color, weight: line.weight || 5, opacity: line.opacity == null ? 1 : line.opacity, lineCap: "round", lineJoin: "round" }).addTo(layer);
+        L.polyline(line.points, { color: line.color, weight: line.weight || 5, opacity: line.opacity == null ? 1 : line.opacity, lineCap: "round", lineJoin: "round", dashArray: line.dashed ? "2 10" : null }).addTo(layer);
         line.points.forEach(function (p) { bounds.push(p); });
       });
       (data.markers || []).forEach(function (m) {

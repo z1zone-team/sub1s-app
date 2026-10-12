@@ -1,31 +1,44 @@
-import React from "react";
-import { View } from "react-native";
+import React, { useMemo } from "react";
+import { Pressable, ScrollView, View } from "react-native";
 import { useAuth } from "@clerk/expo";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useStationFacilitiesQuery } from "@/apis/queries/stations/useStationFacilitiesQuery";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useStartTrackingMutation } from "@/apis/mutations/tracking/useStartTrackingMutation";
-import { Button } from "@/common/components/Button";
-import { Screen } from "@/common/components/Screen";
+import { useStationsQuery } from "@/apis/queries/stations/useStationsQuery";
+import { DesignIcon } from "@/common/components/DesignIcon";
 import { Text } from "@/common/components/Text";
-import { formatDurationSec, formatFare } from "@/common/utils/format";
-import { SegmentDetail } from "@/features/routing/components/SegmentDetail";
-import { clockRange, describeDoor, walkSeconds } from "@/features/routing/routeView";
+import { formatClockKst, formatDurationSec, formatFare } from "@/common/utils/format";
+import { VWorldMap } from "@/features/map/VWorldMap";
+import { RouteTimeline } from "@/features/routing/components/RouteTimeline";
+import { splitDuration } from "@/features/routing/routeCardView";
+import { clockRangeShort, mapStationIds, routeMapData } from "@/features/routing/routeTimeline";
 import type { RootStackParamList } from "@/navigation/navigation-types";
 import { WALK_LINE_ID } from "@/theme";
+
+/** 프로토타입 RouteDetail.dc.html의 위쪽 지도 높이와, 그 위로 48px 겹쳐 올라오는 시트의 위치 */
+const MAP_HEIGHT = 420;
+const SHEET_TOP = 372;
 
 export function RouteDetailScreen({
   navigation,
   route,
 }: NativeStackScreenProps<RootStackParamList, "RouteDetail">) {
   const { option, title, tagline, destination } = route.params;
+  const insets = useSafeAreaInsets();
 
   const lastRide = [...option.segments].reverse().find((segment) => segment.lineId !== WALK_LINE_ID);
   const firstRideIndex = option.segments.findIndex((segment) => segment.lineId !== WALK_LINE_ID);
-  const facilities = useStationFacilitiesQuery(lastRide?.toStationId);
-  const walk = walkSeconds(option);
   const { isSignedIn } = useAuth();
   const startTracking = useStartTrackingMutation();
   const canGuide = firstRideIndex >= 0 && (option.stationIds?.length ?? 0) > 1;
+
+  // 지도: 경로가 지나는 역의 좌표를 받아 호선 색 선으로 잇는다
+  const stationIds = useMemo(() => mapStationIds(option), [option]);
+  const stations = useStationsQuery(stationIds);
+  const mapData = useMemo(() => {
+    const coords = new Map((stations.data?.items ?? []).map((item) => [item.stationId, { lat: item.lat, lng: item.lng }]));
+    return routeMapData(option, coords);
+  }, [option, stations.data]);
 
   const startGuide = () => {
     if (startTracking.isPending) return;
@@ -46,59 +59,100 @@ export function RouteDetailScreen({
     );
   };
 
+  const { hours, minutes } = splitDuration(option.totalDurationSec);
+  const arrival = Date.parse(option.estimatedArrivalTimestamp);
+
   return (
-    <Screen edges={[]} scroll contentClassName="px-5">
-      <View className="gap-1.5 py-4">
-        <Text className="text-body-sm font-sans-extrabold text-primary">{title}</Text>
-        {tagline ? <Text className="text-body-sm text-text-secondary">{tagline}</Text> : null}
-        <Text className="text-display-sm font-sans-extrabold">
-          {formatDurationSec(option.totalDurationSec)}
-        </Text>
-        <Text className="text-body-sm text-text-secondary">
-          {[
-            clockRange(option),
-            `환승 ${option.transferCount}회`,
-            formatFare(option.totalFare),
-            walk > 0 ? `도보 ${formatDurationSec(walk)}` : "",
-          ]
-            .filter(Boolean)
-            .join(" · ")}
-        </Text>
+    <View className="flex-1 bg-surface">
+      <View className="absolute inset-x-0 top-0" style={{ height: MAP_HEIGHT }}>
+        <VWorldMap data={mapData} className="flex-1" />
       </View>
 
-      {option.segments.map((segment, index) => (
-        <View key={`${segment.lineId}-${index}`} className={index === 0 ? "" : "border-t border-border"}>
-          <SegmentDetail segment={segment} showNextTrain={index === firstRideIndex} />
-        </View>
-      ))}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="뒤로"
+        onPress={() => navigation.goBack()}
+        style={{ top: insets.top + 10 }}
+        className="absolute left-4 h-control w-control items-center justify-center rounded-pill border border-border bg-bg"
+      >
+        <DesignIcon name="back" size={22} />
+      </Pressable>
 
-      <View className="gap-1.5 border-t border-border py-4">
-        <Text className="text-heading font-sans-extrabold">
-          {destination.name || lastRide?.toStationName || "도착"} 도착
-        </Text>
-        {lastRide && facilities.data?.available && facilities.data.elevatorDoors.length > 0 ? (
-          <Text className="text-body-sm text-text-secondary">
-            {lastRide.toStationName}역 엘리베이터와 가까운 문{" "}
-            {facilities.data.elevatorDoors.map(describeDoor).join(", ")}
-          </Text>
-        ) : null}
-        {lastRide && facilities.data?.available && facilities.data.exits.length > 0 ? (
-          <Text className="text-body-sm text-text-secondary">
-            출구 {facilities.data.exits.map((exit) => exit.exitNo).join(", ")}번
-          </Text>
-        ) : null}
-      </View>
+      <View style={{ top: SHEET_TOP }} className="absolute inset-x-0 bottom-0 rounded-t-xl border-t border-border bg-bg">
+        <View className="mb-0.5 mt-2.5 h-1 w-9 self-center rounded-pill bg-border" />
+        <ScrollView contentContainerClassName="px-5 pb-27.5 pt-3.5" showsVerticalScrollIndicator={false}>
+          <View className="flex-row items-center gap-1.5">
+            <View className="h-6 justify-center rounded-pill bg-primary px-2.25">
+              <Text className="text-caption font-sans-extrabold text-on-primary">{title}</Text>
+            </View>
+            {tagline ? (
+              <Text numberOfLines={1} className="shrink text-small font-sans-semibold text-text-secondary">
+                {tagline}
+              </Text>
+            ) : null}
+          </View>
 
-      {canGuide ? (
-        <View className="gap-2 pb-2">
-          <Button label="안내 시작" onPress={startGuide} loading={startTracking.isPending} />
-          {startTracking.error ? (
-            <Text className="text-center text-body-sm text-error">
-              안내를 시작하지 못했어요. 다시 시도해 주세요.
+          <View className="mt-2.5 flex-row flex-wrap items-baseline gap-0.5">
+            {hours > 0 ? (
+              <>
+                <Text className="text-display-lg font-sans-extrabold">{hours}</Text>
+                <Text className="mr-1 text-base font-sans-bold">시간</Text>
+              </>
+            ) : null}
+            {minutes > 0 || hours === 0 ? (
+              <>
+                <Text className="text-display-lg font-sans-extrabold">{minutes}</Text>
+                <Text className="text-base font-sans-bold">분</Text>
+              </>
+            ) : null}
+            <Text className="ml-2.5 shrink text-body text-text-secondary">
+              {[clockRangeShort(option, formatClockKst), `환승 ${option.transferCount}회`].filter(Boolean).join(" · ")} ·{" "}
+              <Text className="text-body font-sans-bold text-text">{formatFare(option.totalFare)}</Text>
             </Text>
+          </View>
+
+          <RouteTimeline option={option} destinationName={destination.name || lastRide?.toStationName || "도착지"} />
+        </ScrollView>
+      </View>
+
+      <View
+        style={{ paddingBottom: Math.max(insets.bottom, 12) + 10 }}
+        className="absolute inset-x-0 bottom-0 flex-row items-center gap-2 border-t border-border bg-bg px-5 pt-3"
+      >
+        <View className="flex-1">
+          <Text className="text-title font-sans-bold">{formatDurationSec(option.totalDurationSec)}</Text>
+          {!Number.isNaN(arrival) ? (
+            <Text className="text-small text-text-secondary">{formatClockKst(arrival)} 도착</Text>
           ) : null}
         </View>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => navigation.goBack()}
+          className="h-12.5 justify-center rounded-md border border-border bg-bg px-4"
+        >
+          <Text className="text-subtitle font-sans-bold">다른 경로</Text>
+        </Pressable>
+        {canGuide ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ busy: startTracking.isPending }}
+            disabled={startTracking.isPending}
+            onPress={startGuide}
+            className="h-12.5 flex-row items-center gap-1.5 rounded-md bg-primary px-5"
+          >
+            <DesignIcon name="navigate" size={16} tone="onPrimary" />
+            <Text className="text-subtitle font-sans-bold text-on-primary">안내시작</Text>
+          </Pressable>
+        ) : null}
+      </View>
+      {startTracking.error ? (
+        <Text
+          style={{ bottom: Math.max(insets.bottom, 12) + 84 }}
+          className="absolute inset-x-5 text-center text-body-sm text-error"
+        >
+          안내를 시작하지 못했어요. 다시 시도해 주세요.
+        </Text>
       ) : null}
-    </Screen>
+    </View>
   );
 }
