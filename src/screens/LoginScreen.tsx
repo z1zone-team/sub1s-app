@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { useAuth } from "@clerk/expo";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { BrandLogo } from "@/common/components/BrandLogo";
 import { DesignIcon, type DesignIconName } from "@/common/components/DesignIcon";
 import { RiseIn } from "@/common/components/RiseIn";
 import { Screen } from "@/common/components/Screen";
@@ -48,7 +49,7 @@ const PROVIDERS: Array<{ provider: SocialProvider; icon: DesignIconName; label: 
   { provider: "google", icon: "google", label: "Google로 계속하기" },
 ];
 
-/** 프로토타입 Login.dc.html. 로고는 나중에 한번에 바꾸기로 해서 임시 아이콘이다 */
+/** 프로토타입 Login.dc.html */
 export function LoginScreen({ navigation }: NativeStackScreenProps<RootStackParamList, "Login">) {
   const { isSignedIn } = useAuth();
   const chooseGuest = useGuestStore((state) => state.choose);
@@ -67,9 +68,7 @@ export function LoginScreen({ navigation }: NativeStackScreenProps<RootStackPara
     <Screen>
       <View className="flex-1 items-center justify-center px-7">
         <RiseIn from={RISE_FROM} durationMs={RISE_MS}>
-          <View className="h-26 w-26 items-center justify-center rounded-xl bg-primary">
-            <DesignIcon name="train" size={52} tone="onPrimary" />
-          </View>
+          <BrandLogo size={104} radius={24} />
         </RiseIn>
         <RiseIn from={RISE_FROM} durationMs={RISE_MS} delayMs={80}>
           <Text className="mt-7 text-center text-display-sm font-sans-bold leading-snug">지하철, 더 가볍게</Text>

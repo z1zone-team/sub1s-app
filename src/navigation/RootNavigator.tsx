@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
 import { useAuth } from "@clerk/expo";
 import { NavigationContainer, createNavigationContainerRef } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -26,6 +25,7 @@ import { ArrivedScreen } from "@/screens/ArrivedScreen";
 import { LiveNavScreen } from "@/screens/LiveNavScreen";
 import { MoveMapScreen } from "@/screens/MoveMapScreen";
 import { TimelineScreen } from "@/screens/TimelineScreen";
+import { SplashScreen } from "@/common/components/SplashScreen";
 import { useTheme } from "@/theme";
 import { buildNavigationTheme } from "@/theme/navigationTheme";
 import { linking } from "./linking";
@@ -74,13 +74,7 @@ export function RootNavigator() {
     authTimedOut,
   });
 
-  if (start === "LOADING") {
-    return (
-      <View className="flex-1 items-center justify-center bg-bg">
-        <ActivityIndicator color={colors.primary} />
-      </View>
-    );
-  }
+  if (start === "LOADING") return <SplashScreen />;
 
   return (
     <NavigationContainer
