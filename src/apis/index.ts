@@ -55,4 +55,5 @@ export * from "./queries/ranking/useRankingQuery";
 
 // Voice Mutations
 export * from "./mutations/voice/recommendVoiceRoute";
+export * from "./mutations/voice/voiceJobs";
 export * from "./mutations/voice/useVoiceRouteRecommendMutation";
