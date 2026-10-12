@@ -30,6 +30,16 @@ export const recommendVoiceRoute = async (
   fileSizeBytes?: number,
   options?: RequestOptions
 ): Promise<VoiceRouteRecommendResponseDto> => {
+  return postMultipart<VoiceRouteRecommendResponseDto>(
+    "/voice/route-recommend",
+    buildVoiceFormData(params),
+    fileSizeBytes,
+    options
+  );
+};
+
+/** 음성 요청의 multipart 본문. 동기(`route-recommend`)와 비동기(`jobs`) 요청이 같은 필드를 쓴다 */
+export function buildVoiceFormData(params: VoiceRouteRecommendRequest): FormData {
   const formData = new FormData();
 
   // React Native file object vs Web Blob/File 호환성 처리
@@ -38,11 +48,5 @@ export const recommendVoiceRoute = async (
   if (params.preferredMode) {
     formData.append("preferredMode", params.preferredMode);
   }
-
-  return postMultipart<VoiceRouteRecommendResponseDto>(
-    "/voice/route-recommend",
-    formData,
-    fileSizeBytes,
-    options
-  );
-};
+  return formData;
+}

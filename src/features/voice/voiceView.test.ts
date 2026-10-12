@@ -10,6 +10,7 @@ import {
   WAVE_HEIGHTS,
   waveDelayMs,
 } from "./voiceView";
+import { VoiceJobFailedError } from "./voiceJob";
 
 const segment = (lineId: string, from: string, to: string) =>
   ({ lineId, fromStationId: from, fromStationName: from + "역", toStationId: to, toStationName: to + "역" }) as never;
@@ -22,13 +23,31 @@ describe("failureOf", () => {
     expect(failureOf(new ApiError("INTERNAL", "x", 500))).toBe("GENERIC");
   });
 
+  it("출발지 없음, 너무 긴 녹음, 서버가 쓸 수 없음도 따로 안내한다", () => {
+    expect(failureOf(new ApiError("VOICE_ORIGIN_REQUIRED", "x", 422))).toBe("ORIGIN_REQUIRED");
+    expect(failureOf(new ApiError("VOICE_AUDIO_TOO_LARGE", "x", 413))).toBe("TOO_LONG");
+    expect(failureOf(new ApiError("VOICE_QUEUE_FULL", "x", 503))).toBe("UNAVAILABLE");
+    expect(failureOf(new ApiError("VOICE_QUEUE_UNAVAILABLE", "x", 503))).toBe("UNAVAILABLE");
+  });
+
+  it("작업이 실패했다는 알림(VoiceJobFailedError)도 같은 상태로 가른다", () => {
+    const failed = (status: number) => new VoiceJobFailedError({ code: "X", message: "m", status });
+
+    expect(failureOf(failed(404))).toBe("NOT_FOUND");
+    expect(failureOf(failed(422))).toBe("ORIGIN_REQUIRED");
+    expect(failureOf(failed(503))).toBe("UNAVAILABLE");
+    expect(failureOf(failed(429))).toBe("BUSY");
+    expect(failureOf(failed(504))).toBe("GENERIC");
+    expect(failureOf(failed(500))).toBe("GENERIC");
+  });
+
   it("알 수 없는 오류는 일반 실패다", () => {
     expect(failureOf(new Error("boom"))).toBe("GENERIC");
     expect(failureOf(undefined)).toBe("GENERIC");
   });
 
   it("모든 실패 종류에 안내 문구가 있다", () => {
-    for (const kind of ["NO_SPEECH", "NOT_FOUND", "BUSY", "LOGIN", "GENERIC"] as const) {
+    for (const kind of ["NO_SPEECH", "NOT_FOUND", "ORIGIN_REQUIRED", "TOO_LONG", "UNAVAILABLE", "BUSY", "LOGIN", "GENERIC"] as const) {
       expect(FAILURE_TEXT[kind].title).not.toBe("");
       expect(FAILURE_TEXT[kind].body).not.toBe("");
     }

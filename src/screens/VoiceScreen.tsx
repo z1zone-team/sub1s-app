@@ -3,10 +3,7 @@ import { Pressable, View } from "react-native";
 import { useAuth } from "@clerk/expo";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import {
-  useVoiceRouteRecommendMutation,
-  type VoiceRouteRecommendResponseDto,
-} from "@/apis/mutations/voice/useVoiceRouteRecommendMutation";
+import type { VoiceRouteRecommendResponseDto } from "@/apis/mutations/voice/recommendVoiceRoute";
 import { DesignIcon } from "@/common/components/DesignIcon";
 import { LineBadge } from "@/common/components/LineBadge";
 import { LoginRequired } from "@/common/components/LoginRequired";
@@ -18,6 +15,7 @@ import { useAudioRecorder, type AudioRecordingResult } from "@/common/device/aud
 import { canSpeakBriefing } from "@/features/voice/briefingVoice";
 import { BriefingCard } from "@/features/voice/components/BriefingCard";
 import { useBriefingVoice } from "@/features/voice/hooks/useBriefingVoice";
+import { useVoiceJobMutation } from "@/features/voice/hooks/useVoiceJobMutation";
 import { MicButton } from "@/features/voice/components/MicButton";
 import { VoiceFailMascot } from "@/features/voice/components/VoiceFailMascot";
 import { WaveBars } from "@/features/voice/components/WaveBars";
@@ -63,7 +61,7 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
   const { isSignedIn } = useAuth();
   const insets = useSafeAreaInsets();
   const recorder = useAudioRecorder();
-  const recommend = useVoiceRouteRecommendMutation();
+  const recommend = useVoiceJobMutation();
   const briefingVoice = useBriefingVoice();
   const [phase, setPhase] = useState<Phase>({ name: "listening" });
   const started = useRef(false);
@@ -132,7 +130,8 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
       recorder.error === "AUDIO_PERMISSION_DENIED"
         ? { title: "마이크 권한이 필요해요", body: "설정에서 마이크 사용을 허용한 뒤 다시 시도해 주세요." }
         : FAILURE_TEXT[phase.failure];
-    const showExamples = phase.failure === "NO_SPEECH" || phase.failure === "NOT_FOUND";
+    const showExamples =
+      phase.failure === "NO_SPEECH" || phase.failure === "NOT_FOUND" || phase.failure === "ORIGIN_REQUIRED";
     return (
       <Screen>
         <VoiceHeader onClose={close} />

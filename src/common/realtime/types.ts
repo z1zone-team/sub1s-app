@@ -1,3 +1,4 @@
+import type { VoiceRouteRecommendResponseDto } from "../../apis/mutations/voice/recommendVoiceRoute";
 import type {
   TrainCongestionDto,
   CarCongestionDto,
@@ -53,6 +54,18 @@ export interface RankingUpdatePayload {
   currentPoints: number;
 }
 
+/** 음성 작업이 성공했을 때 요청한 본인에게만 오는 신호 */
+export interface VoiceResultPayload {
+  jobId: string;
+  result: VoiceRouteRecommendResponseDto;
+}
+
+/** 음성 작업이 실패했을 때 요청한 본인에게만 오는 신호 (HTTP 오류 응답과 같은 코드와 메시지) */
+export interface VoiceFailedPayload {
+  jobId: string;
+  error: { code: string; message: string; status: number };
+}
+
 export interface ClientToServerEvents {
   join_train: (payload: JoinTrainPayload) => void;
   leave_train: (payload: LeaveTrainPayload) => void;
@@ -66,6 +79,8 @@ export interface ServerToClientEvents {
   offroute_alert: (data: OffRouteAlertPayload) => void;
   ranking_changed: (data: RankingChangedPayload) => void;
   ranking_update: (data: RankingUpdatePayload) => void;
+  voice_result: (data: VoiceResultPayload) => void;
+  voice_failed: (data: VoiceFailedPayload) => void;
 }
 
 export type { TrainCongestionDto, CarCongestionDto };

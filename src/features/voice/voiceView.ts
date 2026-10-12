@@ -1,4 +1,5 @@
 import { ApiError } from "@/apis/client";
+import { VoiceJobFailedError } from "./voiceJob";
 import type { RouteMode, SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
 import type { RouteEndpoint } from "@/features/routing/endpoint";
 import { WALK_LINE_ID } from "@/theme";
@@ -6,13 +7,28 @@ import { WALK_LINE_ID } from "@/theme";
 /** 이보다 짧게 녹음하면 말이 없었다고 보고 서버에 보내지 않는다 */
 export const MIN_SPEECH_MS = 800;
 
-export type VoiceFailure = "NO_SPEECH" | "NOT_FOUND" | "BUSY" | "LOGIN" | "GENERIC";
+export type VoiceFailure =
+  | "NO_SPEECH"
+  | "NOT_FOUND"
+  | "ORIGIN_REQUIRED"
+  | "TOO_LONG"
+  | "UNAVAILABLE"
+  | "BUSY"
+  | "LOGIN"
+  | "GENERIC";
 
+/**
+ * 요청이 거절된 오류(`ApiError`)와 작업이 실패했다는 알림(`VoiceJobFailedError`)은 같은 코드, 상태를 쓴다.
+ * 서버가 상태로 구분해 주므로 상태로 화면을 고른다
+ */
 export function failureOf(error: unknown): VoiceFailure {
-  if (error instanceof ApiError) {
+  if (error instanceof ApiError || error instanceof VoiceJobFailedError) {
     if (error.status === 401) return "LOGIN";
     if (error.status === 429) return "BUSY";
     if (error.status === 404) return "NOT_FOUND";
+    if (error.status === 422) return "ORIGIN_REQUIRED";
+    if (error.status === 413) return "TOO_LONG";
+    if (error.status === 503) return "UNAVAILABLE";
   }
   return "GENERIC";
 }
@@ -25,6 +41,18 @@ export const FAILURE_TEXT: Record<VoiceFailure, { title: string; body: string }>
   NOT_FOUND: {
     title: "역을 찾지 못했어요",
     body: "말씀하신 출발역이나 도착역을 찾지 못했어요. 역 이름을 또박또박 다시 말씀해 주세요.",
+  },
+  ORIGIN_REQUIRED: {
+    title: "어디서 출발할까요?",
+    body: "출발역을 함께 말씀해 주세요. 예를 들어 “가양에서 강남까지”처럼 말씀해 주세요.",
+  },
+  TOO_LONG: {
+    title: "말씀이 너무 길어요",
+    body: "조금 짧게 나눠서 다시 말씀해 주세요.",
+  },
+  UNAVAILABLE: {
+    title: "지금은 음성 검색을 쓸 수 없어요",
+    body: "음성을 처리하는 곳이 바빠요. 잠시 후 다시 시도하거나 글자로 찾아 주세요.",
   },
   BUSY: {
     title: "잠시 후에 다시 해 주세요",
