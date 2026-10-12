@@ -137,7 +137,7 @@ export function RootNavigator() {
         <Stack.Screen
           name="LiveNav"
           component={LiveNavScreen}
-          options={{ title: "안내 중", headerBackVisible: false, gestureEnabled: false }}
+          options={{ headerShown: false, gestureEnabled: false }}
         />
         <Stack.Screen
           name="OffRoute"
