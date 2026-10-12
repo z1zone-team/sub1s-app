@@ -16,7 +16,11 @@ export type DesignIconName =
   | "back"
   | "search"
   | "swap"
-  | "close";
+  | "close"
+  | "walk"
+  | "train"
+  | "check"
+  | "arrow";
 
 interface DesignIconProps {
   name: DesignIconName;
@@ -126,6 +130,33 @@ export function DesignIcon({
       break;
     case "close":
       shapes = <Path d="M6 6l12 12M18 6L6 18" fill="none" strokeWidth={strokeWidth ?? 2.2} {...common} />;
+      break;
+    case "walk":
+      shapes = (
+        <>
+          <Circle cx={13} cy={4} r={2} fill="none" strokeWidth={strokeWidth ?? 2.4} {...common} />
+          <Path d="M10 21l2-6 3 3v3M8 12l3-4 4 1 2 4" fill="none" strokeWidth={strokeWidth ?? 2.4} {...common} />
+        </>
+      );
+      break;
+    case "train":
+      shapes = (
+        <>
+          <Rect x={5} y={3} width={14} height={15} rx={3} fill="none" stroke={paint} strokeWidth={strokeWidth ?? 2} strokeLinejoin="round" />
+          <Path d="M5 11h14M8 21l2-3M16 21l-2-3" fill="none" strokeWidth={strokeWidth ?? 2} {...common} />
+        </>
+      );
+      break;
+    case "check":
+      shapes = (
+        <>
+          <Circle cx={12} cy={12} r={9} fill="none" strokeWidth={strokeWidth ?? 2.6} {...common} />
+          <Path d="M8 12.5l3 3 5-6" fill="none" strokeWidth={strokeWidth ?? 2.6} {...common} />
+        </>
+      );
+      break;
+    case "arrow":
+      shapes = <Path d="M5 12h14M13 6l6 6-6 6" fill="none" strokeWidth={strokeWidth ?? 2} {...common} />;
       break;
     case "person":
       shapes = (

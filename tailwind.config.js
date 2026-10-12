@@ -106,9 +106,14 @@ module.exports = {
       /** 기본 4px 눈금 사이에 있는 프로토타입 값 */
       spacing: {
         0.75: "3px",
+        1.25: "5px",
+        1.75: "7px",
         4.5: "18px",
         5.5: "22px",
+        6.5: "26px",
+        11.5: "46px",
         7.5: "30px",
+        9.25: "37px",
         8.5: "34px",
         13: "52px",
         15: "60px",
@@ -119,6 +124,10 @@ module.exports = {
       },
       width: {
         control: "44px",
+      },
+      borderWidth: {
+        1.5: "1.5px",
+        2.5: "2.5px",
       },
       height: {
         control: "44px",
