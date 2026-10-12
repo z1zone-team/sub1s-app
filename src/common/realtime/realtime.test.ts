@@ -149,6 +149,30 @@ describe("Realtime Module", () => {
       expect(mockSocketDisconnect).toHaveBeenCalled();
       expect(useRealtimeStore.getState().isConnected).toBe(false);
     });
+
+    it("연결을 쓰는 화면이 모두 놓아야 연결을 끊는다", async () => {
+      subwaySocketClient.disconnect();
+      mockSocketDisconnect.mockClear();
+
+      await subwaySocketClient.retain();
+      await subwaySocketClient.retain();
+
+      subwaySocketClient.release();
+      expect(mockSocketDisconnect).not.toHaveBeenCalled();
+
+      subwaySocketClient.release();
+      expect(mockSocketDisconnect).toHaveBeenCalledTimes(1);
+    });
+
+    it("놓는 횟수가 더 많아도 연결 수가 음수가 되지 않는다", async () => {
+      subwaySocketClient.release();
+      mockSocketDisconnect.mockClear();
+
+      await subwaySocketClient.retain();
+      subwaySocketClient.release();
+
+      expect(mockSocketDisconnect).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("Offline Fallback Logic (REST)", () => {

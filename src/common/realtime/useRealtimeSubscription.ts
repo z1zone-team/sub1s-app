@@ -21,8 +21,11 @@ export function useRealtimeSubscription(train?: JoinTrainPayload | null) {
     let isMounted = true;
 
     async function init() {
-      const socket = await subwaySocketClient.connect();
-      if (!isMounted) return;
+      const socket = await subwaySocketClient.retain();
+      if (!isMounted) {
+        subwaySocketClient.release();
+        return;
+      }
 
       const onCongestionTick = (data: TrainCongestionDto) => {
         actions.setCongestion(data);
@@ -57,6 +60,7 @@ export function useRealtimeSubscription(train?: JoinTrainPayload | null) {
         if (train) {
           subwaySocketClient.leaveTrain(train);
         }
+        subwaySocketClient.release();
       };
     }
 

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useAuth } from "@clerk/expo";
+import { useIsFocused } from "@react-navigation/native";
 import { useTravelStatsQuery } from "@/apis/queries/profile/useTravelStatsQuery";
 import { useRankingQuery } from "@/apis/queries/ranking/useRankingQuery";
 import { DesignIcon } from "@/common/components/DesignIcon";
@@ -10,6 +11,7 @@ import { LoginRequired } from "@/common/components/LoginRequired";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { InviteSheet } from "@/features/ranking/components/InviteSheet";
+import { useRankingRealtime } from "@/features/ranking/useRankingRealtime";
 import { PodiumColumn } from "@/features/ranking/components/PodiumColumn";
 import { MoodFace } from "@/features/ranking/components/RankCharacters";
 import { RankRow } from "@/features/ranking/components/RankRow";
@@ -43,6 +45,9 @@ export function RankingScreen() {
     limit: 20,
   });
   const monthStats = useTravelStatsQuery("MONTH");
+  // 화면이 보이는 동안 다른 사용자의 이동으로 순위가 바뀌면 바로 다시 불러온다
+  const focused = useIsFocused();
+  useRankingRealtime(Boolean(isSignedIn) && focused);
 
   if (!isSignedIn) {
     return <LoginRequired description="로그인하면 랭킹을 보고 친구와 겨룰 수 있어요" />;
