@@ -38,7 +38,9 @@ export type DesignIconName =
   | "plus"
   | "link"
   | "message"
-  | "share";
+  | "share"
+  | "kakao"
+  | "google";
 
 interface DesignIconProps {
   name: DesignIconName;
@@ -256,6 +258,19 @@ export function DesignIcon({
       break;
     case "share":
       shapes = <Path d="M12 3v12M7 8l5-5 5 5M5 14v6h14v-6" fill="none" strokeWidth={strokeWidth ?? 1.8} {...common} />;
+      break;
+    case "kakao":
+      shapes = (
+        <Path
+          d="M12 4C7 4 3 7.2 3 11.2c0 2.6 1.7 4.8 4.2 6.1L6.5 21l4.1-2.8c.5.1.9.1 1.4.1 5 0 9-3.2 9-7.1S17 4 12 4z"
+          fill="none"
+          strokeWidth={strokeWidth ?? 1.9}
+          {...common}
+        />
+      );
+      break;
+    case "google":
+      shapes = <Path d="M20 12.2c0 4.6-3.3 7.8-8 7.8a8 8 0 1 1 5.4-13.9M12.4 12h7.6" fill="none" strokeWidth={strokeWidth ?? 1.9} {...common} />;
       break;
     case "play":
       shapes = <Path d="M7 4l13 8-13 8z" fill={paint} stroke="none" />;
