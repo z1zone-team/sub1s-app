@@ -27,6 +27,8 @@ export interface MapData {
   lines: MapLine[];
   /** 모든 마커와 선이 보이게 맞출지. 아니면 center를 쓴다 */
   fit: boolean;
+  /** 맞출 때 아래를 이만큼(px) 더 비운다. 지도 위에 바텀시트가 얹힐 때 쓴다 */
+  bottomInset?: number;
   center?: [number, number];
   zoom?: number;
 }
@@ -116,7 +118,7 @@ export function buildMapHtml(vworldKey: string): string {
         bounds.push([m.lat, m.lng]);
       });
       if (data.fit && bounds.length > 0) {
-        map.fitBounds(bounds, { padding: [32, 32], maxZoom: 15 });
+        map.fitBounds(bounds, { paddingTopLeft: [32, 32], paddingBottomRight: [32, 32 + (data.bottomInset || 0)], maxZoom: 15 });
       } else if (data.center) {
         map.setView(data.center, data.zoom || ${DEFAULT_ZOOM});
       }

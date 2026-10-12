@@ -116,3 +116,33 @@ export function axisTicks(maxKm: number): { max: number; ticks: number[] } {
     scale *= 10;
   }
 }
+
+/** ISO 시각의 한국 날짜 "2026-10-12". 읽을 수 없으면 빈 문자열 */
+export function kstDateKey(iso: string): string {
+  const time = Date.parse(iso);
+  if (Number.isNaN(time)) return "";
+  return new Date(time + KST_OFFSET_MS).toISOString().slice(0, 10);
+}
+
+/**
+ * 이동 지도의 이동 목록. 주와 월은 막대 날짜 범위 안의 기록만 남긴다.
+ * 년과 전체는 기록 API가 월 단위라 받아 온 기록을 그대로 둔다(이번 달 기록뿐)
+ */
+export function logsForPeriod(
+  logs: TravelLogItemDto[],
+  period: TravelStatsPeriod,
+  buckets: StatsBucketDto[] | undefined
+): TravelLogItemDto[] {
+  if ((period !== "WEEK" && period !== "MONTH") || !buckets || buckets.length === 0) return logs;
+  const start = buckets[0].key;
+  const end = buckets[buckets.length - 1].key;
+  return logs.filter((log) => {
+    const key = kstDateKey(log.traveledAt);
+    return key >= start && key <= end;
+  });
+}
+
+/** 호선을 골랐을 때 그 호선을 탄 기록만 또렷하게 보인다. 고르지 않았으면 모두 또렷하다 */
+export function logMatchesLine(log: TravelLogItemDto, focusLineId: string | undefined): boolean {
+  return !focusLineId || log.lineIds.includes(focusLineId);
+}
