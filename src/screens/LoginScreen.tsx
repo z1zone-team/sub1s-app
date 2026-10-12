@@ -1,17 +1,55 @@
 import React, { useEffect } from "react";
-import { View } from "react-native";
+import { ActivityIndicator, Pressable, View } from "react-native";
 import { useAuth } from "@clerk/expo";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { Button } from "@/common/components/Button";
+import { DesignIcon, type DesignIconName } from "@/common/components/DesignIcon";
+import { RiseIn } from "@/common/components/RiseIn";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { useGuestStore } from "@/common/auth/guest-store";
-import { useSocialSignIn } from "@/common/auth/useSocialSignIn";
+import { useSocialSignIn, type SocialProvider } from "@/common/auth/useSocialSignIn";
 import type { RootStackParamList } from "@/navigation/navigation-types";
+import { cn } from "@/lib/cn";
+import { useTheme } from "@/theme";
 
-export function LoginScreen({
-  navigation,
-}: NativeStackScreenProps<RootStackParamList, "Login">) {
+const RISE_FROM = 12;
+const RISE_MS = 500;
+
+interface SocialButtonProps {
+  icon: DesignIconName;
+  label: string;
+  loading: boolean;
+  disabled: boolean;
+  onPress: () => void;
+}
+
+/** 프로토타입의 소셜 로그인 버튼: 54px, 테두리, 아이콘과 글자가 가운데에 */
+function SocialButton({ icon, label, loading, disabled, onPress }: SocialButtonProps) {
+  const { colors } = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ disabled, busy: loading }}
+      disabled={disabled}
+      onPress={onPress}
+      className={cn(
+        "h-13.5 flex-row items-center justify-center gap-2.5 rounded-md border border-border bg-bg active:bg-surface",
+        disabled && !loading ? "opacity-50" : ""
+      )}
+    >
+      {loading ? <ActivityIndicator color={colors.text} /> : <DesignIcon name={icon} size={20} />}
+      <Text className="text-base font-sans-bold">{label}</Text>
+    </Pressable>
+  );
+}
+
+const PROVIDERS: Array<{ provider: SocialProvider; icon: DesignIconName; label: string }> = [
+  { provider: "kakao", icon: "kakao", label: "카카오로 계속하기" },
+  { provider: "google", icon: "google", label: "Google로 계속하기" },
+];
+
+/** 프로토타입 Login.dc.html. 로고는 나중에 한번에 바꾸기로 해서 임시 아이콘이다 */
+export function LoginScreen({ navigation }: NativeStackScreenProps<RootStackParamList, "Login">) {
   const { isSignedIn } = useAuth();
   const chooseGuest = useGuestStore((state) => state.choose);
   const { signIn, pending, error } = useSocialSignIn();
@@ -26,41 +64,55 @@ export function LoginScreen({
   }, [isSignedIn]);
 
   return (
-    <Screen contentClassName="justify-center gap-3 px-6">
-      <View className="mb-6 gap-2">
-        <Text className="text-display-md font-sans-extrabold text-primary">Sub1S</Text>
-        <Text className="text-title-lg font-sans-extrabold">지하철, 더 가볍게</Text>
-        <Text className="text-body text-text-secondary">
-          가입 없이 소셜 계정으로 바로 시작하고 나에게 맞는 경로를 추천받으세요
-        </Text>
+    <Screen>
+      <View className="flex-1 items-center justify-center px-7">
+        <RiseIn from={RISE_FROM} durationMs={RISE_MS}>
+          <View className="h-26 w-26 items-center justify-center rounded-xl bg-primary">
+            <DesignIcon name="train" size={52} tone="onPrimary" />
+          </View>
+        </RiseIn>
+        <RiseIn from={RISE_FROM} durationMs={RISE_MS} delayMs={80}>
+          <Text className="mt-7 text-center text-display-sm font-sans-extrabold leading-snug">지하철, 더 가볍게</Text>
+        </RiseIn>
+        <RiseIn from={RISE_FROM} durationMs={RISE_MS} delayMs={140}>
+          <Text className="mt-2.5 text-center text-subtitle leading-normal text-text-secondary">
+            {"가입 없이 소셜 계정으로 바로 시작하고\n나에게 맞는 경로를 추천받으세요"}
+          </Text>
+        </RiseIn>
       </View>
 
-      <Button
-        label="카카오로 계속하기"
-        onPress={() => void signIn("kakao")}
-        loading={pending === "kakao"}
-        disabled={pending !== null}
-      />
-      <Button
-        label="Google로 계속하기"
-        variant="secondary"
-        onPress={() => void signIn("google")}
-        loading={pending === "google"}
-        disabled={pending !== null}
-      />
-      {error ? <Text className="text-center text-body-sm text-error">{error}</Text> : null}
+      <RiseIn from={RISE_FROM} durationMs={RISE_MS} delayMs={200}>
+        <View className="gap-2.5 px-5">
+          {PROVIDERS.map((item) => (
+            <SocialButton
+              key={item.provider}
+              icon={item.icon}
+              label={item.label}
+              loading={pending === item.provider}
+              disabled={pending !== null}
+              onPress={() => void signIn(item.provider)}
+            />
+          ))}
+          {error ? <Text className="text-center text-body-sm text-error">{error}</Text> : null}
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              void chooseGuest();
+              leave();
+            }}
+            className="h-control items-center justify-center"
+          >
+            <Text className="text-body font-sans-semibold text-text-secondary">로그인 없이 둘러보기</Text>
+          </Pressable>
+        </View>
+      </RiseIn>
 
-      <Button
-        label="로그인 없이 둘러보기"
-        variant="ghost"
-        onPress={() => {
-          void chooseGuest();
-          leave();
-        }}
-      />
-
-      <Text className="mt-4 text-center text-small text-text-secondary">
-        계속하면 Sub1S의 이용약관 및 개인정보처리방침에 동의하는 것으로 간주합니다.
+      <Text className="mx-7 mb-6 mt-2 text-center text-small leading-relaxed text-text-secondary">
+        {"계속하면 Sub1S의 "}
+        <Text className="text-small font-sans-semibold text-accent underline">이용약관</Text>
+        {" 및 "}
+        <Text className="text-small font-sans-semibold text-accent underline">개인정보처리방침</Text>
+        {"에\n동의하는 것으로 간주합니다."}
       </Text>
     </Screen>
   );
