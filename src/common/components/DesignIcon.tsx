@@ -25,7 +25,10 @@ export type DesignIconName =
   | "navigate"
   | "bell"
   | "undo"
-  | "warning";
+  | "warning"
+  | "play"
+  | "pause"
+  | "retry";
 
 interface DesignIconProps {
   name: DesignIconName;
@@ -180,6 +183,20 @@ export function DesignIcon({
       shapes = (
         <Path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0" fill="none" strokeWidth={strokeWidth ?? 2} {...common} />
       );
+      break;
+    case "play":
+      shapes = <Path d="M7 4l13 8-13 8z" fill={paint} stroke="none" />;
+      break;
+    case "pause":
+      shapes = (
+        <>
+          <Rect x={6} y={5} width={4} height={14} rx={1} fill={paint} />
+          <Rect x={14} y={5} width={4} height={14} rx={1} fill={paint} />
+        </>
+      );
+      break;
+    case "retry":
+      shapes = <Path d="M4 12a8 8 0 1 0 2.5-5.8M4 4v4h4" fill="none" strokeWidth={strokeWidth ?? 2} {...common} />;
       break;
     case "warning":
       shapes = (

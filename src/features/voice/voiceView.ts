@@ -50,8 +50,27 @@ const MODE_REASON: Record<RouteMode, string> = {
   ONLY_WALK: "걸어서 가는 경로",
 };
 
+/** 결과 화면에서 굵게 보이는 경로 종류 ("취향에 맞춘 경로") */
+export function modeLabel(mode: RouteMode): string {
+  return MODE_REASON[mode];
+}
+
 export function modeReasonText(mode: RouteMode): string {
   return `${MODE_REASON[mode]}로 찾았어요`;
+}
+
+/** 추천 경로의 마지막 탑승 호선. 결과 화면의 "가양 → 강남 [2]" 칩에 호선 배지로 붙는다. 탑승 구간이 없으면 undefined */
+export function destinationLineId(option: SubwayRouteOptionDto): string | undefined {
+  const rides = option.segments.filter((segment) => segment.lineId !== WALK_LINE_ID);
+  return rides[rides.length - 1]?.lineId;
+}
+
+/** 프로토타입 Voice.dc.html의 파형 막대 높이(px) 24개 */
+export const WAVE_HEIGHTS = [18, 34, 52, 30, 64, 80, 46, 70, 92, 58, 40, 76, 88, 50, 66, 36, 72, 54, 28, 60, 44, 24, 38, 16];
+
+/** 파형 막대마다 시작이 조금씩 어긋나도록 (i x 0.07) % 0.9 초 늦춘다 */
+export function waveDelayMs(index: number): number {
+  return Math.round(((index * 0.07) % 0.9) * 1000);
 }
 
 /** 추천 경로의 첫 탑승역과 마지막 도착역으로 출발지와 도착지를 만든다. 경로 상세가 이 두 값을 받는다 */
