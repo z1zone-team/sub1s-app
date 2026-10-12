@@ -13,7 +13,7 @@ import {
   separateFareLineNames,
   splitDuration,
 } from "../routeCardView";
-import { clockRange, operationLabel, walkSeconds, type RouteGroup } from "../routeView";
+import { clockRange, congestionPhrase, operationLabel, walkSeconds, withTopicParticle, type RouteGroup } from "../routeView";
 import { InfoChip } from "./InfoChip";
 import { PillSegmentBar } from "./PillSegmentBar";
 import { RideBadge } from "./RideBadge";
@@ -77,8 +77,9 @@ function BoardingDetails({ option, boarding }: { option: SubwayRouteOptionDto; b
           <View className="w-9.25 items-center">
             <DesignIcon name="train" size={16} tone="primary" />
           </View>
-          <Text className="text-body text-text-secondary">추천 탑승</Text>
-          <Text className="text-body font-sans-bold">{cars.carNo}번째 칸</Text>
+          <Text className="text-body text-text-secondary">
+            <Text className="text-body font-sans-bold text-text">{cars.carNo}번째 칸</Text>이 한산해요
+          </Text>
           {cars.weakAc.length > 0 ? (
             <Text className="text-body text-text-secondary">· 약냉방 {cars.weakAc.join("·")}번째</Text>
           ) : null}
@@ -92,7 +93,7 @@ function BoardingDetails({ option, boarding }: { option: SubwayRouteOptionDto; b
           <Text className="text-body font-sans-bold">{alight.station} 하차</Text>
           {alight.walkTo ? (
             <Text numberOfLines={1} className="shrink text-body text-text-secondary">
-              → 도보 {alight.walkMinutes}분 {alight.walkTo}
+              → 걸어서 {alight.walkMinutes}분 {alight.walkTo}
             </Text>
           ) : null}
         </View>
@@ -135,12 +136,12 @@ export function RouteResultCard({ group, boarding, onPress }: RouteResultCardPro
       accessibilityRole="button"
       onPress={onPress}
       className={cn(
-        "rounded-lg px-4 py-4.5",
-        recommended ? "border-1.5 border-primary bg-primary-tint" : "border border-border bg-bg"
+        "rounded-lg-plus px-4 py-4.5",
+        recommended ? "bg-primary-tint" : "bg-bg"
       )}
     >
       <View className="flex-row items-center gap-2">
-        <View className="h-6.5 justify-center rounded-pill bg-primary px-2.5">
+        <View className="h-6.5 justify-center rounded-xs-plus bg-primary px-2.5">
           <Text className="text-small font-sans-bold text-on-primary">{group.title}</Text>
         </View>
         {group.tagline ? (
@@ -158,7 +159,7 @@ export function RouteResultCard({ group, boarding, onPress }: RouteResultCardPro
         {[
           clock,
           `환승 ${option.transferCount}회`,
-          recommended && walk > 0 ? `도보 ${formatDurationSec(walk)}` : "",
+          recommended && walk > 0 ? `걸어서 ${formatDurationSec(walk)}` : "",
         ]
           .filter(Boolean)
           .join(" · ")}
@@ -173,12 +174,12 @@ export function RouteResultCard({ group, boarding, onPress }: RouteResultCardPro
           <InfoChip
             tone={chipTone}
             leading={<View className={cn("h-2 w-2 rounded-pill", CONGESTION_BG[congestion.level])} />}
-            label={recommended ? `${congestion.level} · 혼잡도 ${congestion.ratePercent}%` : `${congestion.level} · ${congestion.ratePercent}%`}
+            label={`${congestionPhrase(congestion.level)} ${congestion.ratePercent}%`}
           />
         ) : null}
-        {!recommended && cars ? <InfoChip tone={chipTone} label={`추천 탑승 ${cars.carNo}번째 칸`} /> : null}
+        {!recommended && cars ? <InfoChip tone={chipTone} label={`${cars.carNo}번째 칸이 한산해요`} /> : null}
         {separateFare.map((name) => (
-          <InfoChip key={name} tone={chipTone} label={`${name} 별도 요금`} />
+          <InfoChip key={name} tone={chipTone} label={`${withTopicParticle(name)} 요금이 더 붙어요`} />
         ))}
         {operation && (operation.tone === "warning" || recommended) ? (
           <InfoChip

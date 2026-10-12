@@ -8,6 +8,7 @@ import type {
 import type { NextTrain } from "@/apis/queries/stations/getNextTrains";
 import {
   carInsight,
+  congestionPhrase,
   clockRange,
   describeDoor,
   formatWaiting,
@@ -17,6 +18,7 @@ import {
   pickNextTrain,
   reasonText,
   routeSignature,
+  withTopicParticle,
   segmentShares,
   walkSeconds,
 } from "./routeView";
@@ -131,11 +133,11 @@ describe("reasonText", () => {
   it("lists the preferences the route fits, in the order the user ranked them", () => {
     expect(
       reasonText(["FEWEST_TRANSFERS", "WEAK_AC_CAR", "FASTEST"], ["PERSONAL"], ["FEW_TRANSFERS", "WEAK_AC"])
-    ).toBe("환승 적게 · 약냉방칸 선호에 맞췄어요");
+    ).toBe("환승 적고 약냉방칸 있는 길로 골랐어요");
   });
 
   it("counts no transfer at all as fitting the fewer-transfers preference", () => {
-    expect(reasonText(["NO_TRANSFER"], ["PERSONAL"], ["FEW_TRANSFERS"])).toBe("환승 적게 선호에 맞췄어요");
+    expect(reasonText(["NO_TRANSFER"], ["PERSONAL"], ["FEW_TRANSFERS"])).toBe("환승 적은 길로 골랐어요");
   });
 
   it("falls back to the mode tagline, then to the route highlights, when no preference fits", () => {
@@ -262,7 +264,7 @@ describe("carInsight", () => {
 
 describe("operationLabel", () => {
   it("says nothing is announced for NORMAL, shows the notice for DISRUPTED, and hides UNKNOWN", () => {
-    expect(operationLabel("NORMAL")).toEqual({ tone: "ok", text: "공지된 이상 없음" });
+    expect(operationLabel("NORMAL")).toEqual({ tone: "ok", text: "공지된 지연은 없어요" });
     expect(operationLabel("DISRUPTED", { title: "2호선 이대역 무정차 통과중", occurredAt: "x" })).toEqual({
       tone: "warning",
       text: "2호선 이대역 무정차 통과중",
@@ -295,5 +297,29 @@ describe("highlight phrases", () => {
     for (const tag of allTags) {
       expect(reasonText([tag], ["PERSONAL"])).toEqual(expect.any(String));
     }
+  });
+});
+
+describe("congestionPhrase", () => {
+  it("혼잡도 단계를 말로 풀어 쓴다", () => {
+    expect(congestionPhrase("혼잡")).toBe("많이 붐벼요");
+    expect(congestionPhrase("보통")).toBe("적당히 붐벼요");
+    expect(congestionPhrase("여유")).toBe("여유 있어요");
+  });
+});
+
+describe("withTopicParticle", () => {
+  it("받침이 있으면 은, 없으면 는을 붙인다", () => {
+    expect(withTopicParticle("신분당선")).toBe("신분당선은");
+    expect(withTopicParticle("공항철도")).toBe("공항철도는");
+    expect(withTopicParticle("GTX-A")).toBe("GTX-A는");
+  });
+});
+
+describe("선호가 둘 이상일 때 문장", () => {
+  it("앞은 잇는 말, 마지막은 꾸미는 말로 이어 쓴다", () => {
+    expect(reasonText(["FASTEST", "LEAST_CROWDED", "LEAST_WALK"], ["PERSONAL"], ["FAST", "UNCROWDED", "LESS_WALK"])).toBe(
+      "빠르고 덜 붐비고 덜 걷는 길로 골랐어요"
+    );
   });
 });

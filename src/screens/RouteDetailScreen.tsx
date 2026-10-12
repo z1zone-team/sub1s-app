@@ -60,7 +60,6 @@ export function RouteDetailScreen({
   };
 
   const { hours, minutes } = splitDuration(option.totalDurationSec);
-  const arrival = Date.parse(option.estimatedArrivalTimestamp);
 
   return (
     <View className="flex-1 bg-surface">
@@ -82,7 +81,7 @@ export function RouteDetailScreen({
         <View className="mb-0.5 mt-2.5 h-1 w-9 self-center rounded-pill bg-border" />
         <ScrollView contentContainerClassName="px-5 pb-27.5 pt-3.5" showsVerticalScrollIndicator={false}>
           <View className="flex-row items-center gap-1.5">
-            <View className="h-6 justify-center rounded-pill bg-primary px-2.25">
+            <View className="h-6 justify-center rounded-xs-plus bg-primary px-2.25">
               <Text className="text-caption font-sans-bold text-on-primary">{title}</Text>
             </View>
             {tagline ? (
@@ -117,20 +116,14 @@ export function RouteDetailScreen({
 
       <View
         style={{ paddingBottom: Math.max(insets.bottom, 12) + 10 }}
-        className="absolute inset-x-0 bottom-0 flex-row items-center gap-2 border-t border-border bg-bg px-5 pt-3"
+        className="absolute inset-x-0 bottom-0 flex-row gap-2 bg-bg px-4 pt-3"
       >
-        <View className="flex-1">
-          <Text className="text-title font-sans-bold">{formatDurationSec(option.totalDurationSec)}</Text>
-          {!Number.isNaN(arrival) ? (
-            <Text className="text-small text-text-secondary">{formatClockKst(arrival)} 도착</Text>
-          ) : null}
-        </View>
         <Pressable
           accessibilityRole="button"
           onPress={() => navigation.goBack()}
-          className="h-12.5 justify-center rounded-md border border-border bg-bg px-4"
+          className="h-14 flex-1 items-center justify-center rounded-lg bg-surface"
         >
-          <Text className="text-subtitle font-sans-bold">다른 경로</Text>
+          <Text className="text-base font-sans-semibold">다른 경로</Text>
         </Pressable>
         {canGuide ? (
           <Pressable
@@ -138,10 +131,11 @@ export function RouteDetailScreen({
             accessibilityState={{ busy: startTracking.isPending }}
             disabled={startTracking.isPending}
             onPress={startGuide}
-            className="h-12.5 flex-row items-center gap-1.5 rounded-md bg-primary px-5"
+            style={{ flex: 2 }}
+            className="h-14 flex-row items-center justify-center gap-1.5 rounded-lg bg-primary"
           >
             <DesignIcon name="navigate" size={16} tone="onPrimary" />
-            <Text className="text-subtitle font-sans-bold text-on-primary">안내시작</Text>
+            <Text className="text-base font-sans-bold text-on-primary">{formatDurationSec(option.totalDurationSec)} 안내 시작</Text>
           </Pressable>
         ) : null}
       </View>

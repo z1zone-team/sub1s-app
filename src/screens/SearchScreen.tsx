@@ -3,7 +3,6 @@ import { FlatList, Pressable, TextInput, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { ApiError } from "@/apis/client";
 import { usePlaceSearchQuery } from "@/apis/queries/places/usePlaceSearchQuery";
-import { useRouteSearchQuery } from "@/apis/queries/routing/useRouteSearchQuery";
 import { useSavePlaceMutation } from "@/apis/queries/users/useUserPlaces";
 import { DesignIcon } from "@/common/components/DesignIcon";
 import { Screen } from "@/common/components/Screen";
@@ -13,18 +12,15 @@ import {
   endpointFromCoords,
   isSameEndpoint,
   isValidEndpoint,
-  toRouteSearchRequest,
   type RouteEndpoint,
 } from "@/features/routing/endpoint";
-import { groupRouteOptions } from "@/features/routing/routeView";
 import { toSearchRows } from "@/features/routing/searchRows";
 import { useRecentDestinations } from "@/features/routing/useRecentDestinations";
 import { endpointToSaveBody, PLACE_LABEL } from "@/features/places/placeEndpoint";
 import { RecentSearchList } from "@/features/search/components/RecentSearchList";
-import { RecommendedRoutes } from "@/features/search/components/RecommendedRoutes";
 import { RouteEndpointBox, type EndpointField } from "@/features/search/components/RouteEndpointBox";
 import { SearchResultRow } from "@/features/search/components/SearchResultRow";
-import { pickRecommendedGroups, recommendedPair, swapEndpoints } from "@/features/search/searchLogic";
+import { swapEndpoints } from "@/features/search/searchLogic";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import type { RootStackParamList } from "@/navigation/navigation-types";
 
@@ -123,16 +119,6 @@ export function SearchScreen({
 
   const showSuggestions = active === "destination" && text.trim().length === 0;
 
-  // 추천 경로: 지금의 출발지에서 가장 최근 도착지까지
-  const pair = useMemo(() => recommendedPair(origin, recent.destinations), [origin, recent.destinations]);
-  const recommended = useRouteSearchQuery(pair ? toRouteSearchRequest(pair.origin, pair.destination) : {}, {
-    enabled: showSuggestions && !pickPlace && Boolean(pair),
-  });
-  const recommendedGroups = useMemo(
-    () => pickRecommendedGroups(groupRouteOptions(recommended.data?.options ?? [])),
-    [recommended.data]
-  );
-
   const typing = text.trim() !== query.trim();
 
   const errorMessage = (() => {
@@ -144,7 +130,7 @@ export function SearchScreen({
   })();
 
   return (
-    <Screen>
+    <Screen surface>
       <View className="px-4 pt-2">
         <Pressable
           accessibilityRole="button"
@@ -204,14 +190,6 @@ export function SearchScreen({
           showSuggestions ? (
             <View className="pb-8">
               <RecentSearchList recent={recent} onSelect={(endpoint) => choose(endpoint)} />
-              {pair && !pickPlace ? (
-                <RecommendedRoutes
-                  originName={pair.origin.name}
-                  destinationName={pair.destination.name}
-                  groups={recommendedGroups}
-                  onPress={() => navigation.navigate("RouteResult", { origin: pair.origin, destination: pair.destination })}
-                />
-              ) : null}
             </View>
           ) : null
         }

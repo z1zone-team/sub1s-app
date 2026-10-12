@@ -4,6 +4,7 @@ import type {
   PathSegmentDto,
   RouteHighlight,
   RouteMode,
+  CongestionLevel,
   SegmentCar,
   SubwayRouteOptionDto,
 } from "@/apis/queries/routing/searchRoutes";
@@ -48,6 +49,30 @@ const PREF_TAGS: Record<string, { label: string; tags: RouteHighlight[] }> = {
   LESS_WALK: { label: "덜 걷게", tags: ["LEAST_WALK"] },
 };
 
+/** 선호 이름을 문장 속에서 잇는 말: 둘 이상이면 앞은 "환승 적고", 마지막은 "약냉방칸 있는"처럼 쓴다 */
+const PREF_PHRASE: Record<string, { connective: string; attributive: string }> = {
+  "빠르게": { connective: "빠르고", attributive: "빠른" },
+  "환승 적게": { connective: "환승 적고", attributive: "환승 적은" },
+  "약냉방칸": { connective: "약냉방칸 있고", attributive: "약냉방칸 있는" },
+  "덜 붐비게": { connective: "덜 붐비고", attributive: "덜 붐비는" },
+  "덜 걷게": { connective: "덜 걷고", attributive: "덜 걷는" },
+};
+
+/** 혼잡도 단계를 사람이 말하듯이: 혼잡은 "많이 붐벼요", 보통은 "적당히 붐벼요", 여유는 "여유 있어요" */
+export function congestionPhrase(level: CongestionLevel): string {
+  if (level === "혼잡") return "많이 붐벼요";
+  if (level === "보통") return "적당히 붐벼요";
+  return "여유 있어요";
+}
+
+/** 마지막 글자 받침에 따라 은 또는 는을 붙인다: "신분당선은", "공항철도는" (한글이 아니면 는) */
+export function withTopicParticle(name: string): string {
+  const last = name.charCodeAt(name.length - 1);
+  const isHangul = last >= 0xac00 && last <= 0xd7a3;
+  const hasFinal = isHangul && (last - 0xac00) % 28 !== 0;
+  return `${name}${hasFinal ? "은" : "는"}`;
+}
+
 export interface RouteGroup {
   option: SubwayRouteOptionDto;
   /** 이 경로를 낸 모드들 (같은 경로면 여러 개) */
@@ -83,7 +108,7 @@ export function matchedPreferences(
 }
 
 /**
- * 카드에 보이는 한 줄 설명. 사용자의 선호와 맞는 장점이 있으면 "환승 적게 · 약냉방칸 선호에 맞췄어요",
+ * 카드에 보이는 한 줄 설명. 사용자의 선호와 맞는 장점이 있으면 "환승 적고 약냉방칸 있는 길로 골랐어요",
  * 없으면 모드의 기본 설명이나 옵션의 장점 한두 개를 쓴다
  */
 export function reasonText(
@@ -92,7 +117,12 @@ export function reasonText(
   routePrefs: string[] = []
 ): string | undefined {
   const matched = matchedPreferences(highlights, routePrefs);
-  if (matched.length > 0) return `${matched.join(" · ")} 선호에 맞췄어요`;
+  if (matched.length > 0) {
+    const phrases = matched.map((label) => PREF_PHRASE[label]);
+    const front = phrases.slice(0, -1).map((phrase) => phrase.connective);
+    const last = phrases[phrases.length - 1].attributive;
+    return `${[...front, last].join(" ")} 길로 골랐어요`;
+  }
 
   const tagline = modes.map((mode) => MODE_TAGLINE[mode]).find(Boolean);
   if (tagline) return tagline;
@@ -200,12 +230,12 @@ export interface OperationLabel {
   text: string;
 }
 
-/** NORMAL은 공지된 이상이 없다는 뜻이라 "공지된 이상 없음", UNKNOWN은 아무것도 보이지 않는다 */
+/** NORMAL은 공지된 이상이 없다는 뜻이라 "공지된 지연은 없어요", UNKNOWN은 아무것도 보이지 않는다 */
 export function operationLabel(
   status: OperationStatus,
   notice?: OperationNotice
 ): OperationLabel | undefined {
-  if (status === "NORMAL") return { tone: "ok", text: "공지된 이상 없음" };
+  if (status === "NORMAL") return { tone: "ok", text: "공지된 지연은 없어요" };
   if (status === "DISRUPTED") return { tone: "warning", text: notice?.title ?? "운행에 이상이 있어요" };
   return undefined;
 }
