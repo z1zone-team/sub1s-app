@@ -24,6 +24,8 @@ class SubwaySocketClient {
   private socket: SubwaySocket | null = null;
   private appStateSubscription: { remove: () => void } | null = null;
   private shouldBeConnected = false;
+  /** 소켓을 쓰는 화면의 수. 마지막 화면이 놓을 때만 연결을 끊는다 */
+  private holders = 0;
 
   constructor() {
     this.setupAppStateListener();
@@ -66,6 +68,20 @@ class SubwaySocketClient {
     }
 
     return this.socket!;
+  }
+
+  /** 화면이 소켓을 쓰기 시작한다. 반드시 같은 횟수만큼 release를 불러야 한다 */
+  public async retain(): Promise<SubwaySocket> {
+    this.holders += 1;
+    const socket = await this.connect();
+    // 연결하는 사이에 화면이 벗어났으면 바로 정리한다
+    if (this.holders === 0) this.disconnect();
+    return socket;
+  }
+
+  public release(): void {
+    this.holders = Math.max(0, this.holders - 1);
+    if (this.holders === 0) this.disconnect();
   }
 
   public disconnect(): void {
