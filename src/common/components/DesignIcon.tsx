@@ -34,7 +34,11 @@ export type DesignIconName =
   | "friends"
   | "notify"
   | "eye"
-  | "expand";
+  | "expand"
+  | "plus"
+  | "link"
+  | "message"
+  | "share";
 
 interface DesignIconProps {
   name: DesignIconName;
@@ -233,6 +237,25 @@ export function DesignIcon({
       break;
     case "expand":
       shapes = <Path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" fill="none" strokeWidth={strokeWidth ?? 2.2} {...common} />;
+      break;
+    case "plus":
+      shapes = <Path d="M12 5v14M5 12h14" fill="none" strokeWidth={strokeWidth ?? 2.2} {...common} />;
+      break;
+    case "link":
+      shapes = (
+        <Path
+          d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"
+          fill="none"
+          strokeWidth={strokeWidth ?? 2}
+          {...common}
+        />
+      );
+      break;
+    case "message":
+      shapes = <Path d="M4 5h16v11H9l-5 4z" fill="none" strokeWidth={strokeWidth ?? 1.8} {...common} />;
+      break;
+    case "share":
+      shapes = <Path d="M12 3v12M7 8l5-5 5 5M5 14v6h14v-6" fill="none" strokeWidth={strokeWidth ?? 1.8} {...common} />;
       break;
     case "play":
       shapes = <Path d="M7 4l13 8-13 8z" fill={paint} stroke="none" />;

@@ -29,13 +29,12 @@ export interface MoodLevel {
   key: "NORMAL" | "TIRED" | "DARK_CIRCLES";
   label: string;
   range: string;
-  face: string;
 }
 
 export const MOOD_LEVELS: MoodLevel[] = [
-  { key: "NORMAL", label: "보통", range: "~50km", face: "🙂" },
-  { key: "TIRED", label: "피곤", range: "50~150km", face: "😩" },
-  { key: "DARK_CIRCLES", label: "다크서클", range: "150km~", face: "😵" },
+  { key: "NORMAL", label: "보통", range: "~50km" },
+  { key: "TIRED", label: "피곤", range: "50~150km" },
+  { key: "DARK_CIRCLES", label: "다크서클", range: "150km~" },
 ];
 
 /** 이번 달 이동 거리로 정하는 표정. 50km 미만 보통, 150km 미만 피곤, 그 이상 다크서클 */
@@ -58,10 +57,16 @@ export interface GapRow {
   kind: "GAP";
 }
 
+/** 닉네임은 @를 붙여 보여 준다(MY와 같은 모양). 익명은 "익명" 그대로다 */
 export const displayName = (item: Pick<LeaderboardItemDto, "nickname" | "isAnonymous">): string =>
-  item.isAnonymous ? "익명" : item.nickname;
+  item.isAnonymous ? "익명" : `@${item.nickname}`;
 
-const kmText = (km: number): string => km.toFixed(1) + "km";
+/** "1,204.6"처럼 천 단위 쉼표를 붙인 거리 숫자(단위 없음). 시상대와 목록 숫자에 쓴다 */
+export function kmNumber(km: number): string {
+  return km.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+}
+
+const kmText = (km: number): string => kmNumber(km) + "km";
 
 /**
  * 4위부터의 목록. 내 순위가 받아온 목록에 없으면 "···" 뒤에 내 순위와 점수를 붙인다

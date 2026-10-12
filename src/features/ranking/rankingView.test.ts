@@ -4,6 +4,7 @@ import {
   kstYearMonth,
   moodOf,
   periodKeyOf,
+  kmNumber,
   podium,
   rowsAfterPodium,
 } from "./rankingView";
@@ -67,6 +68,14 @@ describe("moodOf", () => {
   });
 });
 
+describe("kmNumber", () => {
+  it("소수 첫째 자리와 천 단위 쉼표", () => {
+    expect(kmNumber(312.84)).toBe("312.8");
+    expect(kmNumber(1204.6)).toBe("1,204.6");
+    expect(kmNumber(0)).toBe("0.0");
+  });
+});
+
 describe("podium와 목록", () => {
   const all = [item(1), item(2), item(3), item(4), item(5, { isAnonymous: true })];
 
@@ -77,7 +86,7 @@ describe("podium와 목록", () => {
   it("4위부터 목록에 두고 익명은 익명으로 보여 준다", () => {
     const rows = rowsAfterPodium(data(all));
     expect(rows).toEqual([
-      { kind: "ROW", rank: 4, nickname: "닉4", isMe: false, value: "40.0km" },
+      { kind: "ROW", rank: 4, nickname: "@닉4", isMe: false, value: "40.0km" },
       { kind: "ROW", rank: 5, nickname: "익명", isMe: false, value: "50.0km" },
     ]);
   });
