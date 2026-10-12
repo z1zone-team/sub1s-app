@@ -39,10 +39,6 @@ type Phase =
   | { name: "result"; data: VoiceRouteRecommendResponseDto }
   | { name: "failed"; failure: VoiceFailure };
 
-function formatSeconds(ms: number): string {
-  return `${(ms / 1000).toFixed(1)}초`;
-}
-
 /** 세 상태(듣는 중, 결과, 실패)가 함께 쓰는 위쪽 줄: 닫기, 가운데 제목 */
 function VoiceHeader({ onClose }: { onClose: () => void }) {
   return (
@@ -143,7 +139,7 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
           <Shake delayMs={200}>
             <VoiceFailMascot size={120} />
           </Shake>
-          <Text className="mt-7 text-center text-headline-lg font-sans-bold">{failure.title}</Text>
+          <Text className="mt-7 text-center text-display-sm font-sans-bold">{failure.title}</Text>
           <Text className="mt-2.5 text-center text-subtitle text-text-secondary">{failure.body}</Text>
           {showExamples ? (
             <View className="mt-6 flex-row flex-wrap justify-center gap-2">
@@ -159,7 +155,7 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
           <Pressable
             accessibilityRole="button"
             onPress={() => void listen()}
-            className="h-14 flex-row items-center justify-center gap-2 rounded-md bg-primary"
+            className="h-14 flex-row items-center justify-center gap-2 rounded-lg bg-primary"
           >
             <DesignIcon name="retry" size={20} tone="onPrimary" />
             <Text className="text-base font-sans-bold text-on-primary">재시도</Text>
@@ -167,9 +163,9 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
           <Pressable
             accessibilityRole="button"
             onPress={() => navigation.replace("Search")}
-            className="h-13 items-center justify-center rounded-md border border-border"
+            className="h-13 items-center justify-center rounded-md-plus border border-border"
           >
-            <Text className="text-subtitle font-sans-semibold">글자로 검색하기</Text>
+            <Text className="text-subtitle font-sans-semibold">글자로 찾기</Text>
           </Pressable>
         </View>
       </Screen>
@@ -229,14 +225,14 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
                 tagline: data.briefingText,
               });
             }}
-            className={endpoints ? "h-14 items-center justify-center rounded-md bg-primary" : "h-14 items-center justify-center rounded-md bg-primary opacity-50"}
+            className={endpoints ? "h-14 items-center justify-center rounded-lg bg-primary" : "h-14 items-center justify-center rounded-lg bg-primary opacity-50"}
           >
             <Text className="text-base font-sans-bold text-on-primary">경로 보기</Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
             onPress={() => void listen()}
-            className="h-13 items-center justify-center rounded-md border border-border bg-bg"
+            className="h-13 items-center justify-center rounded-md-plus border border-border bg-bg"
           >
             <Text className="text-subtitle font-sans-semibold">다시 말하기</Text>
           </Pressable>
@@ -251,7 +247,7 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
       <VoiceHeader onClose={close} />
       <View className="flex-1 items-center px-7 pt-14">
         <Text className="text-subtitle font-sans-medium text-text-secondary">{processing ? "분석하는 중이에요" : "듣고 있어요"}</Text>
-        <Text className="mt-3 text-center text-headline-lg font-sans-bold leading-snug">어디로 갈까요?</Text>
+        <Text className="mt-3 text-center text-display-sm font-sans-bold leading-snug">어디로 갈까요?</Text>
         <Text className="mt-2.5 text-center text-body text-text-secondary">예) “{VOICE_EXAMPLES[0]}”</Text>
         <View className="mt-16">
           <WaveBars active={!processing} />
@@ -260,7 +256,7 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
       <View style={{ paddingBottom: bottomPadding }} className="items-center gap-3.5 px-5">
         <MicButton onPress={() => void stop()} disabled={processing} />
         <Text className="text-body-sm text-text-secondary">
-          {processing ? "잠시만 기다려 주세요" : `${formatSeconds(recorder.durationMillis)} · 누르면 중지`}
+          {processing ? "잠시만 기다려 주세요" : "다 말씀하셨으면 눌러 주세요"}
         </Text>
       </View>
     </Screen>

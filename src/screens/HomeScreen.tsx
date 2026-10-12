@@ -137,18 +137,18 @@ export function HomeScreen() {
           <View className="h-control-lg flex-1 flex-row items-center gap-1 rounded-pill border border-border bg-bg pl-2 pr-1.5">
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="역, 장소 검색"
+              accessibilityLabel="어디로 갈까요?"
               onPress={() => navigation.navigate("MapSearch")}
               className="h-control flex-1 flex-row items-center gap-2.5"
             >
               <BrandLogo size={34} radius={9} />
-              <Text className="text-base font-sans-medium text-text-secondary">역, 장소 검색</Text>
+              <Text className="text-base font-sans-medium text-text-secondary">어디로 갈까요?</Text>
             </Pressable>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="음성 검색"
               onPress={() => navigation.navigate("Voice")}
-              className="h-10 w-10 items-center justify-center rounded-pill"
+              className="h-11 w-11 items-center justify-center rounded-pill"
             >
               <DesignIcon name="mic" size={22} />
             </Pressable>

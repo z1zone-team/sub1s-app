@@ -19,12 +19,12 @@ export function failureOf(error: unknown): VoiceFailure {
 
 export const FAILURE_TEXT: Record<VoiceFailure, { title: string; body: string }> = {
   NO_SPEECH: {
-    title: "다시 말해 주세요",
-    body: "말소리가 잘 들리지 않았어요. 조용한 곳에서 역 이름을 또박또박 말해 주세요.",
+    title: "다시 말씀해 주세요",
+    body: "말소리가 잘 들리지 않았어요. 조용한 곳에서 역 이름을 또박또박 말씀해 주세요.",
   },
   NOT_FOUND: {
     title: "역을 찾지 못했어요",
-    body: "말씀하신 출발역이나 도착역을 찾지 못했어요. 역 이름을 또박또박 다시 말해 주세요.",
+    body: "말씀하신 출발역이나 도착역을 찾지 못했어요. 역 이름을 또박또박 다시 말씀해 주세요.",
   },
   BUSY: {
     title: "잠시 후에 다시 해 주세요",
@@ -36,7 +36,7 @@ export const FAILURE_TEXT: Record<VoiceFailure, { title: string; body: string }>
   },
   GENERIC: {
     title: "음성을 처리하지 못했어요",
-    body: "잠시 후 다시 시도하거나 글자로 검색해 주세요.",
+    body: "잠시 후 다시 시도하거나 글자로 찾아 주세요.",
   },
 };
 
