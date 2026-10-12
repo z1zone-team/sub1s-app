@@ -8,6 +8,10 @@ import {
   useRemovePlaceMutation,
   useUserPlacesQuery,
 } from "@/apis/queries/users/useUserPlaces";
+import {
+  useFavoriteRoutesQuery,
+  useRemoveFavoriteRouteMutation,
+} from "@/apis/queries/users/useFavoriteRoutes";
 import type { PlaceKind } from "@/apis/queries/users/places";
 import { Chip } from "@/common/components/Chip";
 import { BrandLogo } from "@/common/components/BrandLogo";
@@ -20,7 +24,8 @@ import { cn } from "@/lib/cn";
 import { formatMonthDayKst } from "@/common/utils/format";
 import { GuideBubble } from "@/features/home/GuideBubble";
 import { HomeSheet, SHEET_PEEK_HEIGHT } from "@/features/home/HomeSheet";
-import { toRecentRouteChips } from "@/features/routing/recentDestinations";
+import { FavoriteRoutesSheet } from "@/features/home/FavoriteRoutesSheet";
+import { favoriteEndpoint, toHomeRouteChips } from "@/features/routing/favoriteRoutes";
 import { useRecentDestinations } from "@/features/routing/useRecentDestinations";
 import { PLACE_KINDS, PLACE_LABEL, placeOfKind, placeToEndpoint } from "@/features/places/placeEndpoint";
 import { useActiveGuideStore } from "@/features/guide/active-guide-store";
@@ -34,7 +39,6 @@ import { useOnboardingPrompt } from "@/features/onboarding/useOnboardingPrompt";
 import type { RootStackParamList } from "@/navigation/navigation-types";
 
 const PLACE_ICON: Record<PlaceKind, DesignIconName> = { HOME: "home", SCHOOL: "school" };
-const MAX_ROUTE_CHIPS = 2;
 /** 지도 검색에서 장소를 고르면 시트 대신 보이는 하단 카드의 대략적인 높이. 안내 복귀 버튼이 그 위에 놓인다 */
 const PLACE_CARD_HEIGHT = 200;
 
@@ -91,6 +95,9 @@ export function HomeScreen() {
   const { isSignedIn } = useAuth();
   const places = useUserPlacesQuery();
   const removePlace = useRemovePlaceMutation();
+  const favoriteRoutes = useFavoriteRoutesQuery();
+  const removeFavoriteRoute = useRemoveFavoriteRouteMutation();
+  const [favoritesOpen, setFavoritesOpen] = useState(false);
   const activeGuide = useActiveGuideStore((state) => state.guide);
   const [areaHeight, setAreaHeight] = useState(0);
   const [areaWidth, setAreaWidth] = useState(0);
@@ -104,7 +111,10 @@ export function HomeScreen() {
   );
   const hasLocation = baseMapData.markers.some((marker) => marker.kind === "me");
 
-  const routeChips = useMemo(() => toRecentRouteChips(recent.routes, MAX_ROUTE_CHIPS), [recent.routes]);
+  const routeChips = useMemo(
+    () => toHomeRouteChips(favoriteRoutes.data?.favorites, recent.routes),
+    [favoriteRoutes.data, recent.routes]
+  );
 
   const openPlace = (kind: PlaceKind) => {
     const place = placeOfKind(places.data, kind);
@@ -198,7 +208,7 @@ export function HomeScreen() {
               key={chip.id}
               compact
               label={chip.label}
-              leading={<DesignIcon name="star" size={16} filled />}
+              leading={<DesignIcon name={chip.favorite ? "star" : "clock"} size={16} filled={chip.favorite} />}
               onPress={() => navigation.navigate("RouteResult", { origin: chip.origin, destination: chip.destination })}
             />
           ))}
@@ -210,7 +220,7 @@ export function HomeScreen() {
               {is3d ? "2D" : "3D"}
             </Text>
           </FloatingButton>
-          <FloatingButton label="즐겨찾기" onPress={() => navigation.navigate("Search")}>
+          <FloatingButton label="즐겨찾기 경로" onPress={() => setFavoritesOpen(true)}>
             <DesignIcon name="star" size={20} />
           </FloatingButton>
           <FloatingButton
@@ -222,6 +232,27 @@ export function HomeScreen() {
             <DesignIcon name="locate" size={20} tone={hasLocation ? "text" : "disabled"} />
           </FloatingButton>
         </View>
+
+        <FavoriteRoutesSheet
+          visible={favoritesOpen}
+          signedIn={!!isSignedIn}
+          favorites={favoriteRoutes.data?.favorites}
+          loading={favoriteRoutes.isLoading}
+          limit={favoriteRoutes.data?.limit}
+          onClose={() => setFavoritesOpen(false)}
+          onSelect={(favorite) => {
+            setFavoritesOpen(false);
+            navigation.navigate("RouteResult", {
+              origin: favoriteEndpoint(favorite.origin),
+              destination: favoriteEndpoint(favorite.destination),
+            });
+          }}
+          onRemove={(favorite) => removeFavoriteRoute.mutate(favorite.id)}
+          onLogin={() => {
+            setFavoritesOpen(false);
+            navigation.navigate("Login");
+          }}
+        />
 
         {activeGuide ? (
           <GuideBubble

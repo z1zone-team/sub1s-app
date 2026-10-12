@@ -1,8 +1,13 @@
 import React, { useMemo, useRef } from "react";
-import { ActivityIndicator, FlatList, Pressable, View } from "react-native";
+import { ActivityIndicator, Alert, FlatList, Pressable, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { ApiError } from "@/apis/client";
 import { useAuth } from "@clerk/expo";
+import {
+  useFavoriteRoutesQuery,
+  useRemoveFavoriteRouteMutation,
+  useSaveFavoriteRouteMutation,
+} from "@/apis/queries/users/useFavoriteRoutes";
 import { usePreferencesQuery } from "@/apis/queries/users/usePreferencesQuery";
 import { useRouteSearchQuery } from "@/apis/queries/routing/useRouteSearchQuery";
 import { useNextTrainsQuery } from "@/apis/queries/stations/useNextTrainsQuery";
@@ -13,6 +18,7 @@ import { RiseIn } from "@/common/components/RiseIn";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { toRouteSearchRequest, type RouteEndpoint } from "@/features/routing/endpoint";
+import { canFavorite, findFavorite, toSaveBody } from "@/features/routing/favoriteRoutes";
 import { RouteResultCard } from "@/features/routing/components/RouteResultCard";
 import { departureLabel, endpointLabel, waitingText } from "@/features/routing/routeCardView";
 import { groupRouteOptions, pickNextTrain } from "@/features/routing/routeView";
@@ -59,6 +65,40 @@ export function RouteResultScreen({
     [search.data, routePrefs]
   );
 
+  const favoriteRoutes = useFavoriteRoutesQuery();
+  const saveFavorite = useSaveFavoriteRouteMutation();
+  const removeFavorite = useRemoveFavoriteRouteMutation();
+  const favorite = findFavorite(favoriteRoutes.data?.favorites, origin, destination);
+  const favoritePending = saveFavorite.isPending || removeFavorite.isPending;
+
+  const toggleFavorite = () => {
+    if (!isSignedIn) {
+      Alert.alert("로그인이 필요해요", "로그인하면 자주 가는 경로를 저장할 수 있어요.", [
+        { text: "로그인", onPress: () => navigation.navigate("Login") },
+        { text: "취소", style: "cancel" },
+      ]);
+      return;
+    }
+    if (favorite) {
+      removeFavorite.mutate(favorite.id);
+      return;
+    }
+    const body = toSaveBody(origin, destination);
+    if (!body) {
+      Alert.alert("저장할 수 없는 경로예요", "현재 위치에서 출발하는 경로는 즐겨찾기에 둘 수 없어요.");
+      return;
+    }
+    saveFavorite.mutate(body, {
+      onError: (error) => {
+        if (error instanceof ApiError && error.code === "FAVORITE_ROUTE_LIMIT") {
+          Alert.alert("더 저장할 수 없어요", "즐겨찾기 경로는 20개까지 저장할 수 있어요. 홈의 ★ 목록에서 지워 주세요.");
+        } else {
+          Alert.alert("저장하지 못했어요", "잠시 후 다시 시도해 주세요.");
+        }
+      },
+    });
+  };
+
   // 맨 위 카드의 첫 탑승역에서 곧 오는 열차 ("2분 후 · 중앙보훈병원 방면")
   const firstRide = groups[0]?.option.segments.find((segment) => segment.lineId !== WALK_LINE_ID);
   const nextTrains = useNextTrainsQuery(
@@ -84,6 +124,18 @@ export function RouteResultScreen({
           <Text numberOfLines={1} className="flex-1 text-subtitle font-sans-bold">
             {endpointLabel({ ...destination, name: destinationName || "도착지" })}
           </Text>
+          {canFavorite(origin, destination) || !isSignedIn ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={favorite ? "즐겨찾기에서 빼기" : "즐겨찾기에 추가"}
+              accessibilityState={{ selected: Boolean(favorite), disabled: favoritePending }}
+              disabled={favoritePending}
+              onPress={toggleFavorite}
+              className="h-10 w-10 items-center justify-center"
+            >
+              <DesignIcon name="star" size={20} filled={Boolean(favorite)} tone={favorite ? "primary" : "secondary"} />
+            </Pressable>
+          ) : null}
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="닫기"
