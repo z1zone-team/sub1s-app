@@ -5,7 +5,8 @@ import { Text } from "@/common/components/Text";
 import { formatDurationSec } from "@/common/utils/format";
 import type { RouteGroup } from "@/features/routing/routeView";
 import { segmentShares } from "@/features/routing/routeView";
-import { getLineInfo, lineTextColor, WALK_LINE_ID } from "@/theme";
+import { RideBadge } from "@/features/routing/components/RideBadge";
+import { getLineInfo, WALK_LINE_ID } from "@/theme";
 import { cn } from "@/lib/cn";
 import { arrivalText, summarizeRoute, transferAndWalkText } from "../searchLogic";
 
@@ -40,23 +41,6 @@ function MiniSegmentBar({ option }: { option: SubwayRouteOptionDto }) {
   );
 }
 
-/** "9 급행"처럼 호선 번호와 급행 표시가 한 알약에 들어간다. 노선마다 색이 달라 style로 준다 */
-function RideBadge({ lineId, express }: { lineId: string; express: boolean }) {
-  const line = getLineInfo(lineId);
-  const label = express ? `${line.shortLabel} 급행` : line.shortLabel;
-  return (
-    <View
-      accessibilityLabel={line.name}
-      className="h-5 min-w-5 items-center justify-center rounded-pill px-1.5"
-      style={{ backgroundColor: line.color }}
-    >
-      <Text className="text-tiny font-sans-extrabold" style={{ color: lineTextColor(line.color) }}>
-        {label}
-      </Text>
-    </View>
-  );
-}
-
 function RouteSummary({ option }: { option: SubwayRouteOptionDto }) {
   const { rides, walkTo } = summarizeRoute(option);
   const single = rides.length === 1;
@@ -64,7 +48,7 @@ function RouteSummary({ option }: { option: SubwayRouteOptionDto }) {
     <View className="mt-3 flex-row flex-wrap items-center gap-1.5">
       {rides.map((ride, index) => (
         <View key={`${ride.lineId}-${index}`} className="flex-row items-center gap-1.5">
-          <RideBadge lineId={ride.lineId} express={ride.isExpress} />
+          <RideBadge lineId={ride.lineId} kind={ride.isExpress ? "급행" : undefined} />
           <Text className="text-body-sm font-sans-semibold">{single ? `${ride.from} → ${ride.to}` : ride.to}</Text>
         </View>
       ))}

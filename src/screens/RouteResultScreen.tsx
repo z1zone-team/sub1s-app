@@ -1,19 +1,23 @@
-import React, { useMemo } from "react";
-import { ActivityIndicator, FlatList, View } from "react-native";
+import React, { useMemo, useRef } from "react";
+import { ActivityIndicator, FlatList, Pressable, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { ApiError } from "@/apis/client";
 import { useAuth } from "@clerk/expo";
 import { usePreferencesQuery } from "@/apis/queries/users/usePreferencesQuery";
 import { useRouteSearchQuery } from "@/apis/queries/routing/useRouteSearchQuery";
+import { useNextTrainsQuery } from "@/apis/queries/stations/useNextTrainsQuery";
 import { useStationsQuery } from "@/apis/queries/stations/useStationsQuery";
 import { Button } from "@/common/components/Button";
+import { DesignIcon } from "@/common/components/DesignIcon";
+import { RiseIn } from "@/common/components/RiseIn";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { toRouteSearchRequest, type RouteEndpoint } from "@/features/routing/endpoint";
-import { RouteCard } from "@/features/routing/components/RouteCard";
-import { groupRouteOptions } from "@/features/routing/routeView";
+import { RouteResultCard } from "@/features/routing/components/RouteResultCard";
+import { departureLabel, endpointLabel, waitingText } from "@/features/routing/routeCardView";
+import { groupRouteOptions, pickNextTrain } from "@/features/routing/routeView";
 import type { RootStackParamList } from "@/navigation/navigation-types";
-import { useTheme } from "@/theme";
+import { useTheme, WALK_LINE_ID } from "@/theme";
 
 /** 딥링크로 들어오면 이름이 비어 있어 역 조회로 채운다 */
 function useEndpointNames(origin: RouteEndpoint, destination: RouteEndpoint) {
@@ -37,12 +41,14 @@ function errorMessage(error: Error): string {
   return "경로를 불러오지 못했어요.";
 }
 
+/** 프로토타입 Route.dc.html의 경로 목록. 위에 출발 → 도착 박스, 출발 시각 줄, 그 아래 카드 목록 */
 export function RouteResultScreen({
   navigation,
   route,
 }: NativeStackScreenProps<RootStackParamList, "RouteResult">) {
   const { colors } = useTheme();
   const { origin, destination, mode } = route.params;
+  const openedAt = useRef(Date.now()).current;
 
   const search = useRouteSearchQuery(toRouteSearchRequest(origin, destination, mode));
   const { originName, destinationName } = useEndpointNames(origin, destination);
@@ -53,48 +59,83 @@ export function RouteResultScreen({
     [search.data, routePrefs]
   );
 
+  // 맨 위 카드의 첫 탑승역에서 곧 오는 열차 ("2분 후 · 중앙보훈병원 방면")
+  const firstRide = groups[0]?.option.segments.find((segment) => segment.lineId !== WALK_LINE_ID);
+  const nextTrains = useNextTrainsQuery(
+    { stationId: firstRide?.fromStationId ?? "", limit: 2 },
+    { enabled: Boolean(firstRide) }
+  );
+  const boarding = useMemo(() => {
+    if (!firstRide || !nextTrains.data) return undefined;
+    const train = pickNextTrain(nextTrains.data.trains, firstRide);
+    return train ? { waiting: waitingText(train.arrivalInSec), headsign: train.headsign } : undefined;
+  }, [firstRide, nextTrains.data]);
+
   return (
-    <Screen edges={[]}>
-      <View className="gap-0.5 px-5 py-3">
-        <Text className="text-title font-sans-extrabold">
-          {originName || "출발지"} → {destinationName || "도착지"}
-        </Text>
-        <Text className="text-small text-text-secondary">요금은 교통카드 기준이에요</Text>
+    <Screen>
+      <View className="px-4 pt-2.5">
+        <View className="h-13 flex-row items-center gap-2 rounded-lg border border-border pl-4 pr-1.5">
+          <View className="h-2.5 w-2.5 rounded-pill border-2.5 border-text" />
+          <Text numberOfLines={1} className="shrink text-subtitle font-sans-bold">
+            {endpointLabel({ ...origin, name: originName || "출발지" })}
+          </Text>
+          <DesignIcon name="arrow" size={16} tone="secondary" />
+          <View className="h-2.5 w-2.5 rounded-pill bg-text" />
+          <Text numberOfLines={1} className="flex-1 text-subtitle font-sans-bold">
+            {endpointLabel({ ...destination, name: destinationName || "도착지" })}
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="닫기"
+            onPress={() => navigation.navigate("Search")}
+            className="h-10 w-10 items-center justify-center"
+          >
+            <DesignIcon name="close" size={20} />
+          </Pressable>
+        </View>
+      </View>
+      <View className="mt-2.5 h-11.5 flex-row items-center justify-between border-b border-border px-5">
+        <Text className="text-body font-sans-bold text-accent">{departureLabel(openedAt)}</Text>
+        <Text className="text-small font-sans-semibold text-text-secondary">요금은 교통카드 기준</Text>
       </View>
 
       {search.isLoading ? (
-        <View className="flex-1 items-center justify-center gap-3">
+        <View className="flex-1 items-center justify-center gap-3 bg-surface">
           <ActivityIndicator color={colors.primary} />
           <Text className="text-text-secondary">경로를 찾는 중이에요</Text>
         </View>
       ) : search.error ? (
-        <View className="flex-1 items-center justify-center gap-4 p-6">
+        <View className="flex-1 items-center justify-center gap-4 bg-surface p-6">
           <Text className="text-center">{errorMessage(search.error)}</Text>
           <Button label="다시 시도" variant="secondary" onPress={() => void search.refetch()} />
           <Button label="다시 검색" variant="ghost" onPress={() => navigation.navigate("Search")} />
         </View>
       ) : (
         <FlatList
+          className="flex-1 bg-surface"
           data={groups}
           keyExtractor={(group) => group.option.mode + group.option.totalDurationSec}
-          renderItem={({ item }) => (
-            <RouteCard
-              group={item}
-              onPress={() =>
-                navigation.navigate("RouteDetail", {
-                  origin,
-                  destination,
-                  option: item.option,
-                  title: item.title,
-                  tagline: item.tagline,
-                })
-              }
-            />
+          renderItem={({ item, index }) => (
+            <RiseIn>
+              <RouteResultCard
+                group={item}
+                boarding={index === 0 ? boarding : undefined}
+                onPress={() =>
+                  navigation.navigate("RouteDetail", {
+                    origin,
+                    destination,
+                    option: item.option,
+                    title: item.title,
+                    tagline: item.tagline,
+                  })
+                }
+              />
+            </RiseIn>
           )}
           ListEmptyComponent={
             <Text className="p-6 text-center text-text-secondary">보여 줄 경로가 없어요</Text>
           }
-          contentContainerClassName="pb-6"
+          contentContainerClassName="gap-2.5 px-3 pb-10 pt-3"
         />
       )}
     </Screen>
