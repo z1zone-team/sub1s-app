@@ -16,6 +16,8 @@ export interface Palette {
   success: string;
   warning: string;
   error: string;
+  /** 이탈 안내 박스처럼 경고 색을 옅게 깐 배경 */
+  errorTint: string;
   info: string;
 }
 
@@ -35,6 +37,7 @@ const light: Palette = {
   success: "#16A34A",
   warning: "#F59E0B",
   error: "#DC2626",
+  errorTint: "#FDECEC",
   info: "#0072CE",
 };
 

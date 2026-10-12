@@ -35,6 +35,7 @@ module.exports = {
         success: colorToken("success"),
         warning: colorToken("warning"),
         error: colorToken("error"),
+        "error-tint": colorToken("error-tint"),
         info: colorToken("info"),
         subway: {
           line1: "#0052A4",
