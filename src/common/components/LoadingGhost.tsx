@@ -1,14 +1,11 @@
 import React, { useEffect, useRef } from "react";
 import { Animated, Easing, View } from "react-native";
-import Svg, { Circle, Path } from "react-native-svg";
+import Ghost from "@assets/svg/ghost-loading.svg";
 import { Text } from "./Text";
 
 const FADE_MS = 200;
 const SWAY_PX = 5;
 const SWAY_MS = 1800;
-const PRIMARY = "#002968";
-const BODY =
-  "M12 46V28a18 18 0 0 1 36 0v16C48 47 49.5 49 52 50.5C53.5 51.5 52.5 53.5 50 53.5C47.5 53.5 46.5 51.5 44.5 51.8C42.5 52.1 42 55 39 55C36 55 35.5 52.2 33 52.4C30.5 52.6 30 55.5 26.8 55.5C23.6 55.5 23.2 52.6 20.8 52.6C18 52.6 16.5 54 14.6 53C12.6 52 12 49.5 12 46z";
 
 interface LoadingGhostProps {
   /** 자리를 차지하는 최소 높이(px). 본문이 들어갈 만큼 크게 잡는다 */
@@ -46,12 +43,7 @@ export function LoadingGhost({ minHeight = 360, tone = "bg" }: LoadingGhostProps
       style={{ minHeight, opacity: fade }}
     >
       <Animated.View style={{ transform: [{ translateY: sway }] }}>
-        <Svg width={56} height={56} viewBox="0 0 64 64" fill="none">
-          <Path d={BODY} fill="#FFFFFF" stroke={PRIMARY} strokeWidth={2.4} strokeLinejoin="round" />
-          <Circle cx={24} cy={29} r={2.6} fill={PRIMARY} />
-          <Circle cx={36} cy={29} r={2.6} fill={PRIMARY} />
-          <Path d="M26.5 36.5q3.5 3 7 0" stroke={PRIMARY} strokeWidth={2.2} strokeLinecap="round" fill="none" />
-        </Svg>
+        <Ghost width={56} height={56} />
       </Animated.View>
       <View>
         <Text className="text-body-sm font-sans-semibold text-text-secondary">불러오는 중이에요</Text>

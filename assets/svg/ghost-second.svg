@@ -1,0 +1,8 @@
+<!-- 랭킹 2등: 책을 든 유령 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" fill="none">
+  <path d="M12 46V28a18 18 0 0 1 36 0v16C48 47 49.5 49 52 50.5C53.5 51.5 52.5 53.5 50 53.5C47.5 53.5 46.5 51.5 44.5 51.8C42.5 52.1 42 55 39 55C36 55 35.5 52.2 33 52.4C30.5 52.6 30 55.5 26.8 55.5C23.6 55.5 23.2 52.6 20.8 52.6C18 52.6 16.5 54 14.6 53C12.6 52 12 49.5 12 46z" fill="#FFFFFF" stroke="#191F28" stroke-width="1.6" stroke-linejoin="round"/>
+  <path d="M21.5 27.5q2.5 2 5 0M33.5 27.5q2.5 2 5 0" stroke="#191F28" stroke-width="1.6" stroke-linecap="round"/>
+  <path d="M28 33.5h4" stroke="#191F28" stroke-width="1.6" stroke-linecap="round"/>
+  <path d="M14 37l16 3 16-3v11l-16 3-16-3z" fill="#FFFFFF" stroke="#191F28" stroke-width="1.6" stroke-linejoin="round"/>
+  <path d="M30 40v11M18 41l8 1.5M18 44l8 1.5M34 42.5l8-1.5M34 45.5l8-1.5" stroke="#191F28" stroke-width="1.1" stroke-linecap="round"/>
+</svg>

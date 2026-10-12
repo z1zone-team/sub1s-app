@@ -1,0 +1,7 @@
+<!-- 표정 카드: 피곤 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" fill="none">
+  <path d="M12 46V28a18 18 0 0 1 36 0v16C48 47 49.5 49 52 50.5C53.5 51.5 52.5 53.5 50 53.5C47.5 53.5 46.5 51.5 44.5 51.8C42.5 52.1 42 55 39 55C36 55 35.5 52.2 33 52.4C30.5 52.6 30 55.5 26.8 55.5C23.6 55.5 23.2 52.6 20.8 52.6C18 52.6 16.5 54 14.6 53C12.6 52 12 49.5 12 46z" fill="#FFFFFF" stroke="#191F28" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M20.5 28h7M32.5 28h7" stroke="#191F28" stroke-width="2" stroke-linecap="round"/>
+  <path d="M22.5 28.2a1.6 1.6 0 0 0 3.2 0M34.5 28.2a1.6 1.6 0 0 0 3.2 0" fill="#191F28"/>
+  <path d="M27 37.5h6" stroke="#191F28" stroke-width="2" stroke-linecap="round"/>
+</svg>
