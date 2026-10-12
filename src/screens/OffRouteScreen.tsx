@@ -12,7 +12,7 @@ import { RerouteCard } from "@/features/guide/components/RerouteCard";
 import { useOffRouteStore } from "@/features/guide/offroute-store";
 import type { RootStackParamList } from "@/navigation/navigation-types";
 
-/** 프로토타입 OffRoute.dc.html의 경로 이탈 화면. 경고 배너, 새 경로 카드, 안내 박스, 두 버튼 */
+/** 프로토타입 OffRoute.dc.html의 경로 이탈 화면. 경고 배너, 돌아가는 길 카드, 안내 박스, 한 줄에 놓인 두 버튼 */
 export function OffRouteScreen({
   navigation,
   route,
@@ -54,15 +54,14 @@ export function OffRouteScreen({
   const message = stationName ? `${stationName}에서 내려 맞은편 열차를 타세요.` : alert.message;
 
   return (
-    <Screen>
+    <Screen surface>
       <ScrollView className="flex-1" contentContainerClassName="gap-3 px-3 pb-4 pt-2">
         <OffRouteBanner message={message} />
         <RerouteCard option={option} detectedStationName={stationName} previousRemainingSec={remainingSec} />
         <RiseIn from={24} durationMs={400} delayMs={200}>
           <View className="rounded-lg bg-error-tint px-4 py-3.5">
             <Text className="text-body-sm">
-              잘못 탄 게 아니라면 <Text className="text-body-sm font-sans-bold">맞게 탔어요</Text>를 눌러 주세요. 다음 역 정차 정보로 다시
-              확인할게요.
+              제대로 탔다면 <Text className="text-body-sm font-sans-bold">맞게 탔어요</Text>를 눌러 주세요. 다음 역에서 다시 확인할게요.
             </Text>
           </View>
         </RiseIn>
@@ -71,23 +70,24 @@ export function OffRouteScreen({
         ) : null}
       </ScrollView>
 
-      <View style={{ paddingBottom: Math.max(insets.bottom, 12) + 10 }} className="gap-2 px-5">
+      <View style={{ paddingBottom: Math.max(insets.bottom, 12) + 10 }} className="flex-row gap-2 px-4">
+        <Pressable
+          accessibilityRole="button"
+          onPress={keepRoute}
+          className="h-14 flex-1 items-center justify-center rounded-lg bg-bg"
+        >
+          <Text className="text-base font-sans-semibold">맞게 탔어요</Text>
+        </Pressable>
         <Pressable
           accessibilityRole="button"
           accessibilityState={{ busy: startTracking.isPending }}
           disabled={startTracking.isPending}
           onPress={startReroute}
-          className="h-14 flex-row items-center justify-center gap-2 rounded-md bg-primary"
+          style={{ flex: 1.6 }}
+          className="h-14 flex-row items-center justify-center gap-2 rounded-lg bg-primary"
         >
           <DesignIcon name="navigate" size={18} tone="onPrimary" />
-          <Text className="text-base font-sans-bold text-on-primary">새 경로로 안내</Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          onPress={keepRoute}
-          className="h-13 items-center justify-center rounded-md border border-border bg-bg"
-        >
-          <Text className="text-subtitle font-sans-semibold">맞게 탔어요</Text>
+          <Text className="text-base font-sans-bold text-on-primary">이 길로 안내받기</Text>
         </Pressable>
       </View>
     </Screen>

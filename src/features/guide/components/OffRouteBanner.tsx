@@ -16,7 +16,7 @@ export function OffRouteBanner({ message }: OffRouteBannerProps) {
       <View accessibilityRole="alert" className="rounded-lg bg-error px-4 py-4.5">
         <View className="flex-row items-center gap-2.5">
           <DesignIcon name="warning" size={26} tone="onPrimary" />
-          <Text className="text-headline font-sans-bold text-on-primary">경로를 이탈했어요</Text>
+          <Text className="text-headline font-sans-bold text-on-primary">반대 방향 열차를 탄 것 같아요</Text>
         </View>
         <Text className="mt-2.5 text-body text-on-primary">{message}</Text>
       </View>
