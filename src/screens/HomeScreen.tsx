@@ -10,6 +10,7 @@ import {
 } from "@/apis/queries/users/useUserPlaces";
 import type { PlaceKind } from "@/apis/queries/users/places";
 import { Chip } from "@/common/components/Chip";
+import { BrandLogo } from "@/common/components/BrandLogo";
 import { DesignIcon, type DesignIconName } from "@/common/components/DesignIcon";
 import { Icon } from "@/common/components/Icon";
 import { LineBadge } from "@/common/components/LineBadge";
@@ -140,10 +141,7 @@ export function HomeScreen() {
               onPress={() => navigation.navigate("MapSearch")}
               className="h-control flex-1 flex-row items-center gap-2.5"
             >
-              {/* 로고 에셋이 확정되기 전까지 자리만 잡는다 (TASKS 6-D 스플래시와 로고 에셋) */}
-              <View className="h-8.5 w-8.5 items-center justify-center rounded-sm-mid bg-primary-tint">
-                <Icon name="subway-outline" size={20} tone="primary" />
-              </View>
+              <BrandLogo size={34} radius={9} />
               <Text className="text-base font-sans-medium text-text-secondary">역, 장소 검색</Text>
             </Pressable>
             <Pressable
