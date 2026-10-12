@@ -22,7 +22,9 @@ export type DesignIconName =
   | "check"
   | "arrow"
   | "snow"
-  | "navigate";
+  | "navigate"
+  | "bell"
+  | "undo";
 
 interface DesignIconProps {
   name: DesignIconName;
@@ -172,6 +174,14 @@ export function DesignIcon({
       break;
     case "navigate":
       shapes = <Path d="M3 11l18-8-8 18-2-8z" fill={paint} stroke={paint} strokeWidth={strokeWidth ?? 1} strokeLinejoin="round" />;
+      break;
+    case "bell":
+      shapes = (
+        <Path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0" fill="none" strokeWidth={strokeWidth ?? 2} {...common} />
+      );
+      break;
+    case "undo":
+      shapes = <Path d="M4 10h13a3 3 0 0 1 0 6h-3M8 6l-4 4 4 4" fill="none" strokeWidth={strokeWidth ?? 2} {...common} />;
       break;
     case "person":
       shapes = (

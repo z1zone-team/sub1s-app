@@ -20,6 +20,15 @@ export function remainingText(remainingSec: number, nowMs: number): string {
   return `${formatDurationSec(remainingSec)} 남음 · ${formatClockKst(nowMs + remainingSec * 1000)} 도착`;
 }
 
+/** 큰 글자와 작은 글자로 나눠 그리는 "31분" / "남음 · 오후 2:51 도착". 곧 도착이면 "곧" / "도착해요" */
+export function remainingParts(remainingSec: number, nowMs: number): { amount: string; rest: string } {
+  if (remainingSec <= 0) return { amount: "곧", rest: "도착해요" };
+  return {
+    amount: formatDurationSec(remainingSec),
+    rest: `남음 · ${formatClockKst(nowMs + remainingSec * 1000)} 도착`,
+  };
+}
+
 /** 홈 복귀 버튼에 보이는 남은 분. 1분 미만이어도 1분으로 보여 준다 */
 export function minutesLabel(remainingSec: number): string {
   return `${Math.max(1, Math.round(remainingSec / 60))}분`;

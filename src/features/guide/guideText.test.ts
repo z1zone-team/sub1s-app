@@ -1,4 +1,4 @@
-import { arrivalDeltaText, minutesLabel, remainingText, upcomingMessage } from "./guideText";
+import { arrivalDeltaText, minutesLabel, remainingParts, remainingText, upcomingMessage } from "./guideText";
 
 describe("upcomingMessage", () => {
   it("바로 다음 역에서 내리면 내릴 준비를 안내한다", () => {
@@ -36,6 +36,17 @@ describe("remainingText", () => {
 
   it("다 지나면 곧 도착한다고 한다", () => {
     expect(remainingText(0, 0)).toBe("곧 도착해요");
+  });
+});
+
+describe("remainingParts", () => {
+  it("큰 글자와 작은 글자로 나눈다", () => {
+    const now = Date.parse("2026-10-11T05:20:00Z");
+    expect(remainingParts(31 * 60, now)).toEqual({ amount: "31분", rest: "남음 · 오후 2:51 도착" });
+  });
+
+  it("다 지나면 곧 도착해요로 나눈다", () => {
+    expect(remainingParts(0, 0)).toEqual({ amount: "곧", rest: "도착해요" });
   });
 });
 

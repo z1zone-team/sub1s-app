@@ -127,6 +127,9 @@ module.exports = {
       width: {
         control: "44px",
       },
+      opacity: {
+        85: "0.85",
+      },
       borderWidth: {
         1.5: "1.5px",
         2.5: "2.5px",
