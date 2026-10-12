@@ -63,6 +63,19 @@ describe("homeMapData", () => {
     expect(data.markers[0].kind).toBe("me");
   });
 
+  it("고른 장소가 있으면 핀을 더하고 그곳을 중심으로 보여 준다", () => {
+    const data = homeMapData({ me: { lat: 37.5, lng: 127 }, pin: { lat: 37.56, lng: 126.97 } });
+    expect(data.markers.map((marker) => marker.kind)).toEqual(["me", "pin"]);
+    expect(data.center).toEqual([37.56, 126.97]);
+    expect(data.zoom).toBe(16);
+  });
+
+  it("내 위치 없이 고른 장소만 있어도 핀을 보여 준다", () => {
+    const data = homeMapData({ pin: { lat: 37.56, lng: 126.97 } });
+    expect(data.markers).toHaveLength(1);
+    expect(data.center).toEqual([37.56, 126.97]);
+  });
+
   it("내 위치가 없으면 마커 없이 기본 위치를 보여 준다", () => {
     const data = homeMapData({});
     expect(data.markers).toEqual([]);

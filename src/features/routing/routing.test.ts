@@ -176,6 +176,7 @@ describe("toSearchRows", () => {
       kind: "STATION",
       title: "강남",
       lineIds: ["02"],
+      coords: { lat: 37.5, lng: 127.0 },
       endpoint: { name: "강남", stationId: "02_222" },
     });
   });
@@ -189,6 +190,7 @@ describe("toSearchRows", () => {
       subtitle: "서울 서초구 강남대로 465",
       hint: "강남역에서 도보 5분",
       lineIds: [],
+      coords: { lat: 37.5035, lng: 127.0243 },
       endpoint: { name: "강남 교보타워", lat: 37.5035, lng: 127.0243 },
     });
   });

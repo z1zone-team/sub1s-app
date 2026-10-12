@@ -33,6 +33,14 @@ export function formatMonthDayKst(iso: string): string {
   return `${month}.${day}`;
 }
 
+/** ISO 시각을 한국 시간 기준 24시간제 "14:51"로. 도착 시각 한 줄 표시에 쓴다 */
+export function formatClock24Kst(iso: string | number): string {
+  const time = typeof iso === "number" ? iso : Date.parse(iso);
+  if (Number.isNaN(time)) return "";
+  const kst = new Date(time + KST_OFFSET_MS);
+  return `${String(kst.getUTCHours()).padStart(2, "0")}:${String(kst.getUTCMinutes()).padStart(2, "0")}`;
+}
+
 /** ISO 시각을 한국 시간 기준 "오후 2:17"로. 기기의 시간대와 상관없이 같다 */
 export function formatClockKst(iso: string | number): string {
   const time = typeof iso === "number" ? iso : Date.parse(iso);

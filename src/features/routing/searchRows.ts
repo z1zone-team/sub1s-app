@@ -18,6 +18,8 @@ export interface SearchRow {
   hint?: string;
   /** 배지로 보여 줄 호선. 역은 이 항목의 호선 하나 */
   lineIds: string[];
+  /** 지도에 핀을 찍을 위치. 최근 검색에서 온 역처럼 모르면 없다 */
+  coords?: { lat: number; lng: number };
   endpoint: RouteEndpoint;
 }
 
@@ -30,6 +32,7 @@ export function toSearchRows(items: PlaceSearchResultItem[]): SearchRow[] {
         kind: "STATION",
         title: item.name,
         lineIds: [item.line.lineId],
+        coords: { lat: item.lat, lng: item.lng },
         endpoint: endpointFromStation(item),
       };
     }
@@ -42,6 +45,7 @@ export function toSearchRows(items: PlaceSearchResultItem[]): SearchRow[] {
       subtitle: item.address || undefined,
       hint: `${item.nearestStation.name}역에서 도보 ${walk}`,
       lineIds: [],
+      coords: { lat: item.lat, lng: item.lng },
       endpoint: endpointFromPlace(item),
     };
   });

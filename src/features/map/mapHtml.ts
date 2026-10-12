@@ -9,8 +9,8 @@ export interface MapMarker {
   /** 지도 위에 항상 보이는 이름. 없으면 점만 그린다 */
   label?: string;
   radius?: number;
-  /** "me"면 점 대신 프로토타입의 캐릭터와 맥동 효과로 그린다 */
-  kind?: "me";
+  /** "me"면 점 대신 프로토타입의 캐릭터와 맥동 효과로, "pin"이면 지도 검색에서 고른 장소의 핀으로 그린다 */
+  kind?: "me" | "pin";
 }
 
 export interface MapLine {
@@ -54,6 +54,7 @@ export function buildMapHtml(vworldKey: string): string {
   .me-ghost { position: absolute; left: 30px; top: 18px; width: 21px; height: 24px; overflow: visible; animation: hover 1.8s ease-in-out infinite; }
   @keyframes pulse { 0% { transform: scale(1); opacity: 0.22; } 100% { transform: scale(2.8); opacity: 0; } }
   @keyframes hover { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.6px); } }
+  .pin-icon { filter: drop-shadow(0 2px 3px rgba(17, 24, 39, 0.35)); }
   #error { display: none; padding: 16px; font: 14px sans-serif; color: #4B5563; }
 </style>
 </head>
@@ -81,6 +82,14 @@ export function buildMapHtml(vworldKey: string): string {
         '<circle cx="24" cy="29" r="3.4" fill="#002968"/><circle cx="36" cy="29" r="3.4" fill="#002968"/>' +
         '<path d="M26.5 36.5q3.5 3 7 0" stroke="#002968" stroke-width="2.6" stroke-linecap="round"/></svg></div>'
     });
+    var PIN_ICON = L.divIcon({
+      className: "",
+      iconSize: [32, 40],
+      iconAnchor: [16, 40],
+      html: '<svg class="pin-icon" width="32" height="40" viewBox="0 0 24 30" fill="none">' +
+        '<path d="M12 1.5C6.8 1.5 2.5 5.7 2.5 10.9c0 6.7 9.5 17.6 9.5 17.6s9.5-10.9 9.5-17.6C21.5 5.7 17.2 1.5 12 1.5z" fill="#002968" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round"/>' +
+        '<circle cx="12" cy="10.8" r="3.6" fill="#FFFFFF"/></svg>'
+    });
     window.updateMap = function (data) {
       layer.clearLayers();
       var bounds = [];
@@ -90,6 +99,11 @@ export function buildMapHtml(vworldKey: string): string {
         line.points.forEach(function (p) { bounds.push(p); });
       });
       (data.markers || []).forEach(function (m) {
+        if (m.kind === "pin") {
+          L.marker([m.lat, m.lng], { icon: PIN_ICON, interactive: false, keyboard: false }).addTo(layer);
+          bounds.push([m.lat, m.lng]);
+          return;
+        }
         if (m.kind === "me") {
           L.marker([m.lat, m.lng], { icon: ME_ICON, interactive: false, keyboard: false }).addTo(layer);
           bounds.push([m.lat, m.lng]);
