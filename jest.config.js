@@ -10,6 +10,7 @@ module.exports = {
           baseUrl: ".",
           paths: {
             "@/*": ["./src/*"],
+            "@assets/*": ["./assets/*"],
           },
         },
       },
@@ -17,6 +18,8 @@ module.exports = {
   },
   setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
   moduleNameMapper: {
+    "[.]svg$": "<rootDir>/jest.svg-mock.js",
+    "^@assets/(.*)$": "<rootDir>/assets/$1",
     "^@/(.*)$": "<rootDir>/src/$1",
   },
 };

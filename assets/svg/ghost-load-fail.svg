@@ -1,0 +1,7 @@
+<!-- 불러오기 실패의 땀 흘리는 유령 (LoadFail.dc.html) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <path d="M12 46V28a18 18 0 0 1 36 0v16C48 47 49.5 49 52 50.5C53.5 51.5 52.5 53.5 50 53.5C47.5 53.5 46.5 51.5 44.5 51.8C42.5 52.1 42 55 39 55C36 55 35.5 52.2 33 52.4C30.5 52.6 30 55.5 26.8 55.5C23.6 55.5 23.2 52.6 20.8 52.6C18 52.6 16.5 54 14.6 53C12.6 52 12 49.5 12 46z" fill="#FFFFFF" stroke="#002968" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M20.5 30.5q3.5-2.5 7 0M32.5 30.5q3.5-2.5 7 0" stroke="#002968" stroke-width="2" stroke-linecap="round"/>
+  <path d="M26 40q4-3.2 8 0" stroke="#002968" stroke-width="2" stroke-linecap="round"/>
+  <path d="M43.5 23.5c0 2.2-1.6 3.6-1.6 3.6s-1.6-1.4-1.6-3.6c0-1.6 1.6-3.3 1.6-3.3s1.6 1.7 1.6 3.3z" fill="#0072CE"/>
+</svg>

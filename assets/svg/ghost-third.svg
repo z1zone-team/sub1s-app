@@ -1,0 +1,10 @@
+<!-- 랭킹 3등: 이어폰을 낀 유령 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" fill="none">
+  <path d="M12 46V28a18 18 0 0 1 36 0v16C48 47 49.5 49 52 50.5C53.5 51.5 52.5 53.5 50 53.5C47.5 53.5 46.5 51.5 44.5 51.8C42.5 52.1 42 55 39 55C36 55 35.5 52.2 33 52.4C30.5 52.6 30 55.5 26.8 55.5C23.6 55.5 23.2 52.6 20.8 52.6C18 52.6 16.5 54 14.6 53C12.6 52 12 49.5 12 46z" fill="#FFFFFF" stroke="#191F28" stroke-width="1.6" stroke-linejoin="round"/>
+  <path d="M21.5 29q2.5-2.5 5 0M33.5 29q2.5-2.5 5 0" stroke="#191F28" stroke-width="1.6" stroke-linecap="round"/>
+  <path d="M26.5 35q3.5 3 7 0" stroke="#191F28" stroke-width="1.6" stroke-linecap="round"/>
+  <rect x="9" y="25" width="5" height="8" rx="2.5" fill="#FFFFFF" stroke="#191F28" stroke-width="1.6"/>
+  <rect x="46" y="25" width="5" height="8" rx="2.5" fill="#FFFFFF" stroke="#191F28" stroke-width="1.6"/>
+  <path d="M11.5 33q0 9 9 12M48.5 33q0 9-9 12M20.5 45q9.5 3 19 0" fill="none" stroke="#191F28" stroke-width="1.1" stroke-linecap="round"/>
+  <path d="M52 12v-6l4-1v6M52 12a1.5 1.5 0 1 1-1.5-1.5M56 11a1.5 1.5 0 1 1-1.5-1.5" stroke="#4E5968" stroke-width="1.1" stroke-linecap="round"/>
+</svg>
