@@ -101,6 +101,7 @@ jest.mock("expo-audio", () => ({
   useAudioRecorder: jest.fn(() => ({
     currentTime: 2.5,
     isRecording: false,
+    getStatus: jest.fn(() => ({ metering: -160 })),
     uri: "file:///data/voice_query.m4a",
     prepareToRecordAsync: jest.fn().mockResolvedValue(undefined),
     record: jest.fn(),
