@@ -18,6 +18,7 @@ import { InviteScreen } from "@/screens/InviteScreen";
 import { NotificationSettingsScreen } from "@/screens/NotificationSettingsScreen";
 import { VoiceScreen } from "@/screens/VoiceScreen";
 import { ProfileEditScreen } from "@/screens/ProfileEditScreen";
+import { SettingsScreen } from "@/screens/SettingsScreen";
 import { OnboardingScreen } from "@/screens/OnboardingScreen";
 import { LoginScreen } from "@/screens/LoginScreen";
 import { OffRouteScreen } from "@/screens/OffRouteScreen";
@@ -107,6 +108,7 @@ export function RootNavigator() {
         <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} options={{ title: "알림 설정" }} />
         <Stack.Screen name="Invite" component={InviteScreen} options={{ title: "친구 초대" }} />
         <Stack.Screen name="Voice" component={VoiceScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: "설정" }} />
         <Stack.Screen name="ProfileEdit" component={ProfileEditScreen} options={{ title: "프로필 수정" }} />
         <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
         <Stack.Screen

@@ -28,7 +28,12 @@ export type DesignIconName =
   | "warning"
   | "play"
   | "pause"
-  | "retry";
+  | "retry"
+  | "settings"
+  | "pulse"
+  | "friends"
+  | "notify"
+  | "eye";
 
 interface DesignIconProps {
   name: DesignIconName;
@@ -182,6 +187,47 @@ export function DesignIcon({
     case "bell":
       shapes = (
         <Path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0" fill="none" strokeWidth={strokeWidth ?? 2} {...common} />
+      );
+      break;
+    case "settings":
+      shapes = (
+        <>
+          <Circle cx={12} cy={12} r={3} fill="none" strokeWidth={strokeWidth ?? 1.8} {...common} />
+          <Path
+            d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"
+            fill="none"
+            strokeWidth={strokeWidth ?? 1.8}
+            {...common}
+          />
+        </>
+      );
+      break;
+    case "pulse":
+      shapes = (
+        <>
+          <Path d="M4 18c3 0 3-8 6-8s3 5 6 5 2-7 4-7" fill="none" strokeWidth={strokeWidth ?? 1.8} {...common} />
+          <Circle cx={4} cy={18} r={1.6} fill={paint} stroke="none" />
+          <Circle cx={20} cy={8} r={1.6} fill={paint} stroke="none" />
+        </>
+      );
+      break;
+    case "friends":
+      shapes = (
+        <>
+          <Circle cx={9} cy={8} r={3.5} fill="none" strokeWidth={strokeWidth ?? 1.8} {...common} />
+          <Path d="M2.5 20c1-3.5 3.5-5.5 6.5-5.5s5.5 2 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c1.8.7 3 2.5 3.6 5.2" fill="none" strokeWidth={strokeWidth ?? 1.8} {...common} />
+        </>
+      );
+      break;
+    case "notify":
+      shapes = <Path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10 21h4" fill="none" strokeWidth={strokeWidth ?? 1.8} {...common} />;
+      break;
+    case "eye":
+      shapes = (
+        <>
+          <Path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" fill="none" strokeWidth={strokeWidth ?? 1.8} {...common} />
+          <Circle cx={12} cy={12} r={3} fill="none" strokeWidth={strokeWidth ?? 1.8} {...common} />
+        </>
       );
       break;
     case "play":

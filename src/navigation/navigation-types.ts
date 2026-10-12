@@ -17,6 +17,7 @@ export type RootStackParamList = {
   Voice: undefined;
   Onboarding: { editing?: boolean } | undefined;
   ProfileEdit: undefined;
+  Settings: undefined;
   Friends: undefined;
   NotificationSettings: undefined;
   Invite: { token: string };
