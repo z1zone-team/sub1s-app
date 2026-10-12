@@ -107,6 +107,8 @@ export function useGuide({ option, sessionId, startedAtMs }: UseGuideArgs) {
     segment: currentSegment(option, stops, progress.currentIndex),
     upcoming: upcomingAction(stops, progress.currentIndex),
     alert,
+    /** 안내 지도에 내 위치를 그리는 데 쓴다. 위치를 모르면 null */
+    coords,
     clearAlert: () => setAlert(null),
     locationGranted: location.permissionStatus === "granted",
   };
