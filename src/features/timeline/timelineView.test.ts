@@ -1,12 +1,15 @@
 import type { TravelLogItemDto } from "@/apis/queries/profile/getTimeline";
 import {
   axisTicks,
+  kstDateKey,
   bucketLabel,
   chartBars,
   formatHoursMinutes,
   kstYearMonth,
   lineRows,
   logDateLabel,
+  logMatchesLine,
+  logsForPeriod,
   logSummary,
   periodName,
 } from "./timelineView";
@@ -111,5 +114,37 @@ describe("axisTicks", () => {
 
   it("기록이 없으면 기본 눈금이다", () => {
     expect(axisTicks(0)).toEqual({ max: 3, ticks: [3, 2, 1, 0] });
+  });
+});
+
+describe("logsForPeriod", () => {
+  const log = (id: string, traveledAt: string, lineIds: string[] = ["09"]) =>
+    ({ id, traveledAt, lineIds, originStationName: "a", destStationName: "b", distanceKm: 1, isExpress: false, durationSec: 60 }) as TravelLogItemDto;
+  const logs = [log("a", "2026-10-12T08:00:00+09:00"), log("b", "2026-10-05T08:00:00+09:00"), log("c", "2026-10-02T23:30:00+09:00")];
+  const week = [
+    { key: "2026-10-06", distanceKm: 0, rideCount: 0 },
+    { key: "2026-10-12", distanceKm: 0, rideCount: 0 },
+  ];
+
+  it("한국 날짜로 바꾼다", () => {
+    expect(kstDateKey("2026-10-02T23:30:00+09:00")).toBe("2026-10-02");
+    expect(kstDateKey("2026-10-02T15:30:00Z")).toBe("2026-10-03");
+    expect(kstDateKey("bad")).toBe("");
+  });
+
+  it("주는 막대 날짜 범위 안의 기록만 남긴다", () => {
+    expect(logsForPeriod(logs, "WEEK", week).map((item) => item.id)).toEqual(["a"]);
+  });
+
+  it("년과 전체는 그대로 둔다", () => {
+    expect(logsForPeriod(logs, "YEAR", week)).toHaveLength(3);
+    expect(logsForPeriod(logs, "WEEK", undefined)).toHaveLength(3);
+  });
+
+  it("호선을 고르면 그 호선을 탄 기록만 맞는다", () => {
+    const transfer = log("t", "2026-10-12T08:00:00+09:00", ["09", "03"]);
+    expect(logMatchesLine(transfer, "03")).toBe(true);
+    expect(logMatchesLine(transfer, "02")).toBe(false);
+    expect(logMatchesLine(transfer, undefined)).toBe(true);
   });
 });

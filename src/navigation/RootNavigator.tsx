@@ -151,7 +151,7 @@ export function RootNavigator() {
           component={ArrivedScreen}
           options={{ headerShown: false, gestureEnabled: false, animation: "fade" }}
         />
-        <Stack.Screen name="MoveMap" component={MoveMapScreen} options={{ title: "이동 지도" }} />
+        <Stack.Screen name="MoveMap" component={MoveMapScreen} options={{ headerShown: false }} />
         <Stack.Screen
           name="Timeline"
           component={TimelineScreen}

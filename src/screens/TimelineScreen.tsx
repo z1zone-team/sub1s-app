@@ -160,7 +160,7 @@ export function TimelineScreen() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="이동 지도 크게 보기"
-          onPress={() => navigation.navigate("MoveMap")}
+          onPress={() => navigation.navigate("MoveMap", { period })}
           className="mx-5 mt-3.5 overflow-hidden rounded-lg border border-border bg-surface"
         >
           <VWorldMap data={mapData} className="h-75" />

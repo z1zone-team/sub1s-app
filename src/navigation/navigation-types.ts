@@ -1,3 +1,4 @@
+import type { TravelStatsPeriod } from "@/apis/queries/profile/getTravelStats";
 import type { NavigatorScreenParams } from "@react-navigation/native";
 import type { RouteMode, SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
 import type { TravelLogResponse } from "@/apis/mutations/travel/createTravelLog";
@@ -63,5 +64,6 @@ export type RootStackParamList = {
     arrivedAtMs: number;
   };
   Timeline: undefined;
-  MoveMap: undefined;
+  /** 타임라인에서 고른 기간을 이어서 보여 준다 */
+  MoveMap: { period: TravelStatsPeriod };
 };
