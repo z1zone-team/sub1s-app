@@ -49,7 +49,7 @@ function ArriveDetail({ row }: { row: Extract<RerouteRow, { kind: "arrive" }> })
   const facilities = useStationFacilitiesQuery(row.stationId);
   const doors = facilities.data?.available ? facilities.data.elevatorDoors : [];
   const text = [
-    doors.length > 0 ? `${doors.map(describeDoor).join(", ")} 문에서 내리면 엘리베이터가 가까워요` : "",
+    doors.length > 0 ? `${doors.map(describeDoor).join(", ")}에서 내리면 엘리베이터가 가까워요` : "",
     row.walkTo && row.walkMinutes ? `${row.walkTo}까지 걸어서 ${row.walkMinutes}분` : "",
   ]
     .filter(Boolean)

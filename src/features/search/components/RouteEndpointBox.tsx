@@ -74,7 +74,7 @@ export function RouteEndpointBox({
   destinationPlaceholder,
 }: RouteEndpointBoxProps) {
   return (
-    <View className="mx-4 mt-1 flex-row items-stretch rounded-lg border border-border">
+    <View className="mx-4 mt-1 flex-row items-stretch rounded-lg-plus bg-bg">
       <View className="flex-1">
         <Row
           field="origin"
@@ -99,7 +99,7 @@ export function RouteEndpointBox({
         accessibilityRole="button"
         accessibilityLabel="출발지 도착지 바꾸기"
         onPress={onSwap}
-        className="w-13 items-center justify-center rounded-r-lg border-l border-border"
+        className="w-13 items-center justify-center rounded-r-lg-plus border-l border-border"
       >
         <DesignIcon name="swap" size={20} />
       </Pressable>

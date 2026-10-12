@@ -10,7 +10,7 @@ import { formatClock24Kst, formatDistanceKm, formatDurationSec } from "@/common/
 import { CONGESTION_BG, CONGESTION_TEXT, getLineInfo, useTheme } from "@/theme";
 import { cn } from "@/lib/cn";
 import { buildTimeline, timeLabel, type TimelineRow } from "../routeTimeline";
-import { describeDoor, formatWaiting, operationLabel, pickNextTrain } from "../routeView";
+import { congestionPhrase, describeDoor, formatWaiting, operationLabel, pickNextTrain } from "../routeView";
 import { CarCongestionCard } from "./CarCongestionCard";
 import { RideBadge } from "./RideBadge";
 
@@ -87,7 +87,7 @@ function RideSummaryBox({ segment }: { segment: PathSegmentDto }) {
         </InfoLine>
       ) : null}
       <InfoLine icon={<DesignIcon name="train" size={15} tone="secondary" />}>
-        {segment.stationCount}개 역 이동 · <Text className="text-body-sm font-sans-bold">{formatDurationSec(segment.durationSec)}</Text>
+        {segment.stationCount}개 역 · <Text className="text-body-sm font-sans-bold">{formatDurationSec(segment.durationSec)}</Text>
       </InfoLine>
       <InfoLine
         icon={
@@ -98,9 +98,9 @@ function RideSummaryBox({ segment }: { segment: PathSegmentDto }) {
           )
         }
       >
-        {operation ? `${operation.text} · ` : ""}혼잡도{" "}
+        {operation ? `${operation.text} · ` : ""}
         <Text className={cn("text-body-sm font-sans-bold", CONGESTION_TEXT[segment.congestionLevel])}>
-          {segment.congestionLevel} {Math.round(segment.congestionRate)}%
+          {congestionPhrase(segment.congestionLevel)} {Math.round(segment.congestionRate)}%
         </Text>
         {segment.congestionSource === "MOCK" ? <Text className="text-body-sm text-text-secondary"> (추정)</Text> : null}
       </InfoLine>
@@ -135,10 +135,10 @@ function BoardContent({ row }: { row: Extract<TimelineRow, { kind: "board" }> })
         <CarCongestionCard
           cars={segment.cars}
           recommendedCarNo={segment.recommendedCarNo}
-          forecastLabel={row.timeMs === undefined ? "도착 시점 예측" : `도착 시점 예측 · ${formatClock24Kst(row.timeMs)} 기준`}
+          forecastLabel={row.timeMs === undefined ? "탈 때 예상이에요" : `${formatClock24Kst(row.timeMs)}에 탈 때 예상이에요`}
         />
       ) : (
-        <Text className="mt-2.5 text-body-sm text-text-secondary">추천 탑승 {segment.recommendedCarNo}번째 칸</Text>
+        <Text className="mt-2.5 text-body-sm text-text-secondary">{segment.recommendedCarNo}번째 칸이 한산해요</Text>
       )}
     </View>
   );
@@ -163,7 +163,7 @@ function AlightContent({
       ? `갈아타기 빠른 문 ${segment.recommendedDoors.map(describeDoor).join(", ")}`
       : ""
     : [
-        doors.length > 0 ? `엘리베이터와 가까운 문 ${doors.map(describeDoor).join(", ")}` : "",
+        doors.length > 0 ? `${doors.map(describeDoor).join(", ")}에서 내리면 엘리베이터가 가까워요` : "",
         exits.length > 0 ? `출구 ${exits.map((exit) => exit.exitNo).join(", ")}번` : "",
       ]
         .filter(Boolean)
@@ -185,7 +185,7 @@ function WalkLine({ segment }: { segment: PathSegmentDto }) {
     <View className="mt-2.5 flex-row items-center gap-1.5">
       <DesignIcon name="walk" size={14} tone="text" strokeWidth={2.2} />
       <Text className="text-body-sm font-sans-bold">
-        도보 {formatDurationSec(segment.durationSec)} · {formatDistanceKm(segment.distanceKm)}
+        걸어서 {formatDurationSec(segment.durationSec)} · {formatDistanceKm(segment.distanceKm)}
       </Text>
     </View>
   );

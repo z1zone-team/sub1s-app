@@ -123,7 +123,7 @@ function Guide({ navigation, sessionId, option, startedAtMs }: GuideProps) {
   const alightExits = facilities.data?.available ? facilities.data.exits : [];
   const popupDetail = showAlight
     ? [
-        alightDoors.length > 0 ? `${alightDoors.map(describeDoor).join(", ")} 문에서 내리면 엘리베이터가 가까워요` : "",
+        alightDoors.length > 0 ? `${alightDoors.map(describeDoor).join(", ")}에서 내리면 엘리베이터가 가까워요` : "",
         alightExits.length > 0 ? `출구 ${alightExits.map((exit) => exit.exitNo).join(", ")}번` : "",
       ]
         .filter(Boolean)
