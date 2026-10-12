@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@clerk/clerk-expo";
+import { useAuth } from "@clerk/expo";
 import { queryKeys } from "@/constants/queryKeys";
 import { getPlaces, removePlace, savePlace, type PlaceKind, type SavePlaceBody } from "./places";
 

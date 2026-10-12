@@ -1,4 +1,4 @@
-import { useAuth } from "@clerk/clerk-expo";
+import { useAuth } from "@clerk/expo";
 
 /**
  * Clerk useAuth를 래핑한 커스텀 훅

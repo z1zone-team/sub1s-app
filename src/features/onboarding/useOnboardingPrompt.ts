@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useAuth } from "@clerk/clerk-expo";
+import { useAuth } from "@clerk/expo";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { usePreferencesQuery } from "@/apis/queries/users/usePreferencesQuery";

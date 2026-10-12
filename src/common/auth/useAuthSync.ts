@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { useAuth, useUser } from "@clerk/clerk-expo";
+import { useAuth, useUser } from "@clerk/expo";
 import { useQueryClient } from "@tanstack/react-query";
 import { post } from "@/apis/client";
 import { buildSyncBody } from "./syncBody";

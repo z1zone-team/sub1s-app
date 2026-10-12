@@ -50,23 +50,19 @@ export function visitedLineIds(lineMap: LineMapResponseDto | undefined): string[
 
 export interface HomeMapInput {
   me?: { lat: number; lng: number };
-  recents: Array<{ name: string; lat: number; lng: number }>;
 }
 
-const ME_COLOR = "#0072CE";
-const RECENT_COLOR = "#DC2626";
+/** 내 위치 색은 쓰이지 않지만 마커 형식상 필요하다. 내 위치는 캐릭터로 그린다 */
+const ME_COLOR = "#002968";
 
-/** 내 위치와 최근 도착지. 내 위치가 있으면 그 주변을 보여 주고 없으면 도착지들이 모두 보이게 맞춘다 */
-export function homeMapData({ me, recents }: HomeMapInput): MapData {
-  const markers: MapMarker[] = recents.map((recent) => ({
-    lat: recent.lat,
-    lng: recent.lng,
-    color: RECENT_COLOR,
-    label: recent.name,
-    radius: 6,
-  }));
-  if (me) markers.push({ lat: me.lat, lng: me.lng, color: ME_COLOR, radius: 8 });
-
-  if (me) return { markers, lines: [], fit: false, center: [me.lat, me.lng], zoom: 14 };
-  return { markers, lines: [], fit: markers.length > 0 };
+/** 홈 지도는 프로토타입처럼 내 위치만 표시한다. 위치가 있으면 그 주변을 보여 주고 없으면 기본 위치를 보여 준다 */
+export function homeMapData({ me }: HomeMapInput): MapData {
+  if (!me) return { markers: [], lines: [], fit: false };
+  return {
+    markers: [{ lat: me.lat, lng: me.lng, color: ME_COLOR, kind: "me" }],
+    lines: [],
+    fit: false,
+    center: [me.lat, me.lng],
+    zoom: 14,
+  };
 }

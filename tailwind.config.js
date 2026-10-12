@@ -95,6 +95,7 @@ module.exports = {
         xs: "4px",
         "xs-plus": "6px",
         sm: "8px",
+        "sm-mid": "9px",
         "sm-plus": "10px",
         md: "12px",
         lg: "16px",
@@ -106,6 +107,10 @@ module.exports = {
       spacing: {
         0.75: "3px",
         5.5: "22px",
+        7.5: "30px",
+        8.5: "34px",
+        13: "52px",
+        15: "60px",
         17: "68px",
         18: "72px",
         19: "76px",

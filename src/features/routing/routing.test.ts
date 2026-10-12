@@ -15,7 +15,7 @@ import {
   stringifyEndpointParam,
   toRouteSearchRequest,
 } from "./endpoint";
-import { staleStationIds, toRecentDestinations } from "./recentDestinations";
+import { staleStationIds, toRecentDestinations, toRecentRouteChips } from "./recentDestinations";
 import { toSearchRows } from "./searchRows";
 
 const line = (lineId: string) => ({ lineId, lineName: `${lineId}호선`, colorHex: "#000000" });
@@ -274,5 +274,27 @@ describe("recent destinations", () => {
     it("lists nothing when the server knows every station", () => {
       expect(staleStationIds(destinations, new Set(["02_222", "99_999"]))).toEqual([]);
     });
+  });
+});
+
+describe("toRecentRouteChips", () => {
+  const route = (id: string, origin: string, destination: string, searchedAt: string) => ({
+    id,
+    origin,
+    originStationId: `${origin}-id`,
+    destination,
+    destLat: 37.5,
+    destLng: 127,
+    searchedAt,
+  });
+
+  it("최신순으로 개수만큼 출발 → 도착 칩을 만든다", () => {
+    const chips = toRecentRouteChips(
+      [route("a", "가양", "신논현", "2026-10-01T00:00:00Z"), route("b", "가좌", "홍대입구", "2026-10-05T00:00:00Z"), route("c", "강남", "시청", "2026-09-01T00:00:00Z")],
+      2
+    );
+    expect(chips.map((chip) => chip.label)).toEqual(["가좌 → 홍대입구", "가양 → 신논현"]);
+    expect(chips[0].origin).toMatchObject({ name: "가좌", stationId: "가좌-id" });
+    expect(chips[0].destination).toMatchObject({ name: "홍대입구", lat: 37.5, lng: 127 });
   });
 });

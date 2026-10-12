@@ -49,3 +49,24 @@ export function staleStationIds(
     .map((destination) => destination.endpoint.stationId)
     .filter((id): id is string => Boolean(id) && !existingStationIds.has(id as string));
 }
+
+export interface RecentRouteChip {
+  id: string;
+  /** 칩에 보이는 "출발 → 도착" */
+  label: string;
+  origin: RouteEndpoint;
+  destination: RouteEndpoint;
+}
+
+/** 최근 경로를 홈 바로가기 칩으로 바꾼다. 최신순이고 같은 출발지와 도착지는 하나만 남긴다 */
+export function toRecentRouteChips(routes: RecentRouteItem[], limit: number): RecentRouteChip[] {
+  return [...routes]
+    .sort((a, b) => b.searchedAt.localeCompare(a.searchedAt))
+    .slice(0, limit)
+    .map((route) => ({
+      id: route.id,
+      label: `${route.origin} → ${route.destination}`,
+      origin: { name: route.origin, stationId: route.originStationId, lat: route.originLat, lng: route.originLng },
+      destination: { name: route.destination, stationId: route.destStationId, lat: route.destLat, lng: route.destLng },
+    }));
+}
