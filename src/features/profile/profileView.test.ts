@@ -1,9 +1,12 @@
 import {
+  isVisibilityOn,
   nameError,
   nicknameError,
   percentileText,
   sumDistanceKm,
+  toggledVisibility,
   VISIBILITY_OPTIONS,
+  visibilityDescription,
   weekBars,
   weekdayLabel,
 } from "./profileView";
@@ -81,5 +84,24 @@ describe("주간 막대", () => {
 describe("VISIBILITY_OPTIONS", () => {
   it("서버의 세 단계와 같다", () => {
     expect(VISIBILITY_OPTIONS.map((option) => option.value)).toEqual(["PUBLIC", "ANONYMOUS", "PRIVATE"]);
+  });
+});
+
+describe("공개 스위치", () => {
+  it("공개와 익명은 켜짐, 비공개는 꺼짐이다", () => {
+    expect(isVisibilityOn("PUBLIC")).toBe(true);
+    expect(isVisibilityOn("ANONYMOUS")).toBe(true);
+    expect(isVisibilityOn("PRIVATE")).toBe(false);
+  });
+
+  it("켜짐을 누르면 비공개, 꺼짐을 누르면 공개가 된다", () => {
+    expect(toggledVisibility("PUBLIC")).toBe("PRIVATE");
+    expect(toggledVisibility("ANONYMOUS")).toBe("PRIVATE");
+    expect(toggledVisibility("PRIVATE")).toBe("PUBLIC");
+  });
+
+  it("상태마다 설명이 있다", () => {
+    expect(visibilityDescription("PUBLIC")).toBe("친구에게 이동 거리와 랭킹이 보여요");
+    expect(visibilityDescription("PRIVATE")).toBe("나만 볼 수 있어요 · 랭킹에서 숨김");
   });
 });

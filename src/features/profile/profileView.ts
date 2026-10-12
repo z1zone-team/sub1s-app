@@ -7,6 +7,20 @@ export const VISIBILITY_OPTIONS: Array<{ value: RankingVisibility; label: string
   { value: "PRIVATE", label: "비공개", description: "나만 볼 수 있어요 · 랭킹에서 숨김" },
 ];
 
+/** MY의 공개 스위치는 공개(켜짐)와 비공개(꺼짐) 둘뿐이다. 익명은 설정 화면에서 고르고 스위치에는 켜짐으로 보인다 */
+export function isVisibilityOn(visibility: RankingVisibility): boolean {
+  return visibility !== "PRIVATE";
+}
+
+/** 스위치를 누르면 켜짐은 비공개로, 꺼짐은 공개로 바뀐다 */
+export function toggledVisibility(visibility: RankingVisibility): RankingVisibility {
+  return isVisibilityOn(visibility) ? "PRIVATE" : "PUBLIC";
+}
+
+export function visibilityDescription(visibility: RankingVisibility): string {
+  return VISIBILITY_OPTIONS.find((option) => option.value === visibility)?.description ?? "";
+}
+
 const NICKNAME_PATTERN = /^[0-9A-Za-z가-힣ㄱ-ㅎㅏ-ㅣ_.-]+$/;
 
 /** 서버 규칙(2~20자, 한글/영문/숫자/_/./-, 공백 불가)과 같은 검사. 통과하면 빈 문구 */
