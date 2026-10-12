@@ -180,7 +180,7 @@ export function SearchScreen({
           }}
           onSwap={swap}
           originPlaceholder={locationDenied ? "출발지를 입력하세요" : originChosenByUser ? "출발지 입력" : "현재 위치 확인 중"}
-          destinationPlaceholder="도착지 입력"
+          destinationPlaceholder="어디로 갈까요?"
         />
       )}
 

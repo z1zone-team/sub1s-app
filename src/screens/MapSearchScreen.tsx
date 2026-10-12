@@ -61,10 +61,10 @@ export function MapSearchScreen({ navigation }: NativeStackScreenProps<RootStack
             autoFocus
             value={text}
             onChangeText={setText}
-            placeholder="역, 장소 검색"
+            placeholder="어디로 갈까요?"
             placeholderClassName="text-text-disabled"
             returnKeyType="search"
-            accessibilityLabel="역, 장소 검색"
+            accessibilityLabel="어디로 갈까요?"
             className="h-12 flex-1 p-0 font-sans text-base text-text"
           />
           <Pressable

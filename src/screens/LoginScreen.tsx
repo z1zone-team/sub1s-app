@@ -34,7 +34,7 @@ function SocialButton({ icon, label, loading, disabled, onPress }: SocialButtonP
       disabled={disabled}
       onPress={onPress}
       className={cn(
-        "h-13.5 flex-row items-center justify-center gap-2.5 rounded-md border border-border bg-bg active:bg-surface",
+        "h-13.5 flex-row items-center justify-center gap-2.5 rounded-md-plus border border-border bg-bg active:bg-surface",
         disabled && !loading ? "opacity-50" : ""
       )}
     >
@@ -111,7 +111,7 @@ export function LoginScreen({ navigation }: NativeStackScreenProps<RootStackPara
         <Text className="text-small font-sans-semibold text-accent underline">이용약관</Text>
         {" 및 "}
         <Text className="text-small font-sans-semibold text-accent underline">개인정보처리방침</Text>
-        {"에\n동의하는 것으로 간주합니다."}
+        {"에\n동의하게 돼요."}
       </Text>
     </Screen>
   );
