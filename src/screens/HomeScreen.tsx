@@ -18,6 +18,7 @@ import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { cn } from "@/lib/cn";
 import { formatMonthDayKst } from "@/common/utils/format";
+import { GuideBubble } from "@/features/home/GuideBubble";
 import { HomeSheet, SHEET_PEEK_HEIGHT } from "@/features/home/HomeSheet";
 import { toRecentRouteChips } from "@/features/routing/recentDestinations";
 import { useRecentDestinations } from "@/features/routing/useRecentDestinations";
@@ -41,6 +42,8 @@ const PLACE_CARD_HEIGHT = 200;
 const SEARCH_OFFSET = 10;
 const CHIPS_OFFSET = 62;
 const FAB_OFFSET = 118;
+/** 안내 복귀 버튼을 끌어 올릴 수 있는 가장 위(상태 표시줄 아래로부터). 프로토타입의 176에서 상태 표시줄 높이 58을 뺀 값 */
+const BUBBLE_TOP_OFFSET = 118;
 
 function FloatingButton({
   label,
@@ -90,6 +93,7 @@ export function HomeScreen() {
   const removePlace = useRemovePlaceMutation();
   const activeGuide = useActiveGuideStore((state) => state.guide);
   const [areaHeight, setAreaHeight] = useState(0);
+  const [areaWidth, setAreaWidth] = useState(0);
   const [is3d, setIs3d] = useState(false);
   const [recenterCount, setRecenterCount] = useState(0);
 
@@ -124,7 +128,10 @@ export function HomeScreen() {
     }, [reload])
   );
 
-  const onLayout = (event: LayoutChangeEvent) => setAreaHeight(event.nativeEvent.layout.height);
+  const onLayout = (event: LayoutChangeEvent) => {
+    setAreaHeight(event.nativeEvent.layout.height);
+    setAreaWidth(event.nativeEvent.layout.width);
+  };
   const searchTop = insets.top + SEARCH_OFFSET;
 
   return (
@@ -217,9 +224,12 @@ export function HomeScreen() {
         </View>
 
         {activeGuide ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`안내 화면으로 돌아가기, ${minutesLabel(activeGuide.remainingSec)} 남음`}
+          <GuideBubble
+            width={areaWidth}
+            height={areaHeight}
+            sheetTop={areaHeight - (selectedPlace ? PLACE_CARD_HEIGHT : SHEET_PEEK_HEIGHT)}
+            topLimit={insets.top + BUBBLE_TOP_OFFSET}
+            label={minutesLabel(activeGuide.remainingSec)}
             onPress={() =>
               navigation.navigate("LiveNav", {
                 sessionId: activeGuide.sessionId,
@@ -227,12 +237,8 @@ export function HomeScreen() {
                 startedAtMs: activeGuide.startedAtMs,
               })
             }
-            style={{ bottom: (selectedPlace ? PLACE_CARD_HEIGHT : SHEET_PEEK_HEIGHT) + 16 }}
-            className="absolute right-4 h-17 w-17 items-center justify-center gap-px rounded-pill border-4 border-bg bg-primary"
-          >
-            <Text className="text-title font-sans-bold text-on-primary">안내</Text>
-            <Text className="text-small font-sans-bold text-on-primary">{minutesLabel(activeGuide.remainingSec)}</Text>
-          </Pressable>
+            onEnd={() => useActiveGuideStore.getState().end()}
+          />
         ) : null}
 
         {selectedPlace ? (
@@ -268,9 +274,9 @@ export function HomeScreen() {
                     key={destination.routeIds[0]}
                     accessibilityRole="button"
                     onPress={() => navigation.navigate("Search", { destination: destination.endpoint })}
-                    className="h-15 flex-row items-center gap-3 border-b border-border"
+                    className="h-15 flex-row items-center gap-3.5"
                   >
-                    <View className="h-9 w-9 items-center justify-center rounded-pill bg-surface">
+                    <View className="h-10 w-10 items-center justify-center rounded-md-plus bg-surface">
                       <DesignIcon name="clock" size={18} tone="secondary" />
                     </View>
                     <View className="flex-1 flex-row items-center gap-1.5">

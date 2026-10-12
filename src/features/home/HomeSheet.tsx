@@ -90,13 +90,13 @@ export function HomeSheet({
       style={{ top }}
       className="absolute inset-x-0 bottom-0 rounded-t-xl border-t border-border bg-bg"
     >
-      <View {...panResponder.panHandlers} className="px-5">
+      <View {...panResponder.panHandlers} className="px-6">
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={open ? `${title} 접기` : `${title} 펼치기`}
           accessibilityState={{ expanded: open }}
           onPress={() => snapTo(!open)}
-          className="h-7.5 items-center justify-center"
+          className="-mb-3.5 h-11 items-center justify-center"
         >
           <View className="h-1 w-9 rounded-pill bg-border" />
         </Pressable>
@@ -107,7 +107,7 @@ export function HomeSheet({
           </Pressable>
         </View>
       </View>
-      <ScrollView scrollEnabled={open} keyboardShouldPersistTaps="handled" contentContainerClassName="px-5 pb-2">
+      <ScrollView scrollEnabled={open} keyboardShouldPersistTaps="handled" contentContainerClassName="px-6 pb-2">
         {children}
       </ScrollView>
     </Animated.View>
