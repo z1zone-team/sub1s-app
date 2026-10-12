@@ -1,8 +1,8 @@
 import React from "react";
 import Svg, { Path } from "react-native-svg";
 
-const INK = "#111827";
-const MUTED = "#4B5563";
+const INK = "#191F28";
+const MUTED = "#4E5968";
 
 /**
  * 음성 인식 실패 화면의 캐릭터. 찌푸린 눈과 입, 물음표가 붙는다.

@@ -40,13 +40,13 @@ function Duration({ seconds, large }: { seconds: number; large: boolean }) {
     <View className="flex-row items-baseline gap-0.5">
       {hours > 0 ? (
         <>
-          <Text className={cn(number, "font-sans-extrabold")}>{hours}</Text>
+          <Text className={cn(number, "font-sans-bold")}>{hours}</Text>
           <Text className={cn(unit, "mr-1 font-sans-bold")}>시간</Text>
         </>
       ) : null}
       {minutes > 0 || hours === 0 ? (
         <>
-          <Text className={cn(number, "font-sans-extrabold")}>{minutes}</Text>
+          <Text className={cn(number, "font-sans-bold")}>{minutes}</Text>
           <Text className={cn(unit, "font-sans-bold")}>분</Text>
         </>
       ) : null}
@@ -141,7 +141,7 @@ export function RouteResultCard({ group, boarding, onPress }: RouteResultCardPro
     >
       <View className="flex-row items-center gap-2">
         <View className="h-6.5 justify-center rounded-pill bg-primary px-2.5">
-          <Text className="text-small font-sans-extrabold text-on-primary">{group.title}</Text>
+          <Text className="text-small font-sans-bold text-on-primary">{group.title}</Text>
         </View>
         {group.tagline ? (
           <Text numberOfLines={1} className="shrink text-small font-sans-semibold text-primary">
@@ -152,7 +152,7 @@ export function RouteResultCard({ group, boarding, onPress }: RouteResultCardPro
 
       <View className="mt-3 flex-row items-baseline justify-between">
         <Duration seconds={option.totalDurationSec} large={recommended} />
-        <Text className="text-base font-sans-extrabold">{formatFare(option.totalFare)}</Text>
+        <Text className="text-base font-sans-bold">{formatFare(option.totalFare)}</Text>
       </View>
       <Text className="mt-0.5 text-body text-text-secondary">
         {[

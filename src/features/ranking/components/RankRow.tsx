@@ -18,21 +18,21 @@ export function RankRow({ rank, name, value, isMe }: RankRowProps) {
   const [part] = valueParts(value);
   return (
     <View className={cn("h-14 flex-row items-center gap-3 rounded-md px-3", isMe ? "bg-primary-tint" : "")}>
-      <Text className={cn("w-6 text-center text-subtitle font-sans-extrabold", isMe ? "" : "text-text-secondary")}>{rank}</Text>
+      <Text className={cn("w-6 text-center text-subtitle font-sans-bold", isMe ? "" : "text-text-secondary")}>{rank}</Text>
       <View className="h-9 w-9 items-center justify-center rounded-pill border border-border bg-surface">
         <RowAvatar size={24} />
       </View>
       <View className="min-w-0 flex-1 flex-row items-center gap-1.5">
-        <Text className={cn("text-subtitle", isMe ? "font-sans-extrabold" : "font-sans-medium")} numberOfLines={1}>
+        <Text className={cn("text-subtitle", isMe ? "font-sans-bold" : "font-sans-medium")} numberOfLines={1}>
           {name}
         </Text>
         {isMe ? (
           <View className="h-5 justify-center rounded-pill bg-primary px-1.75">
-            <Text className="text-caption font-sans-extrabold text-on-primary">나</Text>
+            <Text className="text-caption font-sans-bold text-on-primary">나</Text>
           </View>
         ) : null}
       </View>
-      <Text className={cn("text-subtitle", isMe ? "font-sans-extrabold" : "font-sans-medium")}>
+      <Text className={cn("text-subtitle", isMe ? "font-sans-bold" : "font-sans-medium")}>
         {part.number}
         {part.unit ? <Text className="ml-0.5 text-small font-sans-semibold text-text-secondary">{part.unit}</Text> : null}
       </Text>

@@ -50,16 +50,16 @@ export function buildMapHtml(vworldKey: string): string {
 <link rel="stylesheet" href="${LEAFLET_CSS}" />
 <style>
   html, body, #map { margin: 0; height: 100%; width: 100%; }
-  .label { background: rgba(255,255,255,0.9); border: 0; border-radius: 8px; padding: 1px 6px; font: 600 11px sans-serif; color: #111827; box-shadow: none; }
+  .label { background: rgba(255,255,255,0.9); border: 0; border-radius: 8px; padding: 1px 6px; font: 600 11px sans-serif; color: #191F28; box-shadow: none; }
   /* 프로토타입 Main.dc.html의 내 위치 표시. 지도 1단위가 약 2.13px이라 유령은 0.22배 -> 약 20 x 23px */
   .me-wrap { position: relative; width: 80px; height: 80px; }
   .me-halo { position: absolute; left: 27px; top: 27px; width: 26px; height: 26px; border-radius: 50%; background: #002968; opacity: 0.22; animation: pulse 1.8s ease-out infinite; }
-  .me-shadow { position: absolute; left: 32px; top: 40px; width: 16px; height: 5px; border-radius: 50%; background: #111827; opacity: 0.15; }
+  .me-shadow { position: absolute; left: 32px; top: 40px; width: 16px; height: 5px; border-radius: 50%; background: #191F28; opacity: 0.15; }
   .me-ghost { position: absolute; left: 30px; top: 18px; width: 21px; height: 24px; overflow: visible; animation: hover 1.8s ease-in-out infinite; }
   @keyframes pulse { 0% { transform: scale(1); opacity: 0.22; } 100% { transform: scale(2.8); opacity: 0; } }
   @keyframes hover { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.6px); } }
   .pin-icon { filter: drop-shadow(0 2px 3px rgba(17, 24, 39, 0.35)); }
-  #error { display: none; padding: 16px; font: 14px sans-serif; color: #4B5563; }
+  #error { display: none; padding: 16px; font: 14px sans-serif; color: #4E5968; }
 </style>
 </head>
 <body>

@@ -19,7 +19,7 @@ export function LoginRequired({ description, edges }: LoginRequiredProps) {
 
   return (
     <Screen edges={edges} contentClassName="justify-center gap-4 px-6">
-      <Text className="text-title-lg font-sans-extrabold">로그인이 필요해요</Text>
+      <Text className="text-title-lg font-sans-bold">로그인이 필요해요</Text>
       <Text className="text-body text-text-secondary">{description}</Text>
       <Button label="로그인" onPress={() => navigation.navigate("Login")} />
     </Screen>

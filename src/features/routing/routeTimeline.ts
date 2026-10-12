@@ -93,8 +93,8 @@ export function mapStationIds(option: SubwayRouteOptionDto, max: number = MAX_LO
 
 export type StationCoords = ReadonlyMap<string, { lat: number; lng: number }>;
 
-const WALK_COLOR = "#9CA3AF";
-const ENDPOINT_COLOR = "#111827";
+const WALK_COLOR = "#B0B8C1";
+const ENDPOINT_COLOR = "#191F28";
 
 /**
  * 경로 상세 위쪽 지도 데이터. 탑승 구간은 호선 색 선으로, 도보는 회색 점선으로 잇고,

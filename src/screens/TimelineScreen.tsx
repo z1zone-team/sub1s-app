@@ -42,7 +42,7 @@ const BIG_NUMBER = {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <View className="flex-1">
-      <Text className="text-headline font-sans-extrabold">{value}</Text>
+      <Text className="text-headline font-sans-bold">{value}</Text>
       <Text className="mt-0.5 text-body-sm text-text-secondary">{label}</Text>
     </View>
   );
@@ -84,7 +84,7 @@ export function TimelineScreen() {
   const lines = lineRows(data?.lineBreakdown);
   const empty = !stats.isLoading && (data?.totalTravelCount ?? 0) === 0;
   const name = periodName(period, Date.now());
-  const title = <Text className="mx-5 mt-1 text-display-lg font-sans-extrabold">타임라인</Text>;
+  const title = <Text className="mx-5 mt-1 text-display-lg font-sans-bold">타임라인</Text>;
   const tabs = (
     <View className="mx-5 mt-4.5">
       <PeriodTabs value={period} onChange={setPeriod} />
@@ -99,7 +99,7 @@ export function TimelineScreen() {
         {tabs}
         <Text className="mx-5 mt-5.5 text-base font-sans-bold">{name}</Text>
         <View className="mx-5 mt-1.5">
-          <Text className="text-display-xl font-sans-extrabold text-border" style={BIG_NUMBER}>
+          <Text className="text-display-xl font-sans-bold text-border" style={BIG_NUMBER}>
             0.0
           </Text>
           <Text className="mt-1.5 text-subtitle font-sans-semibold text-text-secondary">킬로미터</Text>
@@ -110,7 +110,7 @@ export function TimelineScreen() {
             <Bob lift={5} periodMs={2600}>
               <EmptyMascot size={64} />
             </Bob>
-            <Text className="text-title font-sans-extrabold">아직 탄 기록이 없어요</Text>
+            <Text className="text-title font-sans-bold">아직 탄 기록이 없어요</Text>
             <Text className="text-center text-body-sm leading-normal text-text-secondary">
               {"지하철을 타면 이동한 구간이\n호선 색으로 여기에 그려져요"}
             </Text>
@@ -140,7 +140,7 @@ export function TimelineScreen() {
         <Text className="mx-5 mt-5.5 text-base font-sans-bold">{name}</Text>
 
         <View className="mx-5 mt-1.5">
-          <Text className="text-display-xl font-sans-extrabold" style={BIG_NUMBER}>
+          <Text className="text-display-xl font-sans-bold" style={BIG_NUMBER}>
             {(data?.totalDistanceKm ?? 0).toFixed(1)}
           </Text>
           <Text className="mt-1.5 text-subtitle font-sans-semibold text-text-secondary">킬로미터</Text>
@@ -156,7 +156,7 @@ export function TimelineScreen() {
           <BarChart bars={bars} />
         </View>
 
-        <Text className="mx-5 mt-9 text-title-lg font-sans-extrabold">이동 지도</Text>
+        <Text className="mx-5 mt-9 text-title-lg font-sans-bold">이동 지도</Text>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="이동 지도 크게 보기"
@@ -179,7 +179,7 @@ export function TimelineScreen() {
                 className="h-6.5 flex-row items-center gap-1 rounded-pill px-2.5"
                 style={{ backgroundColor: line.color }}
               >
-                <Text className="text-small font-sans-extrabold" style={{ color: lineTextColor(line.color) }}>
+                <Text className="text-small font-sans-bold" style={{ color: lineTextColor(line.color) }}>
                   {line.name}
                 </Text>
                 <Text className="text-small font-sans-semibold" style={{ color: lineTextColor(line.color) }}>
@@ -192,7 +192,7 @@ export function TimelineScreen() {
 
         {logs.length > 0 ? (
           <>
-            <Text className="mx-5 mb-1.5 mt-10 text-title-lg font-sans-extrabold">최근 활동</Text>
+            <Text className="mx-5 mb-1.5 mt-10 text-title-lg font-sans-bold">최근 활동</Text>
             <View className="px-5">
               {logs.map((log, index) => (
                 <ActivityRow

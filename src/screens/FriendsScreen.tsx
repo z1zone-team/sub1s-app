@@ -45,7 +45,7 @@ export function FriendsScreen() {
         contentContainerClassName="px-5 pb-6"
         ListHeaderComponent={
           <View className="gap-3 py-4">
-            <Text className="text-title-lg font-sans-extrabold">친구 {friends.data?.totalCount ?? 0}명</Text>
+            <Text className="text-title-lg font-sans-bold">친구 {friends.data?.totalCount ?? 0}명</Text>
             <Button label="친구 초대하기" onPress={share} disabled={!invite.data} />
             <Pressable accessibilityRole="button" onPress={confirmReset} disabled={reset.isPending}>
               <Text className="text-center text-body-sm text-text-secondary">초대 링크 새로 만들기</Text>

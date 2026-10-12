@@ -30,7 +30,7 @@ export function ActivityRow({ color, date, route, summary, distanceKm, last = fa
             {date} · {summary}
           </Text>
         </View>
-        <Text className="text-base font-sans-extrabold">
+        <Text className="text-base font-sans-bold">
           {part.number}
           {part.unit ? <Text className="ml-0.5 text-small font-sans-semibold text-text-secondary">{part.unit}</Text> : null}
         </Text>
@@ -45,7 +45,7 @@ export function ActivityRow({ color, date, route, summary, distanceKm, last = fa
         <Text className="mt-0.5 text-base font-sans-bold">{route}</Text>
         <Text className="mt-0.5 text-small font-sans-bold text-text-secondary">{summary}</Text>
       </View>
-      <Text className="text-title font-sans-extrabold">
+      <Text className="text-title font-sans-bold">
         {part.number}
         {part.unit ? <Text className="ml-0.5 text-small font-sans-semibold text-text-secondary">{part.unit}</Text> : null}
       </Text>

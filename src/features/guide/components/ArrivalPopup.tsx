@@ -25,7 +25,7 @@ export function ArrivalPopup({ title, detail, onArrive, loading = false }: Arriv
           <DesignIcon name="bell" size={20} tone="onPrimary" />
         </View>
         <View className="min-w-0 flex-1">
-          <Text className="text-subtitle font-sans-extrabold">{title}</Text>
+          <Text className="text-subtitle font-sans-bold">{title}</Text>
           {detail ? <Text className="mt-0.5 text-body-sm text-text-secondary">{detail}</Text> : null}
         </View>
         {onArrive ? (
@@ -36,7 +36,7 @@ export function ArrivalPopup({ title, detail, onArrive, loading = false }: Arriv
             onPress={onArrive}
             className={cn("h-10 items-center justify-center rounded-sm-plus bg-primary-tint px-3", loading ? "opacity-50" : "")}
           >
-            <Text className="text-body-sm font-sans-extrabold text-primary">도착</Text>
+            <Text className="text-body-sm font-sans-bold text-primary">도착</Text>
           </Pressable>
         ) : null}
       </View>

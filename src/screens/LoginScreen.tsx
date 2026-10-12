@@ -72,7 +72,7 @@ export function LoginScreen({ navigation }: NativeStackScreenProps<RootStackPara
           </View>
         </RiseIn>
         <RiseIn from={RISE_FROM} durationMs={RISE_MS} delayMs={80}>
-          <Text className="mt-7 text-center text-display-sm font-sans-extrabold leading-snug">지하철, 더 가볍게</Text>
+          <Text className="mt-7 text-center text-display-sm font-sans-bold leading-snug">지하철, 더 가볍게</Text>
         </RiseIn>
         <RiseIn from={RISE_FROM} durationMs={RISE_MS} delayMs={140}>
           <Text className="mt-2.5 text-center text-subtitle leading-normal text-text-secondary">

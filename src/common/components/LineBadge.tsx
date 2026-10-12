@@ -31,7 +31,7 @@ export function LineBadge({ lineId, suffix, size = "md" }: LineBadgeProps) {
         className={cn("items-center justify-center rounded-pill", BOX[size], isRound ? "" : BOX_PADDING[size])}
         style={{ backgroundColor: line.color }}
       >
-        <Text className={cn(FONT[size], "font-sans-extrabold")} style={{ color: lineTextColor(line.color) }}>
+        <Text className={cn(FONT[size], "font-sans-bold")} style={{ color: lineTextColor(line.color) }}>
           {line.shortLabel}
         </Text>
       </View>

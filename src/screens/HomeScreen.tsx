@@ -201,7 +201,7 @@ export function HomeScreen() {
 
         <View style={{ top: searchTop + FAB_OFFSET }} className="absolute right-4 gap-2.5">
           <FloatingButton label="2D/3D 지도 전환" selected={is3d} onPress={() => setIs3d((value) => !value)}>
-            <Text className={cn("text-body-sm font-sans-extrabold", is3d ? "text-on-primary" : "text-text")}>
+            <Text className={cn("text-body-sm font-sans-bold", is3d ? "text-on-primary" : "text-text")}>
               {is3d ? "2D" : "3D"}
             </Text>
           </FloatingButton>
@@ -232,8 +232,8 @@ export function HomeScreen() {
             style={{ bottom: (selectedPlace ? PLACE_CARD_HEIGHT : SHEET_PEEK_HEIGHT) + 16 }}
             className="absolute right-4 h-17 w-17 items-center justify-center gap-px rounded-pill border-4 border-bg bg-primary"
           >
-            <Text className="text-title font-sans-extrabold text-on-primary">안내</Text>
-            <Text className="text-small font-sans-extrabold text-on-primary">{minutesLabel(activeGuide.remainingSec)}</Text>
+            <Text className="text-title font-sans-bold text-on-primary">안내</Text>
+            <Text className="text-small font-sans-bold text-on-primary">{minutesLabel(activeGuide.remainingSec)}</Text>
           </Pressable>
         ) : null}
 

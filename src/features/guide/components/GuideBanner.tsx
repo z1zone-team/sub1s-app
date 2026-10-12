@@ -39,14 +39,14 @@ export function GuideBanner({
           </Pressable>
           <View className="flex-1">
             <Text className="text-small font-sans-semibold text-on-primary opacity-85">다음 역</Text>
-            <Text numberOfLines={1} className="text-headline-md font-sans-extrabold text-on-primary">
+            <Text numberOfLines={1} className="text-headline-md font-sans-bold text-on-primary">
               {nextStationName}
             </Text>
           </View>
           <Blink>
             <View className="h-6 flex-row items-center gap-1.25 rounded-pill bg-primary-dark px-2.25">
               <View className="h-1.5 w-1.5 rounded-pill bg-on-primary" />
-              <Text className="text-caption font-sans-extrabold text-on-primary">안내 중</Text>
+              <Text className="text-caption font-sans-bold text-on-primary">안내 중</Text>
             </View>
           </Blink>
         </View>

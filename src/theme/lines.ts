@@ -40,7 +40,7 @@ export const LINES: Readonly<Record<string, LineInfo>> = {
 
 export const WALK_LINE_ID = "WALK";
 
-const UNKNOWN_LINE_COLOR = "#9CA3AF";
+const UNKNOWN_LINE_COLOR = "#B0B8C1";
 
 export function getLineInfo(lineId: string): LineInfo {
   return (
@@ -64,5 +64,5 @@ function relativeLuminance(hex: string): number {
 
 /** 배지 배경색 위에서 읽을 수 있는 글자색. 밝은 노선색(9호선, 수인분당선 등)은 어두운 글자를 쓴다 */
 export function lineTextColor(background: string): string {
-  return relativeLuminance(background) > 0.35 ? "#111827" : "#FFFFFF";
+  return relativeLuminance(background) > 0.35 ? "#191F28" : "#FFFFFF";
 }

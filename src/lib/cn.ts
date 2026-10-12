@@ -25,9 +25,9 @@ export const FONT_SIZE_TOKENS = [
   "hero-lg", "display-xl",
 ] as const;
 
-export const FONT_FAMILY_TOKENS = ["sans-medium", "sans-semibold", "sans-bold", "sans-extrabold"] as const;
+export const FONT_FAMILY_TOKENS = ["sans-medium", "sans-semibold", "sans-bold"] as const;
 
-export const RADIUS_TOKENS = ["3xs", "2xs", "xs-plus", "sm-mid", "sm-plus", "lg-plus", "pill"] as const;
+export const RADIUS_TOKENS = ["3xs", "2xs", "xs-plus", "sm-mid", "sm-plus", "md-plus", "lg-plus", "pill"] as const;
 
 const twMerge = extendTailwindMerge({
   extend: {

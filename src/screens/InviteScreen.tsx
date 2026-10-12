@@ -44,7 +44,7 @@ export function InviteScreen({
   } else if (accept.isSuccess) {
     body = (
       <>
-        <Text className="text-title font-sans-extrabold">
+        <Text className="text-title font-sans-bold">
           {accept.data.nickname}님과 친구가 되었어요
         </Text>
         <Button label="친구 보기" onPress={() => navigation.replace("Friends")} />

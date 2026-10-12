@@ -155,7 +155,7 @@ export function SearchScreen({
           <DesignIcon name="back" />
         </Pressable>
         {pickPlace ? (
-          <Text className="pb-1 text-title font-sans-extrabold">{PLACE_LABEL[pickPlace]}으로 지정할 장소</Text>
+          <Text className="pb-1 text-title font-sans-bold">{PLACE_LABEL[pickPlace]}으로 지정할 장소</Text>
         ) : null}
       </View>
 

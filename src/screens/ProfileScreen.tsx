@@ -55,9 +55,9 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <View className="flex-1 px-5 py-4">
       <Text className="text-small font-sans-semibold text-text-secondary">{label}</Text>
-      <Text className="mt-1 text-headline font-sans-extrabold">
+      <Text className="mt-1 text-headline font-sans-bold">
         {valueParts(value).map((part, index) => (
-          <Text key={index} className="text-headline font-sans-extrabold">
+          <Text key={index} className="text-headline font-sans-bold">
             {part.number}
             {part.unit ? <Text className="ml-0.5 text-body font-sans-semibold">{part.unit}</Text> : null}
           </Text>
@@ -90,7 +90,7 @@ export function ProfileScreen() {
   return (
     <Screen scroll contentClassName="pb-6">
       <View className="flex-row items-center justify-between px-5 pt-2">
-        <Text className="text-headline-lg font-sans-extrabold">MY</Text>
+        <Text className="text-headline-lg font-sans-bold">MY</Text>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="설정"
@@ -109,7 +109,7 @@ export function ProfileScreen() {
             </Bob>
           </View>
           <View className="flex-1">
-            <Text className="text-title-lg font-sans-extrabold" numberOfLines={1}>
+            <Text className="text-title-lg font-sans-bold" numberOfLines={1}>
               {profile?.name || profile?.nickname || ""}
             </Text>
             {profile ? <Text className="mt-0.5 text-body text-text-secondary">@{profile.nickname}</Text> : null}

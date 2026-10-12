@@ -90,7 +90,7 @@ export function OnboardingScreen({
 
       <View className="px-2 pt-7">
         <Text className="text-body-sm font-sans-bold text-primary">{step} / 2</Text>
-        <Text className="mt-2 text-headline-sm font-sans-extrabold leading-snug">
+        <Text className="mt-2 text-headline-sm font-sans-bold leading-snug">
           {step === 1 ? "주로 지하철을 어떤 용무로 타시나요?" : "어떤 경로를 좋아하세요?"}
         </Text>
         <Text className="mt-2 text-body text-text-secondary">

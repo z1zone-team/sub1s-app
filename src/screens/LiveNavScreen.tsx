@@ -289,7 +289,7 @@ function Guide({ navigation, sessionId, option, startedAtMs }: GuideProps) {
                 <Text
                   className={cn(
                     "text-subtitle",
-                    index === visible[stripCurrent] ? "font-sans-extrabold" : "font-sans-medium",
+                    index === visible[stripCurrent] ? "font-sans-bold" : "font-sans-medium",
                     index < progress.currentIndex ? "text-text-secondary" : "text-text"
                   )}
                 >
