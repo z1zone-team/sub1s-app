@@ -147,7 +147,7 @@ export function RootNavigator() {
         <Stack.Screen
           name="Arrived"
           component={ArrivedScreen}
-          options={{ title: "도착", headerBackVisible: false, gestureEnabled: false }}
+          options={{ headerShown: false, gestureEnabled: false, animation: "fade" }}
         />
         <Stack.Screen name="MoveMap" component={MoveMapScreen} options={{ title: "이동 지도" }} />
         <Stack.Screen
