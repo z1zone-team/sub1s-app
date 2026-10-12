@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { ActivityIndicator, FlatList, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { ApiError } from "@/apis/client";
-import { useAuth } from "@clerk/clerk-expo";
+import { useAuth } from "@clerk/expo";
 import { usePreferencesQuery } from "@/apis/queries/users/usePreferencesQuery";
 import { useRouteSearchQuery } from "@/apis/queries/routing/useRouteSearchQuery";
 import { useStationsQuery } from "@/apis/queries/stations/useStationsQuery";

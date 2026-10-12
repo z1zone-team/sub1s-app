@@ -36,8 +36,8 @@ jest.mock("expo-secure-store", () => ({
   deleteItemAsync: jest.fn().mockResolvedValue(undefined),
 }));
 
-// Mock @clerk/clerk-expo
-jest.mock("@clerk/clerk-expo", () => ({
+// Mock @clerk/expo
+jest.mock("@clerk/expo", () => ({
   useAuth: jest.fn(() => ({
     isLoaded: true,
     isSignedIn: true,

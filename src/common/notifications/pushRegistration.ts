@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Platform } from "react-native";
-import { useAuth } from "@clerk/clerk-expo";
+import { useAuth } from "@clerk/expo";
 import * as Notifications from "expo-notifications";
 import { registerPushToken, unregisterPushToken } from "@/apis/mutations/notifications/pushTokens";
 import { ENV } from "@/constants/env";

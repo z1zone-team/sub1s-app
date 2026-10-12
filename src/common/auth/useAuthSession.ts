@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from "react";
-import { useAuth, useUser } from "@clerk/clerk-expo";
+import { useAuth, useUser } from "@clerk/expo";
 import { useAuthStore, type AuthUser } from "./auth-store";
 import { post } from "@/apis/client";
 import { buildSyncBody } from "./syncBody";

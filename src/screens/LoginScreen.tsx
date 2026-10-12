@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { View } from "react-native";
-import { useAuth } from "@clerk/clerk-expo";
+import { useAuth } from "@clerk/expo";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Button } from "@/common/components/Button";
 import { Screen } from "@/common/components/Screen";

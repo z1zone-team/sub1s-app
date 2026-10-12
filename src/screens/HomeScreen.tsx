@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import { Alert, Pressable, ScrollView, View } from "react-native";
-import { useAuth } from "@clerk/clerk-expo";
+import { useAuth } from "@clerk/expo";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import {

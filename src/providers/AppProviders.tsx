@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef } from "react";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
-import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
+import { ClerkProvider, useAuth } from "@clerk/expo";
 import * as SecureStore from "expo-secure-store";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { setTokenGetter } from "@/apis/client";

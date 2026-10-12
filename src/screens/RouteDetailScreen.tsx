@@ -1,6 +1,6 @@
 import React from "react";
 import { View } from "react-native";
-import { useAuth } from "@clerk/clerk-expo";
+import { useAuth } from "@clerk/expo";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useStationFacilitiesQuery } from "@/apis/queries/stations/useStationFacilitiesQuery";
 import { useStartTrackingMutation } from "@/apis/mutations/tracking/useStartTrackingMutation";
