@@ -41,7 +41,7 @@ describe("nameError", () => {
 
 describe("percentileText", () => {
   it("값이 있으면 상위 퍼센트를 보여 준다", () => {
-    expect(percentileText(12)).toBe("지하철 이용 상위 12%");
+    expect(percentileText(12)).toBe("이번 달 상위 12%");
   });
 
   it("값이 없으면 보여 주지 않는다", () => {

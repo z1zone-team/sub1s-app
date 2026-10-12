@@ -122,7 +122,7 @@ export function TimelineScreen() {
           <Pressable
             accessibilityRole="button"
             onPress={() => navigation.navigate("Search")}
-            className="h-14 items-center justify-center rounded-md bg-primary"
+            className="h-14 items-center justify-center rounded-lg bg-primary"
           >
             <Text className="text-base font-sans-bold text-on-primary">첫 경로 찾아보기</Text>
           </Pressable>

@@ -17,9 +17,9 @@ interface RankRowProps {
 export function RankRow({ rank, name, value, isMe }: RankRowProps) {
   const [part] = valueParts(value);
   return (
-    <View className={cn("h-14 flex-row items-center gap-3 rounded-md px-3", isMe ? "bg-primary-tint" : "")}>
+    <View className={cn("h-16 flex-row items-center gap-3.5 rounded-lg px-3", isMe ? "bg-primary-tint" : "")}>
       <Text className={cn("w-6 text-center text-subtitle font-sans-bold", isMe ? "" : "text-text-secondary")}>{rank}</Text>
-      <View className="h-9 w-9 items-center justify-center rounded-pill border border-border bg-surface">
+      <View className="h-10 w-10 items-center justify-center rounded-md-plus bg-surface">
         <RowAvatar size={24} />
       </View>
       <View className="min-w-0 flex-1 flex-row items-center gap-1.5">
@@ -27,7 +27,7 @@ export function RankRow({ rank, name, value, isMe }: RankRowProps) {
           {name}
         </Text>
         {isMe ? (
-          <View className="h-5 justify-center rounded-pill bg-primary px-1.75">
+          <View className="h-5 justify-center rounded-xs-plus bg-primary px-1.75">
             <Text className="text-caption font-sans-bold text-on-primary">나</Text>
           </View>
         ) : null}

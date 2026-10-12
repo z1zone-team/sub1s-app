@@ -57,7 +57,7 @@ export function InviteSheet({ visible, onClose }: InviteSheetProps) {
             <View className="mb-5 h-1 w-9 self-center rounded-pill bg-border" />
             <Text className="text-title-lg font-sans-bold">친구 초대하기</Text>
             <Text className="mt-1.5 text-body text-text-secondary">링크로 들어온 친구와 서로 랭킹을 볼 수 있어요</Text>
-            <View className="mt-5 h-13 flex-row items-center gap-2 rounded-md bg-surface px-3.5">
+            <View className="mt-5 h-13 flex-row items-center gap-2 rounded-md-plus bg-surface px-3.5">
               <DesignIcon name="link" size={18} tone="secondary" />
               <Text className="flex-1 text-body font-sans-semibold" numberOfLines={1}>
                 {link || "링크를 만드는 중이에요"}

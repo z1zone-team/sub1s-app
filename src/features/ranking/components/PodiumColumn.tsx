@@ -60,8 +60,8 @@ export function PodiumColumn({ rank, name, km }: PodiumColumnProps) {
       </Text>
       <Text className="text-small text-text-secondary">{km}</Text>
       <Animated.View
-        className={cn("mt-2 w-full items-center rounded-t-md pt-2.5", pod.height, pod.box)}
-        style={{ transform: [{ scaleY: rise }], transformOrigin: "bottom" }}
+        className={cn("mt-2 w-full items-center pt-2.5", pod.height, pod.box)}
+        style={{ borderTopLeftRadius: 16, borderTopRightRadius: 12, transform: [{ scaleY: rise }], transformOrigin: "bottom" }}
       >
         <Text
           className={cn("font-sans-bold", pod.number, pod.numberColor)}

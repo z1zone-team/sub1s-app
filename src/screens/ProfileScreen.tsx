@@ -17,6 +17,7 @@ import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { formatDistanceKm } from "@/common/utils/format";
 import { valueParts } from "@/features/guide/arrivedView";
+import { kstYearMonth, periodKeyOf } from "@/features/ranking/rankingView";
 import { ProfileMascot } from "@/features/profile/components/ProfileMascot";
 import {
   isVisibilityOn,
@@ -39,7 +40,7 @@ interface MenuRowProps {
 
 function MenuRow({ icon, label, strong = false, value, onPress }: MenuRowProps) {
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} className="h-15 flex-row items-center gap-3.5 px-5">
+    <Pressable accessibilityRole="button" onPress={onPress} className="h-15 flex-row items-center gap-3.5 px-6">
       <DesignIcon name={icon} size={22} />
       <Text className={strong ? "flex-1 text-base font-sans-bold" : "flex-1 text-base font-sans-semibold"}>{label}</Text>
       {value ? <Text className="text-body-sm text-text-secondary">{value}</Text> : null}
@@ -48,19 +49,15 @@ function MenuRow({ icon, label, strong = false, value, onPress }: MenuRowProps) 
   );
 }
 
-function Divider() {
-  return <View className="mx-5 h-px bg-border" />;
-}
-
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <View className="flex-1 px-5 py-4">
-      <Text className="text-small font-sans-semibold text-text-secondary">{label}</Text>
-      <Text className="mt-1 text-headline font-sans-bold">
+    <View className="flex-1 px-4 py-3">
+      <Text className="text-body-sm font-sans-medium text-text-secondary">{label}</Text>
+      <Text className="mt-1 text-display-md font-sans-bold" style={{ letterSpacing: -1 }}>
         {valueParts(value).map((part, index) => (
-          <Text key={index} className="text-headline font-sans-bold">
+          <Text key={index} className="text-display-md font-sans-bold" style={{ letterSpacing: -1, fontVariant: ["tabular-nums"] }}>
             {part.number}
-            {part.unit ? <Text className="ml-0.5 text-body font-sans-semibold">{part.unit}</Text> : null}
+            {part.unit ? <Text className="ml-0.75 text-subtitle font-sans-semibold text-text-secondary">{part.unit}</Text> : null}
           </Text>
         ))}
       </Text>
@@ -76,7 +73,8 @@ export function ProfileScreen() {
   const me = useGetMe();
   const all = useTravelStatsQuery("ALL");
   const week = useTravelStatsQuery("WEEK");
-  const ranking = useRankingQuery({ periodType: "ALL", periodKey: "ALL", limit: 1 });
+  const { year, month } = kstYearMonth(Date.now());
+  const ranking = useRankingQuery({ periodType: "MONTHLY", periodKey: periodKeyOf("MONTHLY", year, month), limit: 1 });
   const updateProfile = useUpdateProfileMutation();
   const friends = useFriendsQuery();
 
@@ -89,9 +87,9 @@ export function ProfileScreen() {
   const visibility = profile?.rankingVisibility ?? "PUBLIC";
 
   return (
-    <Screen scroll contentClassName="pb-6">
+    <Screen scroll surface contentClassName="pb-6">
       <View className="flex-row items-center justify-between px-5 pt-2">
-        <Text className="text-headline-lg font-sans-bold">MY</Text>
+        <Text className="text-display-sm font-sans-bold">MY</Text>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="설정"
@@ -108,8 +106,8 @@ export function ProfileScreen() {
         </View>
       ) : (
         <>
-      <View className="mx-4 mt-4 overflow-hidden rounded-lg border border-border">
-        <View className="flex-row items-center gap-4 p-5">
+      <View className="mx-3 mt-4 overflow-hidden rounded-xl bg-bg">
+        <View className="flex-row items-center gap-4 px-6 pb-2 pt-6">
           <View className="h-19 w-19 items-center justify-center rounded-pill bg-surface">
             <Bob lift={3} periodMs={2400}>
               <ProfileMascot size={56} />
@@ -128,14 +126,13 @@ export function ProfileScreen() {
             ) : null}
           </View>
         </View>
-        <View className="flex-row border-t border-border bg-surface">
+        <View className="flex-row px-2 pb-5 pt-2">
           <Stat label="총 이동 거리" value={formatDistanceKm(all.data?.totalDistanceKm ?? 0)} />
-          <View className="w-px bg-border" />
           <Stat label="환승" value={`${all.data?.transferCount ?? 0}회`} />
         </View>
       </View>
 
-      <View className="mt-5">
+      <View className="mx-3 mt-3 rounded-xl bg-bg py-2">
         <MenuRow
           icon="pulse"
           label="타임라인 자세히 보기"
@@ -143,17 +140,14 @@ export function ProfileScreen() {
           value={`이번 주 ${formatDistanceKm(sumDistanceKm(week.data?.buckets))}`}
           onPress={() => navigation.navigate("Timeline")}
         />
-        <Divider />
         <MenuRow
           icon="friends"
           label="친구 관리"
           value={friends.data ? `${friends.data.totalCount}명` : undefined}
           onPress={() => navigation.navigate("Friends")}
         />
-        <Divider />
         <MenuRow icon="notify" label="알림 설정" onPress={() => navigation.navigate("NotificationSettings")} />
-        <Divider />
-        <View className="h-18 flex-row items-center gap-3.5 px-5">
+        <View className="h-18 flex-row items-center gap-3.5 px-6">
           <DesignIcon name="eye" size={22} />
           <View className="flex-1 gap-0.5">
             <Text className="text-base font-sans-semibold">이동 기록 공개</Text>
@@ -169,7 +163,7 @@ export function ProfileScreen() {
           />
         </View>
         {updateProfile.error ? (
-          <Text className="px-5 text-small text-error">변경하지 못했어요. 다시 시도해 주세요.</Text>
+          <Text className="px-6 text-small text-error">변경하지 못했어요. 다시 시도해 주세요.</Text>
         ) : null}
       </View>
         </>

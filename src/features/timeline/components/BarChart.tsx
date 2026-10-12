@@ -48,12 +48,13 @@ function Bar({ ratio, label, index, wide, color }: { ratio: number; label: strin
 
 /**
  * 프로토타입 Timeline.dc.html의 막대 그래프. 가로 선 4개 위에 막대가 서고 오른쪽에 세로 눈금 숫자가 있다.
- * 막대가 7개 이하면 22px, 많으면 14px 너비이고 아래에서 위로 자란다
+ * 막대가 7개 이하면 22px, 많으면 14px 너비이고 아래에서 위로 자란다. 가장 많이 이동한 막대만 primary 색이고 나머지는 테두리색이다
  */
 export function BarChart({ bars }: BarChartProps) {
   const { colors } = useTheme();
   const { max, ticks } = useMemo(() => axisTicks(Math.max(0, ...bars.map((bar) => bar.distanceKm))), [bars]);
   const wide = bars.length <= 7;
+  const maxKm = Math.max(0, ...bars.map((bar) => bar.distanceKm));
 
   return (
     <View className="flex-row gap-2.5">
@@ -71,7 +72,7 @@ export function BarChart({ bars }: BarChartProps) {
               label={bar.label}
               index={index}
               wide={wide}
-              color={bar.distanceKm > 0 ? colors.primary : colors.border}
+              color={bar.distanceKm > 0 && bar.distanceKm === maxKm ? colors.primary : colors.border}
             />
           ))}
         </View>
