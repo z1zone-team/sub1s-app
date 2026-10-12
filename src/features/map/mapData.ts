@@ -50,19 +50,29 @@ export function visitedLineIds(lineMap: LineMapResponseDto | undefined): string[
 
 export interface HomeMapInput {
   me?: { lat: number; lng: number };
+  /** 지도 검색에서 고른 장소. 있으면 그곳을 중심으로 보여 준다 */
+  pin?: { lat: number; lng: number };
 }
 
 /** 내 위치 색은 쓰이지 않지만 마커 형식상 필요하다. 내 위치는 캐릭터로 그린다 */
 const ME_COLOR = "#002968";
 
-/** 홈 지도는 프로토타입처럼 내 위치만 표시한다. 위치가 있으면 그 주변을 보여 주고 없으면 기본 위치를 보여 준다 */
-export function homeMapData({ me }: HomeMapInput): MapData {
-  if (!me) return { markers: [], lines: [], fit: false };
+/**
+ * 홈 지도는 프로토타입처럼 내 위치를 캐릭터로 표시하고, 지도 검색에서 고른 장소가 있으면 핀을 더한다.
+ * 고른 장소가 있으면 그곳을, 없으면 내 위치를, 둘 다 없으면 기본 위치를 보여 준다
+ */
+export function homeMapData({ me, pin }: HomeMapInput): MapData {
+  const markers: MapMarker[] = [];
+  if (me) markers.push({ lat: me.lat, lng: me.lng, color: ME_COLOR, kind: "me" });
+  if (pin) markers.push({ lat: pin.lat, lng: pin.lng, color: ME_COLOR, kind: "pin" });
+
+  const focus = pin ?? me;
+  if (!focus) return { markers, lines: [], fit: false };
   return {
-    markers: [{ lat: me.lat, lng: me.lng, color: ME_COLOR, kind: "me" }],
+    markers,
     lines: [],
     fit: false,
-    center: [me.lat, me.lng],
-    zoom: 14,
+    center: [focus.lat, focus.lng],
+    zoom: pin ? 16 : 14,
   };
 }

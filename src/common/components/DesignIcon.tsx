@@ -12,7 +12,11 @@ export type DesignIconName =
   | "locate"
   | "clock"
   | "ranking"
-  | "person";
+  | "person"
+  | "back"
+  | "search"
+  | "swap"
+  | "close";
 
 interface DesignIconProps {
   name: DesignIconName;
@@ -105,6 +109,23 @@ export function DesignIcon({
       ) : (
         <Path d="M3 20h18M5 20v-6h4v6M10 20V9h4v11M15 20v-8h4v8" fill="none" strokeWidth={strokeWidth ?? 1.8} {...common} />
       );
+      break;
+    case "back":
+      shapes = <Path d="M15 5l-7 7 7 7" fill="none" strokeWidth={strokeWidth ?? 2} {...common} />;
+      break;
+    case "search":
+      shapes = (
+        <>
+          <Circle cx={11} cy={11} r={7} fill="none" strokeWidth={strokeWidth ?? 2} {...common} />
+          <Path d="M20 20l-4-4" fill="none" strokeWidth={strokeWidth ?? 2} {...common} />
+        </>
+      );
+      break;
+    case "swap":
+      shapes = <Path d="M8 4v16M4 8l4-4 4 4M16 20V4M12 16l4 4 4-4" fill="none" strokeWidth={strokeWidth ?? 1.8} {...common} />;
+      break;
+    case "close":
+      shapes = <Path d="M6 6l12 12M18 6L6 18" fill="none" strokeWidth={strokeWidth ?? 2.2} {...common} />;
       break;
     case "person":
       shapes = (
