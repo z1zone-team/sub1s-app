@@ -21,7 +21,12 @@ export type RootStackParamList = {
   NotificationSettings: undefined;
   Invite: { token: string };
   MainTabs: NavigatorScreenParams<BottomTabParamList>;
+  /** 홈의 검색 필. 입력 한 칸으로 장소를 찾아 지도에서 확인한다 */
+  MapSearch: undefined;
+  /** 길찾기. 출발과 도착 두 칸 */
   Search: {
+    /** 지도에서 고른 장소를 출발지로 정해서 들어올 때 */
+    origin?: RouteEndpoint;
     /** 홈의 최근 도착지처럼 도착지를 미리 정해서 들어올 때 */
     destination?: RouteEndpoint;
     /** 집이나 학교로 저장할 장소를 고르는 모드. 고르면 저장하고 돌아간다 */

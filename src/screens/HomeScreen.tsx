@@ -23,6 +23,9 @@ import { useRecentDestinations } from "@/features/routing/useRecentDestinations"
 import { PLACE_KINDS, PLACE_LABEL, placeOfKind, placeToEndpoint } from "@/features/places/placeEndpoint";
 import { useActiveGuideStore } from "@/features/guide/active-guide-store";
 import { minutesLabel } from "@/features/guide/guideText";
+import { useStationsQuery } from "@/apis/queries/stations/useStationsQuery";
+import { PlaceCard } from "@/features/search/components/PlaceCard";
+import { useSelectedPlaceStore } from "@/features/search/selected-place-store";
 import { VWorldMap } from "@/features/map/VWorldMap";
 import { useHomeMapData } from "@/features/map/useHomeMapData";
 import { useOnboardingPrompt } from "@/features/onboarding/useOnboardingPrompt";
@@ -30,6 +33,8 @@ import type { RootStackParamList } from "@/navigation/navigation-types";
 
 const PLACE_ICON: Record<PlaceKind, DesignIconName> = { HOME: "home", SCHOOL: "school" };
 const MAX_ROUTE_CHIPS = 2;
+/** 지도 검색에서 장소를 고르면 시트 대신 보이는 하단 카드의 대략적인 높이. 안내 복귀 버튼이 그 위에 놓인다 */
+const PLACE_CARD_HEIGHT = 200;
 
 /** 상태 표시줄 아래로 검색 필, 칩 줄, 플로팅 버튼이 내려오는 간격(px). 프로토타입의 58 / 120 / 176에서 상태 표시줄 높이를 뺀 값 */
 const SEARCH_OFFSET = 10;
@@ -68,7 +73,17 @@ export function HomeScreen() {
   const insets = useSafeAreaInsets();
   useOnboardingPrompt();
   const recent = useRecentDestinations();
-  const baseMapData = useHomeMapData();
+  const selectedPlace = useSelectedPlaceStore((state) => state.place);
+  const clearSelectedPlace = useSelectedPlaceStore((state) => state.clear);
+  // 최근 검색에서 고른 역은 좌표가 없어서 서버에서 받아 온다
+  const needsStationCoords = Boolean(selectedPlace && !selectedPlace.coords && selectedPlace.endpoint.stationId);
+  const pinStation = useStationsQuery(
+    needsStationCoords && selectedPlace?.endpoint.stationId ? [selectedPlace.endpoint.stationId] : []
+  );
+  const pinCoords =
+    selectedPlace?.coords ??
+    (needsStationCoords ? pinStation.data?.items.find((item) => item.stationId === selectedPlace?.endpoint.stationId) : undefined);
+  const baseMapData = useHomeMapData(pinCoords ? { lat: pinCoords.lat, lng: pinCoords.lng } : undefined);
   const { isSignedIn } = useAuth();
   const places = useUserPlacesQuery();
   const removePlace = useRemovePlaceMutation();
@@ -122,7 +137,7 @@ export function HomeScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="역, 장소 검색"
-              onPress={() => navigation.navigate("Search")}
+              onPress={() => navigation.navigate("MapSearch")}
               className="h-control flex-1 flex-row items-center gap-2.5"
             >
               {/* 로고 에셋이 확정되기 전까지 자리만 잡는다 (TASKS 6-D 스플래시와 로고 에셋) */}
@@ -214,7 +229,7 @@ export function HomeScreen() {
                 startedAtMs: activeGuide.startedAtMs,
               })
             }
-            style={{ bottom: SHEET_PEEK_HEIGHT + 16 }}
+            style={{ bottom: (selectedPlace ? PLACE_CARD_HEIGHT : SHEET_PEEK_HEIGHT) + 16 }}
             className="absolute right-4 h-17 w-17 items-center justify-center gap-px rounded-pill border-4 border-bg bg-primary"
           >
             <Text className="text-title font-sans-extrabold text-on-primary">안내</Text>
@@ -222,44 +237,59 @@ export function HomeScreen() {
           </Pressable>
         ) : null}
 
-        <HomeSheet
-          containerHeight={areaHeight}
-          topInset={insets.top}
-          title="최근 도착지"
-          actionLabel="전체보기"
-          onActionPress={() => navigation.navigate("Search")}
-        >
-          {recent.destinations.length === 0 ? (
-            <Text className="p-6 text-center text-text-secondary">아직 검색한 도착지가 없어요</Text>
-          ) : (
-            recent.destinations.map((destination) => {
-              const lineIds = destination.endpoint.stationId
-                ? recent.linesOfStation.get(destination.endpoint.stationId) ?? []
-                : [];
-              return (
-                <Pressable
-                  key={destination.routeIds[0]}
-                  accessibilityRole="button"
-                  onPress={() => navigation.navigate("Search", { destination: destination.endpoint })}
-                  className="h-15 flex-row items-center gap-3 border-b border-border"
-                >
-                  <View className="h-9 w-9 items-center justify-center rounded-pill bg-surface">
-                    <DesignIcon name="clock" size={18} tone="secondary" />
-                  </View>
-                  <View className="flex-1 flex-row items-center gap-1.5">
-                    <Text numberOfLines={1} className="shrink text-base font-sans-bold">
-                      {destination.endpoint.name}
-                    </Text>
-                    {lineIds.map((lineId) => (
-                      <LineBadge key={lineId} lineId={lineId} size="sm" />
-                    ))}
-                  </View>
-                  <Text className="text-body-sm text-text-secondary">{formatMonthDayKst(destination.searchedAt)}</Text>
-                </Pressable>
-              );
-            })
-          )}
-        </HomeSheet>
+        {selectedPlace ? (
+          <PlaceCard
+            place={selectedPlace}
+            onClose={clearSelectedPlace}
+            onOrigin={() => {
+              navigation.navigate("Search", { origin: selectedPlace.endpoint });
+              clearSelectedPlace();
+            }}
+            onDestination={() => {
+              navigation.navigate("Search", { destination: selectedPlace.endpoint });
+              clearSelectedPlace();
+            }}
+          />
+        ) : (
+          <HomeSheet
+            containerHeight={areaHeight}
+            topInset={insets.top}
+            title="최근 도착지"
+            actionLabel="전체보기"
+            onActionPress={() => navigation.navigate("Search")}
+          >
+            {recent.destinations.length === 0 ? (
+              <Text className="p-6 text-center text-text-secondary">아직 검색한 도착지가 없어요</Text>
+            ) : (
+              recent.destinations.map((destination) => {
+                const lineIds = destination.endpoint.stationId
+                  ? recent.linesOfStation.get(destination.endpoint.stationId) ?? []
+                  : [];
+                return (
+                  <Pressable
+                    key={destination.routeIds[0]}
+                    accessibilityRole="button"
+                    onPress={() => navigation.navigate("Search", { destination: destination.endpoint })}
+                    className="h-15 flex-row items-center gap-3 border-b border-border"
+                  >
+                    <View className="h-9 w-9 items-center justify-center rounded-pill bg-surface">
+                      <DesignIcon name="clock" size={18} tone="secondary" />
+                    </View>
+                    <View className="flex-1 flex-row items-center gap-1.5">
+                      <Text numberOfLines={1} className="shrink text-base font-sans-bold">
+                        {destination.endpoint.name}
+                      </Text>
+                      {lineIds.map((lineId) => (
+                        <LineBadge key={lineId} lineId={lineId} size="sm" />
+                      ))}
+                    </View>
+                    <Text className="text-body-sm text-text-secondary">{formatMonthDayKst(destination.searchedAt)}</Text>
+                  </Pressable>
+                );
+              })
+            )}
+          </HomeSheet>
+        )}
       </View>
     </Screen>
   );

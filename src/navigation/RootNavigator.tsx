@@ -6,6 +6,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { BottomTabNavigator } from "./BottomTabNavigator";
 import { RouteDetailScreen } from "@/screens/RouteDetailScreen";
 import { RouteResultScreen } from "@/screens/RouteResultScreen";
+import { MapSearchScreen } from "@/screens/MapSearchScreen";
 import { SearchScreen } from "@/screens/SearchScreen";
 import { resolveStartRoute } from "@/common/auth/startRoute";
 import { useGuestStore } from "@/common/auth/guest-store";
@@ -111,6 +112,11 @@ export function RootNavigator() {
         <Stack.Screen
           name="MainTabs"
           component={BottomTabNavigator}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="MapSearch"
+          component={MapSearchScreen}
           options={{ headerShown: false }}
         />
         <Stack.Screen
