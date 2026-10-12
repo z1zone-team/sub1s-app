@@ -55,7 +55,7 @@ export function PodiumColumn({ rank, name, km }: PodiumColumnProps) {
       ) : (
         <ThirdPlaceCharacter size={76} />
       )}
-      <Text className={cn("mt-1.5 max-w-full", rank === 1 ? "text-body font-sans-extrabold" : "text-body-sm font-sans-bold")} numberOfLines={1}>
+      <Text className={cn("mt-1.5 max-w-full", rank === 1 ? "text-body font-sans-bold" : "text-body-sm font-sans-bold")} numberOfLines={1}>
         {name}
       </Text>
       <Text className="text-small text-text-secondary">{km}</Text>
@@ -64,7 +64,7 @@ export function PodiumColumn({ rank, name, km }: PodiumColumnProps) {
         style={{ transform: [{ scaleY: rise }], transformOrigin: "bottom" }}
       >
         <Text
-          className={cn("font-sans-extrabold", pod.number, pod.numberColor)}
+          className={cn("font-sans-bold", pod.number, pod.numberColor)}
           style={{ transform: [{ skewX: "-4deg" }] }}
         >
           {rank}

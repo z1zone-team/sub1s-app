@@ -83,7 +83,7 @@ export function RouteDetailScreen({
         <ScrollView contentContainerClassName="px-5 pb-27.5 pt-3.5" showsVerticalScrollIndicator={false}>
           <View className="flex-row items-center gap-1.5">
             <View className="h-6 justify-center rounded-pill bg-primary px-2.25">
-              <Text className="text-caption font-sans-extrabold text-on-primary">{title}</Text>
+              <Text className="text-caption font-sans-bold text-on-primary">{title}</Text>
             </View>
             {tagline ? (
               <Text numberOfLines={1} className="shrink text-small font-sans-semibold text-text-secondary">
@@ -95,13 +95,13 @@ export function RouteDetailScreen({
           <View className="mt-2.5 flex-row flex-wrap items-baseline gap-0.5">
             {hours > 0 ? (
               <>
-                <Text className="text-display-lg font-sans-extrabold">{hours}</Text>
+                <Text className="text-display-lg font-sans-bold">{hours}</Text>
                 <Text className="mr-1 text-base font-sans-bold">시간</Text>
               </>
             ) : null}
             {minutes > 0 || hours === 0 ? (
               <>
-                <Text className="text-display-lg font-sans-extrabold">{minutes}</Text>
+                <Text className="text-display-lg font-sans-bold">{minutes}</Text>
                 <Text className="text-base font-sans-bold">분</Text>
               </>
             ) : null}

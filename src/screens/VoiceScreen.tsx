@@ -143,7 +143,7 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
           <Shake delayMs={200}>
             <VoiceFailMascot size={120} />
           </Shake>
-          <Text className="mt-7 text-center text-headline-lg font-sans-extrabold">{failure.title}</Text>
+          <Text className="mt-7 text-center text-headline-lg font-sans-bold">{failure.title}</Text>
           <Text className="mt-2.5 text-center text-subtitle text-text-secondary">{failure.body}</Text>
           {showExamples ? (
             <View className="mt-6 flex-row flex-wrap justify-center gap-2">
@@ -188,7 +188,7 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
           <RiseIn from={8} durationMs={400}>
             <View className="items-center">
               <Text className="text-subtitle font-sans-medium text-text-secondary">이렇게 들었어요</Text>
-              <Text className="mt-3 text-center text-display-sm font-sans-extrabold leading-snug">“{data.transcript}”</Text>
+              <Text className="mt-3 text-center text-display-sm font-sans-bold leading-snug">“{data.transcript}”</Text>
               <View className="mt-5 h-9 flex-row items-center gap-2 rounded-pill bg-surface px-3.5">
                 <View className="h-1.5 w-1.5 rounded-pill border-2 border-text" />
                 <Text className="text-body font-sans-semibold">{data.interpretedIntent.originStationName}</Text>
@@ -251,7 +251,7 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
       <VoiceHeader onClose={close} />
       <View className="flex-1 items-center px-7 pt-14">
         <Text className="text-subtitle font-sans-medium text-text-secondary">{processing ? "분석하는 중이에요" : "듣고 있어요"}</Text>
-        <Text className="mt-3 text-center text-headline-lg font-sans-extrabold leading-snug">어디로 갈까요?</Text>
+        <Text className="mt-3 text-center text-headline-lg font-sans-bold leading-snug">어디로 갈까요?</Text>
         <Text className="mt-2.5 text-center text-body text-text-secondary">예) “{VOICE_EXAMPLES[0]}”</Text>
         <View className="mt-16">
           <WaveBars active={!processing} />

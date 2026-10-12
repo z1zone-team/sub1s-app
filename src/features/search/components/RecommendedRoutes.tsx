@@ -94,7 +94,7 @@ export function RecommendedRoutes({ originName, destinationName, groups, onPress
                 </Text>
               </View>
               <View className="mt-2.5 flex-row items-baseline gap-2">
-                <Text className="text-display font-sans-extrabold">{formatDurationSec(option.totalDurationSec)}</Text>
+                <Text className="text-display font-sans-bold">{formatDurationSec(option.totalDurationSec)}</Text>
                 <Text className="text-body text-text-secondary">{arrivalText(option)}</Text>
               </View>
               <MiniSegmentBar option={option} />

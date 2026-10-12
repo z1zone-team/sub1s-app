@@ -29,7 +29,7 @@ export function RideBadge({ lineId, kind, size = "sm", full = false }: RideBadge
       style={{ backgroundColor: line.color }}
     >
       <Text
-        className={cn("font-sans-extrabold", size === "md" ? "text-caption" : "text-tiny")}
+        className={cn("font-sans-bold", size === "md" ? "text-caption" : "text-tiny")}
         style={{ color: lineTextColor(line.color) }}
       >
         {label}

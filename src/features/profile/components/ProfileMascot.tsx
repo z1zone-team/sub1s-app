@@ -1,7 +1,7 @@
 import React from "react";
 import Svg, { Circle, Path } from "react-native-svg";
 
-const INK = "#111827";
+const INK = "#191F28";
 
 /** MY 프로필 카드의 캐릭터. 프로토타입 My.dc.html의 SVG 경로 그대로이고 60 x 60 viewBox를 size로 키운다 */
 export function ProfileMascot({ size = 56 }: { size?: number }) {

@@ -91,7 +91,6 @@ module.exports = {
         "sans-medium": ["Pretendard-Medium"],
         "sans-semibold": ["Pretendard-SemiBold"],
         "sans-bold": ["Pretendard-Bold"],
-        "sans-extrabold": ["Pretendard-ExtraBold"],
       },
       borderRadius: {
         "3xs": "2px",
@@ -102,6 +101,7 @@ module.exports = {
         "sm-mid": "9px",
         "sm-plus": "10px",
         md: "12px",
+        "md-plus": "14px",
         lg: "16px",
         "lg-plus": "20px",
         xl: "24px",

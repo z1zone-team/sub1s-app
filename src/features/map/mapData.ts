@@ -6,7 +6,7 @@ const DIMMED_OPACITY = 0.25;
 
 /** 호선 색. 서버가 준 색이 있으면 그 값을 쓰고 없으면 앱의 호선 색을 쓴다 */
 const colorOf = (lineId: string, serverColor: string | undefined): string =>
-  serverColor || LINES[lineId]?.color || "#9CA3AF";
+  serverColor || LINES[lineId]?.color || "#B0B8C1";
 
 /**
  * 방문한 역을 호선 순서대로 이어 선으로 만들고 점을 찍는다. 방문하지 않은 역에서 선이 끊긴다.

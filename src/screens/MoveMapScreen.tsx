@@ -62,7 +62,7 @@ export function MoveMapScreen({ navigation, route }: NativeStackScreenProps<Root
           <DesignIcon name="back" size={22} strokeWidth={2} />
         </Pressable>
         <View className="h-control justify-center rounded-pill border border-border bg-bg px-4">
-          <Text className="text-subtitle font-sans-extrabold">이동 지도</Text>
+          <Text className="text-subtitle font-sans-bold">이동 지도</Text>
         </View>
       </View>
 
@@ -80,7 +80,7 @@ export function MoveMapScreen({ navigation, route }: NativeStackScreenProps<Root
         </View>
         <View className="mt-0.5 flex-row items-baseline">
           <Text
-            className="text-hero font-sans-extrabold"
+            className="text-hero font-sans-bold"
             style={{ letterSpacing: -1.5, transform: [{ skewX: "-4deg" }], transformOrigin: "left" }}
           >
             {distance.number}
@@ -106,7 +106,7 @@ export function MoveMapScreen({ navigation, route }: NativeStackScreenProps<Root
               className="h-8.5 justify-center rounded-pill border px-3.5"
               style={{ backgroundColor: row.color, borderColor: focus === row.lineId ? colors.text : "transparent" }}
             >
-              <Text className="text-body-sm font-sans-extrabold" style={{ color: lineTextColor(row.color) }}>
+              <Text className="text-body-sm font-sans-bold" style={{ color: lineTextColor(row.color) }}>
                 {row.name} {formatDistanceKm(row.distanceKm)}
               </Text>
             </Pressable>

@@ -8,8 +8,8 @@ describe("theme", () => {
     it("keeps the prototype brand colors in the light palette", () => {
       expect(palettes.light.primary).toBe("#002968");
       expect(palettes.light.bg).toBe("#FFFFFF");
-      expect(palettes.light.surface).toBe("#F5F7FA");
-      expect(palettes.light.error).toBe("#DC2626");
+      expect(palettes.light.surface).toBe("#F2F4F6");
+      expect(palettes.light.error).toBe("#F04452");
     });
 
     it("overrides only the surfaces and text in the dark palette", () => {
@@ -59,14 +59,14 @@ describe("theme", () => {
         id: "ZZ",
         name: "ZZ",
         shortLabel: "ZZ",
-        color: "#9CA3AF",
+        color: "#B0B8C1",
       });
     });
 
     it("uses dark text on the light line colors and white text on the dark ones", () => {
-      expect(lineTextColor(LINES["09"].color)).toBe("#111827");
-      expect(lineTextColor(LINES.SD.color)).toBe("#111827");
-      expect(lineTextColor(LINES.UI.color)).toBe("#111827");
+      expect(lineTextColor(LINES["09"].color)).toBe("#191F28");
+      expect(lineTextColor(LINES.SD.color)).toBe("#191F28");
+      expect(lineTextColor(LINES.UI.color)).toBe("#191F28");
       expect(lineTextColor(LINES["01"].color)).toBe("#FFFFFF");
       expect(lineTextColor(LINES.SB.color)).toBe("#FFFFFF");
       expect(lineTextColor(LINES["02"].color)).toBe("#FFFFFF");

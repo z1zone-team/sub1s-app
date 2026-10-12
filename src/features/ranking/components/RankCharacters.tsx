@@ -1,8 +1,8 @@
 import React from "react";
 import Svg, { Circle, Path, Rect } from "react-native-svg";
 
-const INK = "#111827";
-const MUTED = "#4B5563";
+const INK = "#191F28";
+const MUTED = "#4E5968";
 const BODY =
   "M12 46V28a18 18 0 0 1 36 0v16C48 47 49.5 49 52 50.5C53.5 51.5 52.5 53.5 50 53.5C47.5 53.5 46.5 51.5 44.5 51.8C42.5 52.1 42 55 39 55C36 55 35.5 52.2 33 52.4C30.5 52.6 30 55.5 26.8 55.5C23.6 55.5 23.2 52.6 20.8 52.6C18 52.6 16.5 54 14.6 53C12.6 52 12 49.5 12 46z";
 const DARK_CIRCLE = "M19.5 31.5q5 4.5 9 0q-4 2.2-9 0zM31.5 31.5q4 4.5 9 0q-5 2.2-9 0z";
@@ -20,7 +20,7 @@ export function FirstPlaceCharacter({ size }: SizeProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 60 60" fill="none">
       <Body stroke={1.6} />
-      <Path d={DARK_CIRCLE} fill="#9CA3AF" />
+      <Path d={DARK_CIRCLE} fill="#B0B8C1" />
       <Path d="M20.5 33.5q4 3.5 8 0M31.5 33.5q4 3.5 8 0" stroke={MUTED} strokeWidth={1} strokeLinecap="round" />
       <Path d="M20.5 27h7M32.5 27h7" stroke={INK} strokeWidth={1.6} strokeLinecap="round" />
       <Path d="M22 27.2a2 2 0 0 0 4 0M34 27.2a2 2 0 0 0 4 0" fill={INK} />
@@ -93,7 +93,7 @@ export function MoodFace({ mood, size = 44 }: { mood: MoodFaceKey; size?: number
       ) : null}
       {mood === "DARK_CIRCLES" ? (
         <>
-          <Path d={DARK_CIRCLE} fill="#9CA3AF" />
+          <Path d={DARK_CIRCLE} fill="#B0B8C1" />
           <Path d="M20.5 27h7M32.5 27h7" stroke={INK} strokeWidth={2} strokeLinecap="round" />
           <Path d="M25 40q1.7-1.6 3.3 0t3.4 0t3.3 0" stroke={INK} strokeWidth={2} strokeLinecap="round" />
         </>

@@ -7,7 +7,6 @@ export function useAppFonts(): boolean {
     "Pretendard-Medium": require("../../assets/fonts/Pretendard-Medium.otf"),
     "Pretendard-SemiBold": require("../../assets/fonts/Pretendard-SemiBold.otf"),
     "Pretendard-Bold": require("../../assets/fonts/Pretendard-Bold.otf"),
-    "Pretendard-ExtraBold": require("../../assets/fonts/Pretendard-ExtraBold.otf"),
   });
   // 글꼴을 못 불러와도 시스템 글꼴로 앱을 연다
   return loaded || error !== null;

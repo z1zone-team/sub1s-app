@@ -55,7 +55,7 @@ export function RankingScreen() {
   return (
     <Screen>
       <View className="flex-row items-center justify-between px-5 pt-2">
-        <Text className="text-headline-lg font-sans-extrabold">랭킹</Text>
+        <Text className="text-headline-lg font-sans-bold">랭킹</Text>
         <Pressable
           accessibilityRole="button"
           onPress={() => setInviteOpen(true)}
@@ -78,7 +78,7 @@ export function RankingScreen() {
                 onPress={() => setScope(item.value)}
                 className={cn("h-10 justify-center border-b-2", selected ? "border-primary" : "border-transparent")}
               >
-                <Text className={cn("text-heading font-sans-extrabold", selected ? "text-text" : "text-text-disabled")}>
+                <Text className={cn("text-heading font-sans-bold", selected ? "text-text" : "text-text-disabled")}>
                   {item.label}
                 </Text>
               </Pressable>
@@ -136,7 +136,7 @@ export function RankingScreen() {
 
         <View className="mx-4 mt-6 rounded-lg border border-border p-4.5">
           <View className="flex-row items-baseline justify-between">
-            <Text className="text-subtitle font-sans-extrabold">타는 만큼 표정이 바뀌어요</Text>
+            <Text className="text-subtitle font-sans-bold">타는 만큼 표정이 바뀌어요</Text>
             <Text className="text-small text-text-secondary">월간 기준</Text>
           </View>
           <View className="mt-3.5 flex-row gap-1.5">

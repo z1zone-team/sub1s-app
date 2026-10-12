@@ -28,15 +28,15 @@ const light: Palette = {
   primaryTint: "#E8EDF6",
   accent: "#0072CE",
   bg: "#FFFFFF",
-  surface: "#F5F7FA",
-  border: "#E1E5EC",
-  text: "#111827",
-  textSecondary: "#4B5563",
-  textDisabled: "#9CA3AF",
+  surface: "#F2F4F6",
+  border: "#E5E8EB",
+  text: "#191F28",
+  textSecondary: "#4E5968",
+  textDisabled: "#B0B8C1",
   onPrimary: "#FFFFFF",
   success: "#16A34A",
   warning: "#F59E0B",
-  error: "#DC2626",
+  error: "#F04452",
   errorTint: "#FDECEC",
   info: "#0072CE",
 };
@@ -49,7 +49,7 @@ const dark: Palette = {
   surface: "#151E2E",
   border: "#263248",
   text: "#F3F4F6",
-  textSecondary: "#9CA3AF",
+  textSecondary: "#B0B8C1",
 };
 
 export const palettes: Record<ColorScheme, Palette> = { light, dark };

@@ -32,7 +32,7 @@ function StatTile({ label, value }: { label: string; value: string }) {
     <View className="flex-1 rounded-md bg-surface px-3 py-3.5">
       <View className="flex-row flex-wrap items-baseline">
         {valueParts(value).map((part, index) => (
-          <Text key={`${part.number}-${index}`} className="text-title-lg font-sans-extrabold">
+          <Text key={`${part.number}-${index}`} className="text-title-lg font-sans-bold">
             {part.number}
             <Text className="text-small font-sans-bold">{part.unit}</Text>
             {index < valueParts(value).length - 1 ? " " : ""}
@@ -80,7 +80,7 @@ export function ArrivedScreen({
             </Up>
             <View className="mt-1.5">
               <Up step={1}>
-                <Text className="text-display-sm font-sans-extrabold">{destinationName || "목적지"} 도착!</Text>
+                <Text className="text-display-sm font-sans-bold">{destinationName || "목적지"} 도착!</Text>
               </Up>
             </View>
           </View>
@@ -91,7 +91,7 @@ export function ArrivedScreen({
             <View className="rounded-lg bg-primary p-5">
               <Text className="text-body-sm font-sans-semibold text-on-primary opacity-85">이번 이동으로 받은 점수</Text>
               <View className="mt-1 flex-row items-baseline gap-1">
-                <Text className="text-hero-lg font-sans-extrabold italic text-on-primary">
+                <Text className="text-hero-lg font-sans-bold italic text-on-primary">
                   +{log.earnedPoints.toLocaleString("en-US")}
                 </Text>
                 <Text className="text-base font-sans-bold text-on-primary">점</Text>

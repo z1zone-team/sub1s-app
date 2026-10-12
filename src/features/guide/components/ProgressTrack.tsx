@@ -65,7 +65,7 @@ export function ProgressTrack({ names, reachedIndex, fill, color }: ProgressTrac
               numberOfLines={1}
               className={cn(
                 "w-9 text-center text-tiny",
-                emphasized ? "font-sans-extrabold text-text" : "font-sans-semibold text-text-secondary"
+                emphasized ? "font-sans-bold text-text" : "font-sans-semibold text-text-secondary"
               )}
             >
               {name}

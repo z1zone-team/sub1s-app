@@ -64,7 +64,7 @@ export function CarCongestionCard({ cars, recommendedCarNo, forecastLabel }: Car
               <Text
                 className={cn(
                   "text-tiny",
-                  recommended ? "font-sans-extrabold text-primary" : "font-sans-semibold text-text-secondary"
+                  recommended ? "font-sans-bold text-primary" : "font-sans-semibold text-text-secondary"
                 )}
               >
                 {car.carNo}
@@ -72,7 +72,7 @@ export function CarCongestionCard({ cars, recommendedCarNo, forecastLabel }: Car
               <Text
                 className={cn(
                   "h-3 text-micro",
-                  recommended ? "font-sans-extrabold text-primary" : "font-sans-bold text-accent"
+                  recommended ? "font-sans-bold text-primary" : "font-sans-bold text-accent"
                 )}
               >
                 {recommended ? "추천" : car.isWeakAirConditioned ? "약냉" : ""}

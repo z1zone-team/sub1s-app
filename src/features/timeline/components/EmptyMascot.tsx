@@ -1,8 +1,8 @@
 import React from "react";
 import Svg, { Circle, Path } from "react-native-svg";
 
-const INK = "#111827";
-const MUTED = "#9CA3AF";
+const INK = "#191F28";
+const MUTED = "#B0B8C1";
 
 /** 기록 없음 화면의 캐릭터(멍한 눈, 동그란 입, 회색 선). 프로토타입 TimelineEmpty.dc.html의 SVG 경로 그대로 */
 export function EmptyMascot({ size = 64 }: { size?: number }) {
