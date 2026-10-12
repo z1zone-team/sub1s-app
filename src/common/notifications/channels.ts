@@ -1,34 +1,31 @@
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 
+/** 소리는 지정하지 않는다. "default"를 문자열로 주면 그 이름의 소리 파일을 찾다가 경고가 나므로, 키를 빼서 시스템 기본음을 쓴다 */
 export const NOTIFICATION_CHANNELS = {
   TRANSFER: {
     id: "subway-transfer",
     name: "지하철 환승 안내",
     importance: Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 250, 250, 250],
-    sound: "default",
   },
   ALIGHT: {
     id: "subway-alight",
     name: "지하철 하차 안내",
     importance: Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 300, 200, 300],
-    sound: "default",
   },
   OFFROUTE: {
     id: "subway-offroute",
     name: "오탑승 긴급 경고",
     importance: Notifications.AndroidImportance.MAX,
     vibrationPattern: [0, 500, 200, 500, 200, 500],
-    sound: "default",
   },
   SETTLEMENT: {
     id: "subway-settlement",
     name: "월말 정산 및 통계",
     importance: Notifications.AndroidImportance.DEFAULT,
     vibrationPattern: [0, 200],
-    sound: "default",
   },
 } as const;
 
@@ -45,7 +42,6 @@ export async function setupNotificationChannels(): Promise<void> {
       name: channel.name,
       importance: channel.importance,
       vibrationPattern: channel.vibrationPattern as unknown as number[],
-      sound: channel.sound,
     });
   }
 }
