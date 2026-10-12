@@ -61,7 +61,8 @@ export function ProfileScreen() {
 
   return (
     <Screen scroll contentClassName="gap-5 px-5">
-      <View className="gap-1 pt-4">
+      <Text className="pt-4 text-headline-lg font-sans-extrabold">MY</Text>
+      <View className="gap-1">
         <Text className="text-headline-md font-sans-extrabold">{profile?.name || profile?.nickname || ""}</Text>
         {profile ? <Text className="text-body text-text-secondary">@{profile.nickname}</Text> : null}
         {percentile ? <Text className="text-body-sm font-sans-bold text-primary">{percentile}</Text> : null}

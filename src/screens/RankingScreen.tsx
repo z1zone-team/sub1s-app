@@ -52,7 +52,8 @@ export function RankingScreen() {
 
   return (
     <Screen scroll contentClassName="gap-4 px-5">
-      <View className="flex-row items-center gap-2 pt-4">
+      <Text className="pt-4 text-headline-lg font-sans-extrabold">랭킹</Text>
+      <View className="flex-row items-center gap-2">
         {SCOPES.map((item) => (
           <Chip key={item.value} label={item.label} selected={item.value === scope} onPress={() => setScope(item.value)} />
         ))}

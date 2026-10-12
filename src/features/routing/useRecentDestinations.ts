@@ -53,6 +53,7 @@ export function useRecentDestinations() {
   }, [stations.data, destinations, remove]);
 
   return {
+    routes,
     destinations,
     linesOfStation,
     isLoading,

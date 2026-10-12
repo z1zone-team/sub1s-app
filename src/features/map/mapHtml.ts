@@ -9,6 +9,8 @@ export interface MapMarker {
   /** 지도 위에 항상 보이는 이름. 없으면 점만 그린다 */
   label?: string;
   radius?: number;
+  /** "me"면 점 대신 프로토타입의 캐릭터와 맥동 효과로 그린다 */
+  kind?: "me";
 }
 
 export interface MapLine {
@@ -45,6 +47,13 @@ export function buildMapHtml(vworldKey: string): string {
 <style>
   html, body, #map { margin: 0; height: 100%; width: 100%; }
   .label { background: rgba(255,255,255,0.9); border: 0; border-radius: 8px; padding: 1px 6px; font: 600 11px sans-serif; color: #111827; box-shadow: none; }
+  /* 프로토타입 Main.dc.html의 내 위치 표시. 지도 1단위가 약 2.13px이라 유령은 0.22배 -> 약 20 x 23px */
+  .me-wrap { position: relative; width: 80px; height: 80px; }
+  .me-halo { position: absolute; left: 27px; top: 27px; width: 26px; height: 26px; border-radius: 50%; background: #002968; opacity: 0.22; animation: pulse 1.8s ease-out infinite; }
+  .me-shadow { position: absolute; left: 32px; top: 40px; width: 16px; height: 5px; border-radius: 50%; background: #111827; opacity: 0.15; }
+  .me-ghost { position: absolute; left: 30px; top: 18px; width: 21px; height: 24px; overflow: visible; animation: hover 1.8s ease-in-out infinite; }
+  @keyframes pulse { 0% { transform: scale(1); opacity: 0.22; } 100% { transform: scale(2.8); opacity: 0; } }
+  @keyframes hover { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.6px); } }
   #error { display: none; padding: 16px; font: 14px sans-serif; color: #4B5563; }
 </style>
 </head>
@@ -62,6 +71,16 @@ export function buildMapHtml(vworldKey: string): string {
       maxZoom: 19
     }).addTo(map);
     var layer = L.layerGroup().addTo(map);
+    var ME_ICON = L.divIcon({
+      className: "",
+      iconSize: [80, 80],
+      iconAnchor: [40, 40],
+      html: '<div class="me-wrap"><div class="me-halo"></div><div class="me-shadow"></div>' +
+        '<svg class="me-ghost" viewBox="10 8 44 50" fill="none">' +
+        '<path d="M12 46V28a18 18 0 0 1 36 0v16C48 47 49.5 49 52 50.5C53.5 51.5 52.5 53.5 50 53.5C47.5 53.5 46.5 51.5 44.5 51.8C42.5 52.1 42 55 39 55C36 55 35.5 52.2 33 52.4C30.5 52.6 30 55.5 26.8 55.5C23.6 55.5 23.2 52.6 20.8 52.6C18 52.6 16.5 54 14.6 53C12.6 52 12 49.5 12 46z" fill="#FFFFFF" stroke="#002968" stroke-width="3.4" stroke-linejoin="round"/>' +
+        '<circle cx="24" cy="29" r="3.4" fill="#002968"/><circle cx="36" cy="29" r="3.4" fill="#002968"/>' +
+        '<path d="M26.5 36.5q3.5 3 7 0" stroke="#002968" stroke-width="2.6" stroke-linecap="round"/></svg></div>'
+    });
     window.updateMap = function (data) {
       layer.clearLayers();
       var bounds = [];
@@ -71,6 +90,11 @@ export function buildMapHtml(vworldKey: string): string {
         line.points.forEach(function (p) { bounds.push(p); });
       });
       (data.markers || []).forEach(function (m) {
+        if (m.kind === "me") {
+          L.marker([m.lat, m.lng], { icon: ME_ICON, interactive: false, keyboard: false }).addTo(layer);
+          bounds.push([m.lat, m.lng]);
+          return;
+        }
         var circle = L.circleMarker([m.lat, m.lng], { radius: m.radius || 5, color: "#FFFFFF", weight: 2, fillColor: m.color, fillOpacity: 1 }).addTo(layer);
         if (m.label) circle.bindTooltip(m.label, { permanent: true, direction: "top", offset: [0, -6], className: "label" });
         bounds.push([m.lat, m.lng]);

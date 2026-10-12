@@ -5,7 +5,7 @@ import { useTheme } from "@/theme";
 export type IconName = React.ComponentProps<typeof Ionicons>["name"];
 export type IconTone = "text" | "secondary" | "disabled" | "primary" | "onPrimary" | "error";
 
-const TONE_KEY = {
+export const TONE_KEY = {
   text: "text",
   secondary: "textSecondary",
   disabled: "textDisabled",

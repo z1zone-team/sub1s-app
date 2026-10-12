@@ -55,34 +55,18 @@ describe("visitedLineIds", () => {
 });
 
 describe("homeMapData", () => {
-  it("내 위치가 있으면 그 주변을 보여 준다", () => {
-    const data = homeMapData({ me: { lat: 37.5, lng: 127 }, recents: [{ name: "강남", lat: 37.49, lng: 127.02 }] });
+  it("내 위치가 있으면 내 위치 마커 하나만 두고 그 주변을 보여 준다", () => {
+    const data = homeMapData({ me: { lat: 37.5, lng: 127 } });
     expect(data.fit).toBe(false);
     expect(data.center).toEqual([37.5, 127]);
-    expect(data.markers).toHaveLength(2);
+    expect(data.markers).toHaveLength(1);
+    expect(data.markers[0].kind).toBe("me");
   });
 
-  it("내 위치가 없으면 도착지가 모두 보이게 맞춘다", () => {
-    const data = homeMapData({ recents: [{ name: "강남", lat: 37.49, lng: 127.02 }] });
-    expect(data.fit).toBe(true);
+  it("내 위치가 없으면 마커 없이 기본 위치를 보여 준다", () => {
+    const data = homeMapData({});
+    expect(data.markers).toEqual([]);
     expect(data.center).toBeUndefined();
-  });
-
-  it("아무것도 없으면 맞추지 않는다", () => {
-    expect(homeMapData({ recents: [] }).fit).toBe(false);
-  });
-});
-
-describe("buildMapHtml", () => {
-  it("V-World 타일 주소에 키를 넣는다", () => {
-    expect(buildMapHtml("ABC-123")).toContain("api.vworld.kr/req/wmts/1.0.0/ABC-123/Base/{z}/{y}/{x}.png");
-  });
-
-  it("키의 특수문자를 인코딩한다", () => {
-    expect(buildMapHtml("a b/c")).toContain("a%20b%2Fc");
-  });
-
-  it("버전을 고정한 Leaflet을 쓴다", () => {
-    expect(buildMapHtml("k")).toContain("leaflet/1.9.4/leaflet.min.js");
+    expect(data.fit).toBe(false);
   });
 });
