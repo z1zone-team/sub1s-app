@@ -3,43 +3,48 @@ import { FlatList, Pressable, TextInput, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { ApiError } from "@/apis/client";
 import { usePlaceSearchQuery } from "@/apis/queries/places/usePlaceSearchQuery";
+import { useRouteSearchQuery } from "@/apis/queries/routing/useRouteSearchQuery";
+import { useSavePlaceMutation } from "@/apis/queries/users/useUserPlaces";
+import { DesignIcon } from "@/common/components/DesignIcon";
 import { Screen } from "@/common/components/Screen";
-import { Icon } from "@/common/components/Icon";
-import { LineBadge } from "@/common/components/LineBadge";
 import { Text } from "@/common/components/Text";
 import { useForegroundLocation } from "@/common/device";
-import { formatMonthDayKst } from "@/common/utils/format";
 import {
   endpointFromCoords,
   isSameEndpoint,
   isValidEndpoint,
+  toRouteSearchRequest,
   type RouteEndpoint,
 } from "@/features/routing/endpoint";
-import { toSearchRows, type SearchRow } from "@/features/routing/searchRows";
-import { endpointToSaveBody, PLACE_LABEL } from "@/features/places/placeEndpoint";
-import { useSavePlaceMutation } from "@/apis/queries/users/useUserPlaces";
+import { groupRouteOptions } from "@/features/routing/routeView";
+import { toSearchRows } from "@/features/routing/searchRows";
 import { useRecentDestinations } from "@/features/routing/useRecentDestinations";
+import { endpointToSaveBody, PLACE_LABEL } from "@/features/places/placeEndpoint";
+import { RecentSearchList } from "@/features/search/components/RecentSearchList";
+import { RecommendedRoutes } from "@/features/search/components/RecommendedRoutes";
+import { RouteEndpointBox, type EndpointField } from "@/features/search/components/RouteEndpointBox";
+import { SearchResultRow } from "@/features/search/components/SearchResultRow";
+import { pickRecommendedGroups, recommendedPair, swapEndpoints } from "@/features/search/searchLogic";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import type { RootStackParamList } from "@/navigation/navigation-types";
-import { cn } from "@/lib/cn";
-
-type Field = "origin" | "destination";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
+/** 길찾기. 출발과 도착 두 칸을 채우면 경로 목록으로 간다. 지도 검색(MapSearch)과는 다른 화면이다 */
 export function SearchScreen({
   navigation,
   route,
 }: NativeStackScreenProps<RootStackParamList, "Search">) {
+  const presetOrigin = route.params?.origin;
   const presetDestination = route.params?.destination;
   const pickPlace = route.params?.pickPlace;
   const savePlace = useSavePlaceMutation();
 
-  const [origin, setOrigin] = useState<RouteEndpoint | undefined>();
+  const [origin, setOrigin] = useState<RouteEndpoint | undefined>(presetOrigin);
   const [destination, setDestination] = useState<RouteEndpoint | undefined>(presetDestination);
-  const [active, setActive] = useState<Field>("destination");
+  const [active, setActive] = useState<EndpointField>("destination");
   const [text, setText] = useState("");
-  const [originChosenByUser, setOriginChosenByUser] = useState(false);
+  const [originChosenByUser, setOriginChosenByUser] = useState(Boolean(presetOrigin));
   const navigated = useRef(false);
 
   const location = useForegroundLocation({ autoStart: true });
@@ -104,10 +109,29 @@ export function SearchScreen({
     [pickPlace, savePlace, navigation, active, destination, origin]
   );
 
+  const swap = useCallback(() => {
+    const swapped = swapEndpoints(origin, destination);
+    setOriginChosenByUser(true);
+    setOrigin(swapped.origin);
+    setDestination(swapped.destination);
+    setText("");
+    setActive(swapped.origin ? "destination" : "origin");
+  }, [origin, destination]);
+
   const sameStationWarning =
     isValidEndpoint(origin) && isValidEndpoint(destination) && isSameEndpoint(origin, destination);
 
-  const showRecent = active === "destination" && text.trim().length === 0;
+  const showSuggestions = active === "destination" && text.trim().length === 0;
+
+  // 추천 경로: 지금의 출발지에서 가장 최근 도착지까지
+  const pair = useMemo(() => recommendedPair(origin, recent.destinations), [origin, recent.destinations]);
+  const recommended = useRouteSearchQuery(pair ? toRouteSearchRequest(pair.origin, pair.destination) : {}, {
+    enabled: showSuggestions && !pickPlace && Boolean(pair),
+  });
+  const recommendedGroups = useMemo(
+    () => pickRecommendedGroups(groupRouteOptions(recommended.data?.options ?? [])),
+    [recommended.data]
+  );
 
   const typing = text.trim() !== query.trim();
 
@@ -121,44 +145,46 @@ export function SearchScreen({
 
   return (
     <Screen>
-      <View className="gap-2 px-4 pt-2">
+      <View className="px-4 pt-2">
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="뒤로"
           onPress={() => navigation.goBack()}
-          className="h-control justify-center"
+          className="-ml-3 h-control w-control items-center justify-center"
         >
-          <Icon name="chevron-back" size={26} />
+          <DesignIcon name="back" />
         </Pressable>
-
         {pickPlace ? (
-          <Text className="text-title font-sans-extrabold">{PLACE_LABEL[pickPlace]}으로 지정할 장소</Text>
-        ) : (
-          <FieldRow
-            label="출발"
-            endpoint={origin}
-            placeholder={locationDenied ? "출발지를 입력하세요" : "현재 위치 확인 중"}
-            active={active === "origin"}
+          <Text className="pb-1 text-title font-sans-extrabold">{PLACE_LABEL[pickPlace]}으로 지정할 장소</Text>
+        ) : null}
+      </View>
+
+      {pickPlace ? (
+        <View className="mx-4 mt-1 h-12 justify-center rounded-lg border border-primary px-4">
+          <PickPlaceInput
             text={text}
             onChangeText={setText}
-            onActivate={() => {
-              setActive("origin");
-              setText("");
-            }}
+            placeholder={destination?.name || "장소 입력"}
           />
-        )}
-        <FieldRow
-          label={pickPlace ? "장소" : "도착"}
-          endpoint={destination}
-          placeholder="도착지 입력"
-          active={active === "destination"}
+        </View>
+      ) : (
+        <RouteEndpointBox
+          origin={origin}
+          destination={destination}
+          active={active}
           text={text}
           onChangeText={setText}
-          onActivate={() => {
-            setActive("destination");
+          onActivate={(field) => {
+            setActive(field);
             setText("");
           }}
+          onSwap={swap}
+          originPlaceholder={locationDenied ? "출발지를 입력하세요" : originChosenByUser ? "출발지 입력" : "현재 위치 확인 중"}
+          destinationPlaceholder="도착지 입력"
         />
+      )}
+
+      <View className="gap-1 px-5 pt-2">
         {savePlace.error ? <Text className="text-small text-error">저장하지 못했어요. 다시 시도해 주세요.</Text> : null}
         {locationDenied && !pickPlace ? (
           <Text className="text-small text-text-secondary">위치 권한이 없어 출발지를 직접 입력해야 해요.</Text>
@@ -169,21 +195,28 @@ export function SearchScreen({
       </View>
 
       <FlatList
-        className="mt-2 flex-1"
+        className="flex-1"
         keyboardShouldPersistTaps="handled"
-        data={showRecent ? [] : rows}
+        data={showSuggestions ? [] : rows}
         keyExtractor={(row) => row.key}
-        renderItem={({ item }) => <ResultRow row={item} onPress={() => choose(item.endpoint)} />}
+        renderItem={({ item }) => <SearchResultRow row={item} onPress={() => choose(item.endpoint)} />}
         ListHeaderComponent={
-          showRecent ? (
-            <RecentList
-              recent={recent}
-              onSelect={(endpoint) => choose(endpoint)}
-            />
+          showSuggestions ? (
+            <View className="pb-8">
+              <RecentSearchList recent={recent} onSelect={(endpoint) => choose(endpoint)} />
+              {pair && !pickPlace ? (
+                <RecommendedRoutes
+                  originName={pair.origin.name}
+                  destinationName={pair.destination.name}
+                  groups={recommendedGroups}
+                  onPress={() => navigation.navigate("RouteResult", { origin: pair.origin, destination: pair.destination })}
+                />
+              ) : null}
+            </View>
           ) : null
         }
         ListEmptyComponent={
-          showRecent ? null : (
+          showSuggestions || text.trim().length === 0 ? null : (
             <Text className="p-6 text-center text-text-secondary">
               {errorMessage ?? (typing || search.isFetching ? "검색 중..." : "검색 결과가 없어요")}
             </Text>
@@ -194,131 +227,25 @@ export function SearchScreen({
   );
 }
 
-interface FieldRowProps {
-  label: string;
-  endpoint: RouteEndpoint | undefined;
-  placeholder: string;
-  active: boolean;
-  text: string;
-  onChangeText: (value: string) => void;
-  onActivate: () => void;
-}
-
-function FieldRow({
-  label,
-  endpoint,
-  placeholder,
-  active,
+/** 집이나 학교로 저장할 장소를 찾는 입력칸. 출발/도착 박스를 쓰지 않는 모드라서 입력칸만 따로 둔다 */
+function PickPlaceInput({
   text,
   onChangeText,
-  onActivate,
-}: FieldRowProps) {
-  return (
-    <View
-      className={cn("h-row flex-row items-center gap-3 rounded-md border bg-surface px-3.5", active ? "border-primary" : "border-border")}
-    >
-      <Text className="w-7 text-body-sm font-sans-bold text-text-secondary">{label}</Text>
-      {active ? (
-        <TextInput
-          autoFocus
-          value={text}
-          onChangeText={onChangeText}
-          placeholder={endpoint?.name || placeholder}
-          placeholderClassName="text-text-disabled"
-          returnKeyType="search"
-          className="flex-1 p-0 font-sans text-base text-text"
-        />
-      ) : (
-        <Pressable accessibilityRole="button" onPress={onActivate} className="flex-1">
-          <Text numberOfLines={1} className={cn("text-base", endpoint ? "text-text" : "text-text-disabled")}>
-            {endpoint?.name || placeholder}
-          </Text>
-        </Pressable>
-      )}
-    </View>
-  );
-}
-
-function ResultRow({ row, onPress }: { row: SearchRow; onPress: () => void }) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      className="flex-row items-center gap-3 border-b border-border px-5 py-3.5"
-    >
-      <View className="flex-1 gap-0.5">
-        <Text numberOfLines={1} className="text-base font-sans-semibold">
-          {row.title}
-        </Text>
-        {row.subtitle ? (
-          <Text numberOfLines={1} className="text-body-sm text-text-secondary">
-            {row.subtitle}
-          </Text>
-        ) : null}
-        {row.hint ? (
-          <Text numberOfLines={1} className="text-small text-text-secondary">
-            {row.hint}
-          </Text>
-        ) : null}
-      </View>
-      {row.lineIds.map((lineId) => (
-        <LineBadge key={lineId} lineId={lineId} />
-      ))}
-    </Pressable>
-  );
-}
-
-function RecentList({
-  recent,
-  onSelect,
+  placeholder,
 }: {
-  recent: ReturnType<typeof useRecentDestinations>;
-  onSelect: (endpoint: RouteEndpoint) => void;
+  text: string;
+  onChangeText: (value: string) => void;
+  placeholder: string;
 }) {
-  if (recent.destinations.length === 0) {
-    return <Text className="p-6 text-center text-text-secondary">최근 검색 기록이 없어요</Text>;
-  }
-
   return (
-    <View>
-      <View className="flex-row justify-between px-5 py-2">
-        <Text className="text-body-sm font-sans-bold text-text-secondary">최근 검색</Text>
-        <Pressable accessibilityRole="button" onPress={() => void recent.clear()}>
-          <Text className="text-body-sm text-text-secondary">전체 삭제</Text>
-        </Pressable>
-      </View>
-      {recent.destinations.map((destination) => {
-        const lineIds = destination.endpoint.stationId
-          ? recent.linesOfStation.get(destination.endpoint.stationId) ?? []
-          : [];
-        return (
-          <View key={destination.routeIds[0]} className="flex-row items-center border-b border-border">
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => onSelect(destination.endpoint)}
-              className="flex-1 flex-row items-center gap-2 py-3.5 pl-5"
-            >
-              <Text numberOfLines={1} className="text-base">
-                {destination.endpoint.name}
-              </Text>
-              {lineIds.map((lineId) => (
-                <LineBadge key={lineId} lineId={lineId} size="sm" />
-              ))}
-              <Text className="ml-auto text-small text-text-secondary">
-                {formatMonthDayKst(destination.searchedAt)}
-              </Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="기록 삭제"
-              onPress={() => recent.remove(destination)}
-              className="px-4 py-3.5"
-            >
-              <Icon name="close" size={18} tone="disabled" />
-            </Pressable>
-          </View>
-        );
-      })}
-    </View>
+    <TextInput
+      autoFocus
+      value={text}
+      onChangeText={onChangeText}
+      placeholder={placeholder}
+      placeholderClassName="text-text-disabled"
+      returnKeyType="search"
+      className="h-12 p-0 font-sans-semibold text-subtitle text-text"
+    />
   );
 }
