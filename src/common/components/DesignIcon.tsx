@@ -33,7 +33,8 @@ export type DesignIconName =
   | "pulse"
   | "friends"
   | "notify"
-  | "eye";
+  | "eye"
+  | "expand";
 
 interface DesignIconProps {
   name: DesignIconName;
@@ -229,6 +230,9 @@ export function DesignIcon({
           <Circle cx={12} cy={12} r={3} fill="none" strokeWidth={strokeWidth ?? 1.8} {...common} />
         </>
       );
+      break;
+    case "expand":
+      shapes = <Path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" fill="none" strokeWidth={strokeWidth ?? 2.2} {...common} />;
       break;
     case "play":
       shapes = <Path d="M7 4l13 8-13 8z" fill={paint} stroke="none" />;

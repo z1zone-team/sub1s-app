@@ -83,6 +83,7 @@ module.exports = {
         "display-lg": "34px",
         hero: "40px",
         "hero-lg": "44px",
+        "display-xl": "88px",
       },
       /** 굵기마다 글꼴 파일이 달라서(안드로이드) 굵기는 font-weight 대신 글꼴 이름으로 고른다 */
       fontFamily: {
@@ -126,6 +127,9 @@ module.exports = {
         18: "72px",
         19: "76px",
         27.5: "110px",
+        35: "140px",
+        62.5: "250px",
+        75: "300px",
       },
       width: {
         control: "44px",
