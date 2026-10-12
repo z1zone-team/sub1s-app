@@ -132,7 +132,7 @@ export function RootNavigator() {
         <Stack.Screen
           name="RouteDetail"
           component={RouteDetailScreen}
-          options={{ title: "경로 상세" }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="LiveNav"
