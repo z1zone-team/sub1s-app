@@ -14,9 +14,10 @@ import { RiseIn } from "@/common/components/RiseIn";
 import { Screen } from "@/common/components/Screen";
 import { Shake } from "@/common/components/Shake";
 import { Text } from "@/common/components/Text";
-import { useAudioPlayer } from "@/common/device/audio/useAudioPlayer";
 import { useAudioRecorder, type AudioRecordingResult } from "@/common/device/audio/useAudioRecorder";
+import { canSpeakBriefing } from "@/features/voice/briefingVoice";
 import { BriefingCard } from "@/features/voice/components/BriefingCard";
+import { useBriefingVoice } from "@/features/voice/hooks/useBriefingVoice";
 import { MicButton } from "@/features/voice/components/MicButton";
 import { VoiceFailMascot } from "@/features/voice/components/VoiceFailMascot";
 import { WaveBars } from "@/features/voice/components/WaveBars";
@@ -63,7 +64,7 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
   const insets = useSafeAreaInsets();
   const recorder = useAudioRecorder();
   const recommend = useVoiceRouteRecommendMutation();
-  const player = useAudioPlayer();
+  const briefingVoice = useBriefingVoice();
   const [phase, setPhase] = useState<Phase>({ name: "listening" });
   const started = useRef(false);
   const close = () => navigation.goBack();
@@ -88,12 +89,12 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
   );
 
   const listen = useCallback(async () => {
-    void player.stopAudio();
+    briefingVoice.stop();
     setPhase({ name: "listening" });
     recorder.reset();
     const ok = await recorder.startRecording();
     if (!ok) setPhase({ name: "failed", failure: "GENERIC" });
-  }, [recorder, player]);
+  }, [recorder, briefingVoice]);
 
   useEffect(() => {
     if (!isSignedIn || started.current) return;
@@ -176,7 +177,8 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
     const { data } = phase;
     const endpoints = endpointsOfOption(data.recommendedRoute);
     const lineId = destinationLineId(data.recommendedRoute);
-    const canPlay = Boolean(data.audioTtsUrl);
+    // 서버 음성이 없거나 실패해도 기기 음성으로 읽을 수 있어서 문장이 있으면 재생할 수 있다
+    const canPlay = canSpeakBriefing(data);
     return (
       <Screen>
         <VoiceHeader onClose={close} />
@@ -197,12 +199,9 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
               </Text>
               <BriefingCard
                 text={data.briefingText}
-                playing={player.isPlaying}
+                playing={briefingVoice.isPlaying}
                 canPlay={canPlay}
-                onToggle={() => {
-                  if (player.isPlaying) void player.pauseAudio();
-                  else if (data.audioTtsUrl) void player.playAudio(data.audioTtsUrl);
-                }}
+                onToggle={() => void briefingVoice.toggle(data)}
               />
             </View>
           </RiseIn>
@@ -217,7 +216,7 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
             disabled={!endpoints}
             onPress={() => {
               if (!endpoints) return;
-              void player.stopAudio();
+              briefingVoice.stop();
               navigation.replace("RouteDetail", {
                 ...endpoints,
                 option: data.recommendedRoute,

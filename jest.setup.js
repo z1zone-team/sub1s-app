@@ -115,6 +115,13 @@ jest.mock("expo-audio", () => ({
   })),
 }));
 
+// Mock expo-speech
+jest.mock("expo-speech", () => ({
+  speak: jest.fn(),
+  stop: jest.fn().mockResolvedValue(undefined),
+  isSpeakingAsync: jest.fn().mockResolvedValue(false),
+}));
+
 // Mock @react-native-community/netinfo
 jest.mock("@react-native-community/netinfo", () => ({
   addEventListener: jest.fn((callback) => {
