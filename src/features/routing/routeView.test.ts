@@ -1,5 +1,6 @@
 import type {
   PathSegmentDto,
+  RecommendationMeta,
   RouteHighlight,
   RouteMode,
   SegmentCar,
@@ -17,6 +18,7 @@ import {
   operationLabel,
   pickNextTrain,
   reasonText,
+  recommendationReason,
   routeSignature,
   withTopicParticle,
   segmentShares,
@@ -321,5 +323,132 @@ describe("선호가 둘 이상일 때 문장", () => {
     expect(reasonText(["FASTEST", "LEAST_CROWDED", "LEAST_WALK"], ["PERSONAL"], ["FAST", "UNCROWDED", "LESS_WALK"])).toBe(
       "빠르고 덜 붐비고 덜 걷는 길로 골랐어요"
     );
+  });
+});
+
+const meta = (patch: Partial<RecommendationMeta> = {}): RecommendationMeta => ({
+  context: "WEEKDAY_MORNING_RUSH",
+  reasons: [],
+  usedHistory: false,
+  fareSensitive: false,
+  weights: { congestion: 1.5, transferSec: 240 },
+  ...patch,
+});
+
+describe("점수로 고르는 추천", () => {
+  // 빠르지만 붐비는 경로(최적), 느리지만 한산한 경로(여유), 싸지만 환승이 많은 경로(최소 비용)
+  const fast = option("OPTIMAL", {
+    totalDurationSec: 1440,
+    segments: [ride("02", "A", "B", 1440, { congestionRate: 80 })],
+  });
+  const calm = option("COMFORTABLE", {
+    totalDurationSec: 1680,
+    segments: [ride("01", "A", "B", 1680, { congestionRate: 40 })],
+  });
+  const cheap = option("CHEAPEST", {
+    totalDurationSec: 1500,
+    totalFare: 1550,
+    transferCount: 3,
+    segments: [ride("04", "A", "B", 1500, { congestionRate: 70 })],
+  });
+
+  it("추천 근거가 없으면(비로그인) 서버가 표시한 PERSONAL을 그대로 쓴다", () => {
+    const groups = groupRouteOptions([fast, calm, cheap]);
+
+    expect(groups.map((g) => g.recommended)).toEqual([false, false, false]);
+    expect(groups.map((g) => g.title)).toEqual(["최적", "여유", "최소 비용"]);
+  });
+
+  it("추천 근거가 있으면 종합 점수가 가장 좋은 후보를 추천으로 올린다", () => {
+    const personal = option("PERSONAL", {
+      totalDurationSec: 1560,
+      segments: [ride("03", "A", "B", 1560, { congestionRate: 55 })],
+    });
+    const groups = groupRouteOptions([fast, calm, cheap, personal], [], meta());
+
+    expect(groups[0].recommended).toBe(true);
+    expect(groups[0].title).toBe("추천");
+    expect(groups.filter((g) => g.recommended)).toHaveLength(1);
+  });
+
+  it("혼잡을 피하고 싶은 신호가 쌓이면 한산한 후보가 추천이 되고 원래 이름이 보조 문구로 남는다", () => {
+    const groups = groupRouteOptions(
+      [fast, calm, cheap],
+      [],
+      meta({ reasons: ["PREF_UNCROWDED", "PREF_WEAK_AC", "CONTEXT_RUSH", "HISTORY_COMFORT"] })
+    );
+
+    expect(groups[0].option.mode).toBe("COMFORTABLE");
+    expect(groups[0].title).toBe("추천");
+    expect(groups[0].alias).toBe("여유");
+    expect(groups.slice(1).every((g) => g.alias === undefined)).toBe(true);
+  });
+
+  it("점수로 다른 후보가 추천이 되면 서버가 PERSONAL로 표시한 경로는 추천 카드가 아니다", () => {
+    // 서울역 → 잠실: 최소 비용 경로가 점수 1위, 서버의 PERSONAL 경로는 환승이 적고 한산한 다른 경로
+    const personal = option("PERSONAL", {
+      totalDurationSec: 1560,
+      segments: [ride("03", "A", "B", 1560, { congestionRate: 32 })],
+    });
+    const groups = groupRouteOptions(
+      [fast, cheap, personal],
+      [],
+      meta({ reasons: ["PREF_FAST", "PREF_UNCROWDED"] })
+    );
+
+    expect(groups.filter((g) => g.recommended)).toHaveLength(1);
+    expect(groups.filter((g) => g.title === "추천")).toHaveLength(1);
+    const personalCard = groups.find((g) => g.modes.includes("PERSONAL"))!;
+    if (!personalCard.recommended) expect(personalCard.title).toBe("다른 경로");
+  });
+
+  it("서버의 PERSONAL이 최고점이면 보조 문구 없이 추천이다", () => {
+    const only = option("PERSONAL");
+    const [group] = groupRouteOptions([only], [], meta());
+
+    expect(group.recommended).toBe(true);
+    expect(group.alias).toBeUndefined();
+  });
+
+  it("도보만 가는 후보는 추천이 되지 않고 맨 뒤에 둔다", () => {
+    const walkOnly = option("ONLY_WALK", { totalDurationSec: 600, segments: [walk(600)] });
+    const groups = groupRouteOptions([walkOnly, fast, calm], [], meta());
+
+    expect(groups[groups.length - 1].option.mode).toBe("ONLY_WALK");
+    expect(groups[groups.length - 1].recommended).toBe(false);
+  });
+});
+
+describe("recommendationReason", () => {
+  it("이동 목적과 시간대 근거를 먼저 말한다", () => {
+    expect(recommendationReason(meta({ reasons: ["PURPOSE_SCHOOL", "CONTEXT_RUSH"] }), [], ["FAST"])).toBe(
+      "등하교 시간이라 붐비지 않는 길로 골랐어요"
+    );
+    expect(recommendationReason(meta({ reasons: ["PURPOSE_COMMUTE"] }), [])).toBe(
+      "출퇴근 시간이라 붐비지 않는 길로 골랐어요"
+    );
+    expect(recommendationReason(meta({ reasons: ["CONTEXT_RUSH"] }), [])).toBe("붐비는 시간이라 덜 붐비는 길로 골랐어요");
+    expect(recommendationReason(meta({ reasons: ["CONTEXT_NIGHT"] }), [])).toBe("한산한 시간이라 빨리 가는 길로 골랐어요");
+  });
+
+  it("이력 근거를 말한다", () => {
+    expect(recommendationReason(meta({ reasons: ["HISTORY_COMFORT"] }), [])).toBe("자주 고르신 여유로운 길로 골랐어요");
+    expect(recommendationReason(meta({ reasons: ["HISTORY_FAST"] }), [])).toBe("자주 고르신 빠른 길로 골랐어요");
+    expect(recommendationReason(meta({ reasons: ["HISTORY_CHEAP"] }), [])).toBe("요금이 적게 드는 길로 골랐어요");
+  });
+
+  it("서버 근거가 없으면 설문 취향과 맞는 장점으로 말한다", () => {
+    expect(recommendationReason(meta({ reasons: ["PREF_FEW_TRANSFERS"] }), ["NO_TRANSFER"], ["FEW_TRANSFERS"])).toBe(
+      "환승 적은 길로 골랐어요"
+    );
+  });
+
+  it("설문이 없으면 이 후보의 장점 태그를 쓴다", () => {
+    expect(recommendationReason(meta(), ["FASTEST", "NO_TRANSFER"])).toBe("가장 빨라요 · 환승 없이 가요");
+  });
+
+  it("말할 근거가 없으면 비운다", () => {
+    expect(recommendationReason(meta(), [])).toBeUndefined();
+    expect(recommendationReason(undefined, [])).toBeUndefined();
   });
 });

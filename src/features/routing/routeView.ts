@@ -2,6 +2,7 @@ import type {
   OperationNotice,
   OperationStatus,
   PathSegmentDto,
+  RecommendationMeta,
   RouteHighlight,
   RouteMode,
   CongestionLevel,
@@ -9,6 +10,7 @@ import type {
   SubwayRouteOptionDto,
 } from "@/apis/queries/routing/searchRoutes";
 import type { NextTrain } from "@/apis/queries/stations/getNextTrains";
+import { factorWeights, pickRecommended, scoreOptions } from "./recommendScore";
 import { formatClockKst } from "@/common/utils/format";
 import { WALK_LINE_ID } from "@/theme";
 
@@ -81,6 +83,8 @@ export interface RouteGroup {
   title: string;
   tagline?: string;
   recommended: boolean;
+  /** 종합 점수로 추천이 되었지만 서버가 붙인 이름이 달랐다면 그 이름(예: "최소 비용"). 카드가 보조 문구로 보여 준다 */
+  alias?: string;
 }
 
 const isRide = (segment: PathSegmentDto): boolean => segment.lineId !== WALK_LINE_ID;
@@ -131,13 +135,51 @@ export function reasonText(
   return phrases.length > 0 ? phrases.join(" · ") : undefined;
 }
 
+/** 서버 근거 코드를 사용자에게 보이는 이유 문장으로. 먼저 나온 것이 우선이다 */
+const REASON_SENTENCE: Array<{ code: string; text: string }> = [
+  { code: "PURPOSE_SCHOOL", text: "등하교 시간이라 붐비지 않는 길로 골랐어요" },
+  { code: "PURPOSE_COMMUTE", text: "출퇴근 시간이라 붐비지 않는 길로 골랐어요" },
+  { code: "PURPOSE_HOSPITAL", text: "환승과 혼잡이 적은 편한 길로 골랐어요" },
+  { code: "CONTEXT_RUSH", text: "붐비는 시간이라 덜 붐비는 길로 골랐어요" },
+  { code: "CONTEXT_NIGHT", text: "한산한 시간이라 빨리 가는 길로 골랐어요" },
+  { code: "HISTORY_COMFORT", text: "자주 고르신 여유로운 길로 골랐어요" },
+  { code: "HISTORY_FAST", text: "자주 고르신 빠른 길로 골랐어요" },
+  { code: "HISTORY_CHEAP", text: "요금이 적게 드는 길로 골랐어요" },
+];
+
+/**
+ * 추천 카드의 이유 한 줄. 서버가 준 근거(이동 목적, 시간대, 이력)를 먼저 말하고,
+ * 그것이 없으면 설문 취향, 마지막으로 이 후보의 장점 태그를 쓴다
+ */
+export function recommendationReason(
+  meta: RecommendationMeta | undefined,
+  highlights: RouteHighlight[],
+  routePrefs: string[] = []
+): string | undefined {
+  const reasons = new Set(meta?.reasons ?? []);
+  const sentence = REASON_SENTENCE.find((item) => reasons.has(item.code));
+  if (sentence) return sentence.text;
+  const matched = matchedPreferences(highlights, routePrefs);
+  if (matched.length > 0) {
+    const phrases = matched.map((label) => PREF_PHRASE[label]);
+    const front = phrases.slice(0, -1).map((phrase) => phrase.connective);
+    const last = phrases[phrases.length - 1].attributive;
+    return `${[...front, last].join(" ")} 길로 골랐어요`;
+  }
+  const phrases = highlights.slice(0, 2).map((tag) => HIGHLIGHT_PHRASE[tag]);
+  return phrases.length > 0 ? phrases.join(" · ") : undefined;
+}
+
 /**
  * 같은 경로는 한 장으로 합치고 추천을 맨 위에 둔다.
+ * 로그인한 사용자(서버가 추천 근거 `recommendation`을 준 경우)는 후보들의 시간, 요금, 환승, 혼잡, 도보를
+ * 종합 점수로 매겨 최고점 후보를 추천으로 고른다. 비로그인은 서버가 추천을 주지 않아 추천 카드가 없다.
  * 직접 도보 옵션은 지하철 경로와 비교하지 않고 맨 뒤에 둔다
  */
 export function groupRouteOptions(
   options: SubwayRouteOptionDto[],
-  routePrefs: string[] = []
+  routePrefs: string[] = [],
+  meta?: RecommendationMeta
 ): RouteGroup[] {
   const bySignature = new Map<string, { option: SubwayRouteOptionDto; modes: RouteMode[] }>();
   for (const option of options) {
@@ -147,19 +189,42 @@ export function groupRouteOptions(
     else bySignature.set(key, { option, modes: [option.mode] });
   }
 
-  const rank = (modes: RouteMode[]): number =>
-    Math.min(...modes.map((mode) => MODE_ORDER.indexOf(mode)));
+  const entries = [...bySignature.values()];
 
-  return [...bySignature.values()]
-    .sort((a, b) => rank(a.modes) - rank(b.modes))
-    .map(({ option, modes }) => {
+  // 서버가 추천 근거를 준 경우(로그인)에만 종합 점수로 추천을 고른다. 그렇지 않으면 서버가 표시한 PERSONAL을 쓴다
+  const scoredPick = meta
+    ? pickRecommended(scoreOptions(entries.map((entry) => entry.option), factorWeights(meta)))
+    : undefined;
+  const recommendedKey = scoredPick ? routeSignature(scoredPick.option) : undefined;
+  const isRecommended = (entry: { option: SubwayRouteOptionDto; modes: RouteMode[] }): boolean =>
+    recommendedKey !== undefined ? routeSignature(entry.option) === recommendedKey : entry.modes.includes("PERSONAL");
+
+  const rank = (entry: { option: SubwayRouteOptionDto; modes: RouteMode[] }): number =>
+    isRecommended(entry) ? -1 : Math.min(...entry.modes.map((mode) => MODE_ORDER.indexOf(mode)));
+
+  return entries
+    .sort((a, b) => rank(a) - rank(b))
+    .map((entry) => {
+      const { option, modes } = entry;
       const ordered = [...modes].sort((a, b) => MODE_ORDER.indexOf(a) - MODE_ORDER.indexOf(b));
+      const recommended = isRecommended(entry);
+      // 추천은 한 장뿐이다. 점수로 다른 후보가 추천이 되었으면 서버가 PERSONAL로 표시한 이 카드는 다른 이름으로 보여 준다
+      const displayModes = recommended || recommendedKey === undefined ? ordered : ordered.filter((mode) => mode !== "PERSONAL");
+      // 서버가 PERSONAL로만 표시한 경로가 추천이 아니면(다른 모드와 합쳐지지 않았으면) 장점으로 이름을 대신한다
+      const nameless = displayModes.length === 0;
+      const highlights = option.highlights ?? [];
+      // 종합 점수로 추천이 되었는데 서버가 붙인 이름이 추천이 아니면(예: 최소 비용) 원래 이름을 남긴다
+      const alias =
+        recommended && recommendedKey !== undefined && !ordered.includes("PERSONAL") ? MODE_TITLE[ordered[0]] : undefined;
       return {
         option,
         modes: ordered,
-        title: MODE_TITLE[ordered[0]],
-        tagline: reasonText(option.highlights ?? [], ordered, routePrefs),
-        recommended: ordered.includes("PERSONAL"),
+        title: recommended ? MODE_TITLE.PERSONAL : nameless ? "다른 경로" : MODE_TITLE[displayModes[0]],
+        tagline: recommended
+          ? recommendationReason(meta, highlights, routePrefs)
+          : reasonText(highlights, displayModes, routePrefs),
+        recommended,
+        alias,
       };
     });
 }
