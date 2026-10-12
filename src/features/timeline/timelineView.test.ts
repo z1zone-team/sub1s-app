@@ -1,5 +1,6 @@
 import type { TravelLogItemDto } from "@/apis/queries/profile/getTimeline";
 import {
+  axisTicks,
   bucketLabel,
   chartBars,
   formatHoursMinutes,
@@ -7,6 +8,7 @@ import {
   lineRows,
   logDateLabel,
   logSummary,
+  periodName,
 } from "./timelineView";
 
 describe("kstYearMonth", () => {
@@ -81,5 +83,33 @@ describe("이동 기록 행", () => {
   it("호선과 급행, 탑승 시간을 보여 준다", () => {
     expect(logSummary(log)).toBe("9호선 급행 · 24분");
     expect(logSummary({ ...log, isExpress: false, lineIds: ["09", "03"], durationSec: 20 })).toBe("9호선 → 3호선 · 1분");
+  });
+});
+
+describe("periodName", () => {
+  const now = Date.parse("2026-09-15T03:00:00Z");
+  it("기간마다 이름이 다르다", () => {
+    expect(periodName("WEEK", now)).toBe("이번 주");
+    expect(periodName("MONTH", now)).toBe("9월");
+    expect(periodName("YEAR", now)).toBe("2026년");
+    expect(periodName("ALL", now)).toBe("전체 기간");
+  });
+});
+
+describe("axisTicks", () => {
+  it("프로토타입의 눈금과 같다", () => {
+    expect(axisTicks(11.5)).toEqual({ max: 12, ticks: [12, 8, 4, 0] });
+    expect(axisTicks(25.5)).toEqual({ max: 30, ticks: [30, 20, 10, 0] });
+    expect(axisTicks(96.3)).toEqual({ max: 120, ticks: [120, 80, 40, 0] });
+  });
+
+  it("최대값이 눈금 안에 들어간다", () => {
+    for (const km of [0.4, 3, 7.9, 14.6, 74.6, 300, 1234]) {
+      expect(axisTicks(km).max).toBeGreaterThanOrEqual(km);
+    }
+  });
+
+  it("기록이 없으면 기본 눈금이다", () => {
+    expect(axisTicks(0)).toEqual({ max: 3, ticks: [3, 2, 1, 0] });
   });
 });

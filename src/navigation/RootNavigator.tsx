@@ -155,7 +155,7 @@ export function RootNavigator() {
         <Stack.Screen
           name="Timeline"
           component={TimelineScreen}
-          options={{ title: "이동 기록 타임라인" }}
+          options={{ headerShown: false }}
         />
       </Stack.Navigator>
     </NavigationContainer>

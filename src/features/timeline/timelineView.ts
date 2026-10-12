@@ -87,3 +87,32 @@ export function logSummary(log: TravelLogItemDto): string {
   const minutes = Math.max(1, Math.round(log.durationSec / 60));
   return [label, `${minutes}분`].filter(Boolean).join(" · ");
 }
+
+/** 기간 선택 아래에 보이는 이름: 이번 주, 9월, 2026년, 전체 기간 */
+export function periodName(period: TravelStatsPeriod, nowMs: number): string {
+  const { year, month } = kstYearMonth(nowMs);
+  if (period === "WEEK") return "이번 주";
+  if (period === "MONTH") return `${month}월`;
+  if (period === "YEAR") return `${year}년`;
+  return "전체 기간";
+}
+
+const AXIS_STEPS = [1, 2, 4, 5, 10];
+const round1 = (value: number): number => Math.round(value * 10) / 10;
+
+/**
+ * 막대 그래프의 세로 눈금 4개(위에서 아래로 [최대, 2/3, 1/3, 0]).
+ * 최대 거리를 담는 가장 작은 "간격 x 3"을 고른다. 간격은 1, 2, 4, 5, 10에 10의 거듭제곱을 곱한 값이다
+ * (프로토타입: 11.5km는 12, 8, 4, 0 / 25.5km는 30, 20, 10, 0 / 96.3km는 120, 80, 40, 0)
+ */
+export function axisTicks(maxKm: number): { max: number; ticks: number[] } {
+  if (!Number.isFinite(maxKm) || maxKm <= 0) return { max: 3, ticks: [3, 2, 1, 0] };
+  let scale = 0.1;
+  for (;;) {
+    for (const base of AXIS_STEPS) {
+      const step = round1(base * scale);
+      if (step * 3 >= maxKm) return { max: round1(step * 3), ticks: [round1(step * 3), round1(step * 2), step, 0] };
+    }
+    scale *= 10;
+  }
+}
