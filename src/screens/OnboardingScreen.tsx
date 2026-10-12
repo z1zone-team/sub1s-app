@@ -5,6 +5,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { usePreferencesQuery } from "@/apis/queries/users/usePreferencesQuery";
 import { useUpdatePreferencesMutation } from "@/apis/mutations/users/useUpdatePreferencesMutation";
 import { Button } from "@/common/components/Button";
+import { DesignIcon } from "@/common/components/DesignIcon";
 import { Chip } from "@/common/components/Chip";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
@@ -61,58 +62,71 @@ export function OnboardingScreen({
     save.mutate({ purposes, routePrefs }, { onSuccess: leave });
   };
 
+  const close = () => {
+    if (userId && !editing) void skip(userId);
+    leave();
+  };
+  const label = step === 1 ? "다음" : "시작하기";
+
   return (
-    <Screen contentClassName="gap-4 px-6 pt-2">
+    <Screen contentClassName="px-3">
       <View className="flex-row items-center justify-between">
-        <Text className="text-body-sm font-sans-bold text-text-secondary">{step} / 2</Text>
         <Pressable
           accessibilityRole="button"
-          onPress={() => {
-            if (userId && !editing) void skip(userId);
-            leave();
-          }}
+          accessibilityLabel="뒤로"
+          onPress={step === 1 ? leave : () => setStep(1)}
+          className="h-control w-control items-center justify-center"
         >
-          <Text className="text-body text-text-secondary">{editing ? "닫기" : "건너뛰기"}</Text>
+          <DesignIcon name="back" size={24} strokeWidth={2} />
+        </Pressable>
+        <Pressable accessibilityRole="button" onPress={close} className="h-control justify-center px-2">
+          <Text className="text-body font-sans-semibold text-text-secondary">{editing ? "닫기" : "건너뛰기"}</Text>
         </Pressable>
       </View>
 
-      <View className="h-1 rounded-3xs bg-border">
-        <View className={cn("h-1 rounded-3xs bg-primary", step === 1 ? "w-1/2" : "w-full")} />
+      <View className="mx-2 mt-2 h-1 overflow-hidden rounded-pill bg-border">
+        <View className={cn("h-1 rounded-pill bg-primary", step === 1 ? "w-1/2" : "w-full")} />
       </View>
 
-      <View className="gap-1.5">
-        <Text className="text-headline font-sans-extrabold">
+      <View className="px-2 pt-7">
+        <Text className="text-body-sm font-sans-bold text-primary">{step} / 2</Text>
+        <Text className="mt-2 text-headline-sm font-sans-extrabold leading-snug">
           {step === 1 ? "주로 지하철을 어떤 용무로 타시나요?" : "어떤 경로를 좋아하세요?"}
         </Text>
-        <Text className="text-body-sm text-text-secondary">
+        <Text className="mt-2 text-body text-text-secondary">
           {step === 1 ? "중복 선택 가능" : "골라주신 취향으로 AI가 경로를 맨 위에 추천해 드려요"}
         </Text>
-      </View>
-
-      <View className="flex-row flex-wrap gap-2">
-        {options.map((option) => (
-          <Chip
-            key={option.code}
-            label={option.label}
-            selected={selected.includes(option.code)}
-            onPress={() => setSelected((current) => toggleSelection(current, option.code))}
-          />
-        ))}
+        <View className="mt-7 flex-row flex-wrap gap-2.5">
+          {options.map((option) => (
+            <Chip
+              key={option.code}
+              large
+              label={option.label}
+              selected={selected.includes(option.code)}
+              onPress={() => setSelected((current) => toggleSelection(current, option.code))}
+            />
+          ))}
+        </View>
       </View>
 
       <View className="flex-1" />
 
       {save.error ? (
-        <Text className="text-center text-body-sm text-error">저장하지 못했어요. 다시 시도해 주세요.</Text>
+        <Text className="pb-2 text-center text-body-sm text-error">저장하지 못했어요. 다시 시도해 주세요.</Text>
       ) : null}
-      <View className="gap-2 pb-4">
-        <Button
-          label={step === 1 ? "다음" : "시작하기"}
-          onPress={next}
-          disabled={!proceed}
-          loading={save.isPending}
-        />
-        {step === 2 ? <Button label="이전" variant="ghost" onPress={() => setStep(1)} /> : null}
+      <View className="px-2 pb-4">
+        {proceed ? (
+          <Button label={label} onPress={next} loading={save.isPending} />
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ disabled: true }}
+            disabled
+            className="h-control-lg items-center justify-center rounded-md bg-border"
+          >
+            <Text className="text-base font-sans-bold text-text-secondary">{label}</Text>
+          </Pressable>
+        )}
       </View>
     </Screen>
   );

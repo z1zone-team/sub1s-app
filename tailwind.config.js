@@ -73,6 +73,7 @@ module.exports = {
         heading: "17px",
         title: "18px",
         "title-lg": "20px",
+        "headline-sm": "21px",
         headline: "22px",
         "headline-md": "24px",
         "headline-lg": "26px",
