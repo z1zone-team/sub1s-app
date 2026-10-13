@@ -19,6 +19,9 @@ export interface VoiceRouteRecommendResponseDto {
 export interface VoiceRouteRecommendRequest {
   audio: Blob | File | { uri: string; name: string; type: string };
   preferredMode?: RouteMode;
+  /** 출발지를 말하지 않았을 때 서버가 현재 위치로 쓴다. 둘 다 있을 때만 보낸다 */
+  lat?: number;
+  lng?: number;
 }
 
 /**
@@ -47,6 +50,10 @@ export function buildVoiceFormData(params: VoiceRouteRecommendRequest): FormData
 
   if (params.preferredMode) {
     formData.append("preferredMode", params.preferredMode);
+  }
+  if (Number.isFinite(params.lat) && Number.isFinite(params.lng)) {
+    formData.append("lat", String(params.lat));
+    formData.append("lng", String(params.lng));
   }
   return formData;
 }

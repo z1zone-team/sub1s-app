@@ -12,6 +12,7 @@ import { Screen } from "@/common/components/Screen";
 import { Shake } from "@/common/components/Shake";
 import { Text } from "@/common/components/Text";
 import { useAudioRecorder, type AudioRecordingResult } from "@/common/device/audio/useAudioRecorder";
+import { getCurrentCoordinates } from "@/common/device/location/getCurrentCoordinates";
 import { canSpeakBriefing } from "@/features/voice/briefingVoice";
 import { BriefingCard } from "@/features/voice/components/BriefingCard";
 import { useBriefingVoice } from "@/features/voice/hooks/useBriefingVoice";
@@ -65,6 +66,7 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
   const briefingVoice = useBriefingVoice();
   const [phase, setPhase] = useState<Phase>({ name: "listening" });
   const started = useRef(false);
+  const mounted = useRef(true);
   const close = () => navigation.goBack();
   const bottomPadding = Math.max(insets.bottom, 12) + 10;
 
@@ -75,13 +77,17 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
         return;
       }
       setPhase({ name: "processing" });
-      recommend.mutate(
-        { audio: { uri: recording.uri, name: "voice_query.m4a", type: "audio/m4a" } },
-        {
-          onSuccess: (data) => setPhase({ name: "result", data }),
-          onError: (error) => setPhase({ name: "failed", failure: failureOf(error) }),
-        }
-      );
+      // 출발지를 말하지 않아도 되도록 현재 위치를 함께 보낸다. 위치를 얻지 못하면 위치 없이 보낸다
+      void getCurrentCoordinates().then((coords) => {
+        if (!mounted.current) return; // 위치를 기다리는 동안 화면을 닫았으면 보내지 않는다
+        recommend.mutate(
+          { audio: { uri: recording.uri, name: "voice_query.m4a", type: "audio/m4a" }, ...coords },
+          {
+            onSuccess: (data) => setPhase({ name: "result", data }),
+            onError: (error) => setPhase({ name: "failed", failure: failureOf(error) }),
+          }
+        );
+      });
     },
     [recommend]
   );
@@ -93,6 +99,13 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
     const ok = await recorder.startRecording();
     if (!ok) setPhase({ name: "failed", failure: "GENERIC" });
   }, [recorder, briefingVoice]);
+
+  useEffect(() => {
+    mounted.current = true; // 개발 모드는 효과를 한 번 해제했다가 다시 실행한다
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!isSignedIn || started.current) return;
