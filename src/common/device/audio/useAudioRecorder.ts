@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { createSpeechDetector, SPEECH_SAMPLE_MS } from "@/features/voice/speechLevel";
 import {
   RecordingPresets,
   requestRecordingPermissionsAsync,
@@ -16,8 +17,10 @@ export interface AudioRecordingResult {
 }
 
 export function useAudioRecorder() {
-  const recorder = useExpoAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  // 입력 크기(metering)를 읽어 말소리가 들어올 때만 파형이 움직이게 한다
+  const recorder = useExpoAudioRecorder({ ...RecordingPresets.HIGH_QUALITY, isMeteringEnabled: true });
   const [isRecording, setIsRecording] = useState<boolean>(false);
+  const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [durationMillis, setDurationMillis] = useState<number>(0);
   const [recordingResult, setRecordingResult] = useState<AudioRecordingResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -25,12 +28,20 @@ export function useAudioRecorder() {
   const startedAtRef = useRef<number>(0);
   const activeRef = useRef<boolean>(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const meterTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const detectorRef = useRef(createSpeechDetector());
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+    if (meterTimerRef.current) {
+      clearInterval(meterTimerRef.current);
+      meterTimerRef.current = null;
+    }
+    detectorRef.current.reset();
+    setIsSpeaking(false);
   }, []);
 
   const stopRecording = useCallback(async (): Promise<AudioRecordingResult | null> => {
@@ -86,6 +97,13 @@ export function useAudioRecorder() {
       startedAtRef.current = Date.now();
       setIsRecording(true);
 
+      // 입력 크기만 따로 자주 읽는다. 말하는 중인지가 바뀔 때만 상태를 바꿔 화면이 불필요하게 다시 그려지지 않는다
+      detectorRef.current.reset();
+      meterTimerRef.current = setInterval(() => {
+        const speaking = detectorRef.current.update(recorder.getStatus().metering, Date.now());
+        setIsSpeaking((previous) => (previous === speaking ? previous : speaking));
+      }, SPEECH_SAMPLE_MS);
+
       timerRef.current = setInterval(() => {
         const elapsed = Date.now() - startedAtRef.current;
         setDurationMillis(elapsed);
@@ -118,6 +136,8 @@ export function useAudioRecorder() {
 
   return {
     isRecording,
+    /** 녹음 중 마이크로 말소리가 들어오고 있는지. 조용하면 false */
+    isSpeaking,
     durationMillis,
     recordingResult,
     error,
