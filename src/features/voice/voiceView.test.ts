@@ -29,6 +29,12 @@ describe("failureOf", () => {
     expect(failureOf(new ApiError("VOICE_ORIGIN_REQUIRED", "x", 422))).toBe("ORIGIN_REQUIRED");
   });
 
+  it("집이나 학교를 저장하지 않았다는 오류는 저장 안내로 보여 주고 같은 422인 출발지 없음과 구분한다", () => {
+    expect(failureOf(new ApiError("VOICE_PLACE_NOT_SAVED", "x", 422))).toBe("PLACE_NOT_SAVED");
+    expect(failureOf(new VoiceJobFailedError({ code: "VOICE_PLACE_NOT_SAVED", message: "x", status: 422 }))).toBe("PLACE_NOT_SAVED");
+    expect(failureOf(new ApiError("VOICE_ORIGIN_REQUIRED", "x", 422))).toBe("ORIGIN_REQUIRED");
+  });
+
   it("어디로 갈지 알아듣지 못한 오류는 출발역 안내가 아니라 역을 못 찾았다는 안내다", () => {
     expect(failureOf(new ApiError("VOICE_INTENT_NOT_UNDERSTOOD", "x", 422))).toBe("NOT_FOUND");
     expect(failureOf(new VoiceJobFailedError({ code: "VOICE_INTENT_NOT_UNDERSTOOD", message: "x", status: 422 }))).toBe("NOT_FOUND");
@@ -58,7 +64,7 @@ describe("failureOf", () => {
   });
 
   it("모든 실패 종류에 안내 문구가 있다", () => {
-    for (const kind of ["NO_SPEECH", "NOT_FOUND", "ORIGIN_REQUIRED", "TOO_LONG", "UNAVAILABLE", "BUSY", "LOGIN", "GENERIC"] as const) {
+    for (const kind of ["NO_SPEECH", "NOT_FOUND", "ORIGIN_REQUIRED", "PLACE_NOT_SAVED", "TOO_LONG", "UNAVAILABLE", "BUSY", "LOGIN", "GENERIC"] as const) {
       expect(FAILURE_TEXT[kind].title).not.toBe("");
       expect(FAILURE_TEXT[kind].body).not.toBe("");
     }
