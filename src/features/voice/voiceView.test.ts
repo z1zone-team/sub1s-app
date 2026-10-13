@@ -23,6 +23,17 @@ describe("failureOf", () => {
     expect(failureOf(new ApiError("INTERNAL", "x", 500))).toBe("GENERIC");
   });
 
+  it("말소리가 없었다는 오류는 코드로 알아보고 같은 422인 출발지 없음과 구분한다", () => {
+    expect(failureOf(new ApiError("VOICE_NO_SPEECH", "x", 422))).toBe("NO_SPEECH");
+    expect(failureOf(new VoiceJobFailedError({ code: "VOICE_NO_SPEECH", message: "x", status: 422 }))).toBe("NO_SPEECH");
+    expect(failureOf(new ApiError("VOICE_ORIGIN_REQUIRED", "x", 422))).toBe("ORIGIN_REQUIRED");
+  });
+
+  it("어디로 갈지 알아듣지 못한 오류는 출발역 안내가 아니라 역을 못 찾았다는 안내다", () => {
+    expect(failureOf(new ApiError("VOICE_INTENT_NOT_UNDERSTOOD", "x", 422))).toBe("NOT_FOUND");
+    expect(failureOf(new VoiceJobFailedError({ code: "VOICE_INTENT_NOT_UNDERSTOOD", message: "x", status: 422 }))).toBe("NOT_FOUND");
+  });
+
   it("출발지 없음, 너무 긴 녹음, 서버가 쓸 수 없음도 따로 안내한다", () => {
     expect(failureOf(new ApiError("VOICE_ORIGIN_REQUIRED", "x", 422))).toBe("ORIGIN_REQUIRED");
     expect(failureOf(new ApiError("VOICE_AUDIO_TOO_LARGE", "x", 413))).toBe("TOO_LONG");
