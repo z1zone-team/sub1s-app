@@ -270,6 +270,11 @@ export function formatWaiting(arrivalInSec: number | null): string {
   return `${Math.ceil(arrivalInSec / 60)}분 후 출발`;
 }
 
+/** 이 구간에 추천 칸이 있는지. 서버는 칸 수를 모르는 노선과 도보 구간에서 `recommendedCarNo`를 0으로 준다 */
+export function hasRecommendedCar(segment: { recommendedCarNo: number }): boolean {
+  return segment.recommendedCarNo > 0;
+}
+
 export interface CarInsight {
   /** 추천 칸이 구간 평균보다 얼마나 한산한지(%, 정수). 평균과 같거나 더 붐비면 undefined */
   betterThanAveragePercent?: number;

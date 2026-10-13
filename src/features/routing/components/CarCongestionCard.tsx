@@ -20,7 +20,7 @@ const LEGEND = [
 ] as const;
 
 /**
- * 프로토타입의 "칸별 혼잡도" 카드. 1~10번 칸을 네모 안에 아래에서 차오르는 막대로 보여 주고,
+ * 프로토타입의 "칸별 혼잡도" 카드. 서버가 준 칸(그 열차의 칸 수만큼)을 네모 안에 아래에서 차오르는 막대로 보여 주고,
  * 추천 칸은 primary 테두리와 "추천", 약냉방칸은 "약냉"으로 표시한다. 막대 높이와 색은 값마다 달라 style로 준다
  */
 export function CarCongestionCard({ cars, recommendedCarNo, forecastLabel }: CarCongestionCardProps) {
