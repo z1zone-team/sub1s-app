@@ -2,7 +2,7 @@ import { get, type RequestOptions } from "@/apis/client";
 import type { CongestionLevel } from "../routing/searchRoutes";
 
 export interface CarCongestionDto {
-  carNo: number; // 1 ~ 10
+  carNo: number; // 1부터 그 열차의 칸 수까지
   rate: number; // 0 ~ 100
   level: CongestionLevel;
   isWeakAirConditioned: boolean;

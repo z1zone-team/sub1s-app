@@ -33,7 +33,7 @@ export type RouteHighlight =
   | "CHEAPEST"
   | "WEAK_AC_CAR";
 
-/** 1~10번 칸 하나의 예측 혼잡도 */
+/** 칸 하나의 예측 혼잡도(번호는 1부터 그 열차의 칸 수까지, 호선마다 다르다) */
 export interface SegmentCar {
   carNo: number;
   /** 0~100 */

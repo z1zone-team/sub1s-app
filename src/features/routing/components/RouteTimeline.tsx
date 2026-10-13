@@ -10,7 +10,7 @@ import { formatClock24Kst, formatDistanceKm, formatDurationSec } from "@/common/
 import { CONGESTION_BG, CONGESTION_TEXT, getLineInfo, useTheme } from "@/theme";
 import { cn } from "@/lib/cn";
 import { buildTimeline, timeLabel, type TimelineRow } from "../routeTimeline";
-import { congestionPhrase, describeDoor, formatWaiting, operationLabel, pickNextTrain } from "../routeView";
+import { congestionPhrase, describeDoor, formatWaiting, hasRecommendedCar, operationLabel, pickNextTrain } from "../routeView";
 import { CarCongestionCard } from "./CarCongestionCard";
 import { RideBadge } from "./RideBadge";
 
@@ -137,9 +137,9 @@ function BoardContent({ row }: { row: Extract<TimelineRow, { kind: "board" }> })
           recommendedCarNo={segment.recommendedCarNo}
           forecastLabel={row.timeMs === undefined ? "탈 때 예상이에요" : `${formatClock24Kst(row.timeMs)}에 탈 때 예상이에요`}
         />
-      ) : (
+      ) : hasRecommendedCar(segment) ? (
         <Text className="mt-2.5 text-body-sm text-text-secondary">{segment.recommendedCarNo}번째 칸이 한산해요</Text>
-      )}
+      ) : null}
     </View>
   );
 }

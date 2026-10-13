@@ -9,6 +9,7 @@ import type {
 import type { NextTrain } from "@/apis/queries/stations/getNextTrains";
 import {
   carInsight,
+  hasRecommendedCar,
   congestionPhrase,
   clockRange,
   describeDoor,
@@ -450,5 +451,21 @@ describe("recommendationReason", () => {
   it("말할 근거가 없으면 비운다", () => {
     expect(recommendationReason(meta(), [])).toBeUndefined();
     expect(recommendationReason(undefined, [])).toBeUndefined();
+  });
+});
+
+describe("hasRecommendedCar", () => {
+  it("추천 칸 번호가 1 이상이면 있다", () => {
+    expect(hasRecommendedCar({ recommendedCarNo: 1 })).toBe(true);
+    expect(hasRecommendedCar({ recommendedCarNo: 10 })).toBe(true);
+  });
+
+  it("0이면 없다(칸 수를 모르는 노선이나 도보 구간)", () => {
+    expect(hasRecommendedCar({ recommendedCarNo: 0 })).toBe(false);
+  });
+
+  it("음수나 숫자가 아닌 값도 없다고 본다", () => {
+    expect(hasRecommendedCar({ recommendedCarNo: -1 })).toBe(false);
+    expect(hasRecommendedCar({ recommendedCarNo: Number.NaN })).toBe(false);
   });
 });
