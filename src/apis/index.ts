@@ -12,7 +12,6 @@ export * from "./queries/auth/useGetMe";
 // Routing Queries & Mutations
 export * from "./queries/routing/searchRoutes";
 export * from "./queries/routing/useRouteSearchQuery";
-export * from "./mutations/routing/useRouteSearchMutation";
 
 // Places & Stations Queries
 export * from "./retry";
@@ -54,6 +53,5 @@ export * from "./queries/ranking/getRanking";
 export * from "./queries/ranking/useRankingQuery";
 
 // Voice Mutations
-export * from "./mutations/voice/recommendVoiceRoute";
+export * from "./mutations/voice/voiceRouteTypes";
 export * from "./mutations/voice/voiceJobs";
-export * from "./mutations/voice/useVoiceRouteRecommendMutation";

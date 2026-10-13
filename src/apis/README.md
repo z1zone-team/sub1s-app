@@ -12,7 +12,7 @@
 ```text
 src/apis/
 ├── client.ts                 # Base HTTP 클라이언트 (토큰 자동주입, 에러 처리, get/post/put/patch/del)
-├── queries/                  # [조회성 API] GET 요청
+├── queries/                  # [조회성 API] GET 요청. 같은 입력이면 결과를 재사용할 조회는 POST여도 여기에 둔다(경로 검색 `useRouteSearchQuery`)
 │   ├── auth/                 # ✅ 기준 모범 예제 (getMe.ts, useGetMe.ts)
 │   ├── routing/              # 경로 탐색
 │   ├── congestion/           # 실시간/통계 혼잡도

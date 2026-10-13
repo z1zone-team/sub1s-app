@@ -1,5 +1,5 @@
 import type { VoiceJobStatusResponse } from "@/apis/mutations/voice/voiceJobs";
-import type { VoiceRouteRecommendResponseDto } from "@/apis/mutations/voice/recommendVoiceRoute";
+import type { VoiceRouteRecommendResponseDto } from "@/apis/mutations/voice/voiceRouteTypes";
 import { ApiError } from "@/apis/client";
 import {
   runVoiceJob,
