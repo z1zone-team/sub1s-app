@@ -30,8 +30,7 @@ src/
 │   ├── mutations/           # 생성/수정/삭제 전용 순수 fetcher + useMutation 훅
 │   └── README.md            # API 작성 컨벤션 및 예시 가이드
 ├── common/                  # 도메인 비의존적 공통 인프라 모듈
-│   ├── api/                 # API 클라이언트 및 타입 re-export
-│   ├── auth/                # Clerk 인증 동기화, AuthGate, 목 인증 스토어
+│   ├── auth/                # Clerk 인증 동기화와 소셜 로그인(인증 상태의 기준은 Clerk, 토큰 주입은 `AppProviders`의 브리지)
 │   ├── components/          # ErrorBoundary 등 글로벌 공통 컴포넌트
 │   ├── device/              # 위치(GPS), 오디오(녹음/재생/업로드), 네트워크 모니터링
 │   ├── logging/             # Authorization/토큰 자동 마스킹 로거

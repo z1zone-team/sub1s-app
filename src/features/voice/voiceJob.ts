@@ -1,5 +1,5 @@
 import type { VoiceJobError, VoiceJobStatusResponse } from "@/apis/mutations/voice/voiceJobs";
-import type { VoiceRouteRecommendResponseDto } from "@/apis/mutations/voice/recommendVoiceRoute";
+import type { VoiceRouteRecommendResponseDto } from "@/apis/mutations/voice/voiceRouteTypes";
 
 /** 이 시간 안에 결과가 없으면 실패로 본다. 서버 작업 제한(35초)과 AI 전사 대기(25초)보다 넉넉하게 둔다 */
 export const VOICE_JOB_TIMEOUT_MS = 60_000;

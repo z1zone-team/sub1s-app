@@ -1,4 +1,4 @@
-import type { VoiceRouteRecommendResponseDto } from "../../apis/mutations/voice/recommendVoiceRoute";
+import type { VoiceRouteRecommendResponseDto } from "../../apis/mutations/voice/voiceRouteTypes";
 import type {
   TrainCongestionDto,
   CarCongestionDto,

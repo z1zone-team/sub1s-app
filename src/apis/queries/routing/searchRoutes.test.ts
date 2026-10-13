@@ -1,17 +1,14 @@
 import * as client from "@/apis/client";
 import { searchRoutes } from "./searchRoutes";
 import { useRouteSearchQuery } from "./useRouteSearchQuery";
-import { useRouteSearchMutation } from "@/apis/mutations/routing/useRouteSearchMutation";
 
 const mockUseQuery = jest.fn();
-const mockUseMutation = jest.fn();
 
 jest.mock("@tanstack/react-query", () => {
   const actual = jest.requireActual("@tanstack/react-query");
   return {
     ...actual,
     useQuery: (options: unknown) => mockUseQuery(options),
-    useMutation: (options: unknown) => mockUseMutation(options),
   };
 });
 
@@ -118,25 +115,5 @@ describe("Routing Domain APIs & Hooks", () => {
         queryKey: ["routes", "optimal", "37.498,127.027", "37.566,126.978", undefined],
       })
     );
-  });
-
-  it("useRouteSearchMutation should configure mutationFn correctly", async () => {
-    mockUseMutation.mockReturnValue({ mutateAsync: jest.fn() });
-
-    useRouteSearchMutation();
-
-    expect(mockUseMutation).toHaveBeenCalledWith(
-      expect.objectContaining({
-        mutationFn: expect.any(Function),
-      })
-    );
-
-    const passedOptions = mockUseMutation.mock.calls[0][0];
-    (client.post as jest.Mock).mockResolvedValue(mockSearchResult);
-    const res = await passedOptions.mutationFn({
-      originStationId: "0222",
-      destinationStationId: "0234",
-    });
-    expect(res).toEqual(mockSearchResult);
   });
 });

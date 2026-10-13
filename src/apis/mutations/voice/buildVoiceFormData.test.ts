@@ -1,4 +1,4 @@
-import { buildVoiceFormData, type VoiceRouteRecommendRequest } from "./recommendVoiceRoute";
+import { buildVoiceFormData, type VoiceRouteRecommendRequest } from "./voiceRouteTypes";
 
 const audio = { uri: "file:///voice.m4a", name: "voice_query.m4a", type: "audio/m4a" };
 

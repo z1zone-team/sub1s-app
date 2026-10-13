@@ -1,4 +1,3 @@
-import { postMultipart, type RequestOptions } from "@/apis/client";
 import type { RouteMode, SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
 
 export interface InterpretedIntentDto {
@@ -24,24 +23,7 @@ export interface VoiceRouteRecommendRequest {
   lng?: number;
 }
 
-/**
- * AI 음성 경로 추천 및 자연어 브리핑 API (순수 함수)
- * POST /api/v1/voice/route-recommend (multipart/form-data)
- */
-export const recommendVoiceRoute = async (
-  params: VoiceRouteRecommendRequest,
-  fileSizeBytes?: number,
-  options?: RequestOptions
-): Promise<VoiceRouteRecommendResponseDto> => {
-  return postMultipart<VoiceRouteRecommendResponseDto>(
-    "/voice/route-recommend",
-    buildVoiceFormData(params),
-    fileSizeBytes,
-    options
-  );
-};
-
-/** 음성 요청의 multipart 본문. 동기(`route-recommend`)와 비동기(`jobs`) 요청이 같은 필드를 쓴다 */
+/** 음성 요청의 multipart 본문. `POST /voice/jobs` 요청 본문이다 */
 export function buildVoiceFormData(params: VoiceRouteRecommendRequest): FormData {
   const formData = new FormData();
 

@@ -4,7 +4,7 @@ import { getVoiceJob, submitVoiceJob } from "@/apis/mutations/voice/voiceJobs";
 import type {
   VoiceRouteRecommendRequest,
   VoiceRouteRecommendResponseDto,
-} from "@/apis/mutations/voice/recommendVoiceRoute";
+} from "@/apis/mutations/voice/voiceRouteTypes";
 import { subwaySocketClient, type SubwaySocket, type VoiceFailedPayload, type VoiceResultPayload } from "@/common/realtime";
 import { runVoiceJob, VoiceEventChannel, type VoiceJobDeps } from "../voiceJob";
 

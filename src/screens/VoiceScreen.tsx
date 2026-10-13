@@ -3,7 +3,7 @@ import { Pressable, View } from "react-native";
 import { useAuth } from "@clerk/expo";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import type { VoiceRouteRecommendResponseDto } from "@/apis/mutations/voice/recommendVoiceRoute";
+import type { VoiceRouteRecommendResponseDto } from "@/apis/mutations/voice/voiceRouteTypes";
 import { DesignIcon } from "@/common/components/DesignIcon";
 import { LineBadge } from "@/common/components/LineBadge";
 import { LoginRequired } from "@/common/components/LoginRequired";

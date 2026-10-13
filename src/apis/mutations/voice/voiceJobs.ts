@@ -3,7 +3,7 @@ import {
   buildVoiceFormData,
   type VoiceRouteRecommendRequest,
   type VoiceRouteRecommendResponseDto,
-} from "./recommendVoiceRoute";
+} from "./voiceRouteTypes";
 
 export interface VoiceJobSubmitResponse {
   jobId: string;
