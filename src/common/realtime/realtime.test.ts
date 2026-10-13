@@ -2,7 +2,7 @@ import { useRealtimeStore } from "./realtime-store";
 import { subwaySocketClient, setSocketTokenGetter } from "./socket-client";
 import { performDeviateCheck } from "./useOfflineFallback";
 import { post } from "../../apis/client";
-import type { TrainCongestionDto } from "./types";
+import type { TrainCongestionResponse } from "./types";
 
 // Mock socket.io-client
 const mockSocketOn = jest.fn();
@@ -55,22 +55,24 @@ describe("Realtime Module", () => {
     });
 
     it("should index cars by carNo for selector subscription when congestion is updated", () => {
-      const mockCongestion: TrainCongestionDto = {
-        line: "2호선",
-        trainNo: "2145",
-        currentStation: "강남",
+      const mockCongestion: TrainCongestionResponse = {
+        lineId: "2호선",
+        trainId: "2145",
+        stationId: "0222",
+        averageRate: 65,
+        source: "STATISTICS",
         updatedAt: "2026-10-07T12:00:00Z",
         cars: [
           {
             carNo: 1,
-            congestion: 85,
-            level: "CAUTION",
+            rate: 85,
+            level: "혼잡",
             isWeakAirConditioned: false,
           },
           {
             carNo: 2,
-            congestion: 45,
-            level: "SMOOTH",
+            rate: 45,
+            level: "보통",
             isWeakAirConditioned: true,
           },
         ],
@@ -80,7 +82,7 @@ describe("Realtime Module", () => {
 
       const state = useRealtimeStore.getState();
       expect(state.congestion).toEqual(mockCongestion);
-      expect(state.cars[1]?.congestion).toBe(85);
+      expect(state.cars[1]?.rate).toBe(85);
       expect(state.cars[2]?.isWeakAirConditioned).toBe(true);
       expect(state.cars[3]).toBeUndefined();
     });
