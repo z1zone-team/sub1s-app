@@ -11,6 +11,7 @@ export type VoiceFailure =
   | "NO_SPEECH"
   | "NOT_FOUND"
   | "ORIGIN_REQUIRED"
+  | "PLACE_NOT_SAVED"
   | "TOO_LONG"
   | "UNAVAILABLE"
   | "BUSY"
@@ -27,6 +28,8 @@ export function failureOf(error: unknown): VoiceFailure {
     if (error.code === "VOICE_NO_SPEECH") return "NO_SPEECH";
     // 말은 들었는데 어디로 가는지 알아듣지 못한 것은 출발역을 더하라는 안내가 아니라 다시 말해 달라는 안내다
     if (error.code === "VOICE_INTENT_NOT_UNDERSTOOD") return "NOT_FOUND";
+    // 집이나 학교를 말했는데 저장한 적이 없다
+    if (error.code === "VOICE_PLACE_NOT_SAVED") return "PLACE_NOT_SAVED";
     if (error.status === 401) return "LOGIN";
     if (error.status === 429) return "BUSY";
     if (error.status === 404) return "NOT_FOUND";
@@ -49,6 +52,10 @@ export const FAILURE_TEXT: Record<VoiceFailure, { title: string; body: string }>
   ORIGIN_REQUIRED: {
     title: "어디서 출발할까요?",
     body: "출발역을 함께 말씀해 주세요. 예를 들어 “가양에서 강남까지”처럼 말씀해 주세요.",
+  },
+  PLACE_NOT_SAVED: {
+    title: "집이나 학교를 먼저 저장해 주세요",
+    body: "홈 화면의 집, 학교 버튼을 눌러 장소를 저장하면 “집으로 가자”처럼 말씀하실 수 있어요.",
   },
   TOO_LONG: {
     title: "말씀이 너무 길어요",
