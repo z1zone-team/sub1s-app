@@ -23,6 +23,10 @@ export type VoiceFailure =
  */
 export function failureOf(error: unknown): VoiceFailure {
   if (error instanceof ApiError || error instanceof VoiceJobFailedError) {
+    // 같은 422라도 말소리가 없었다는 것은 출발역 안내가 아니라 다시 말해 달라는 안내다
+    if (error.code === "VOICE_NO_SPEECH") return "NO_SPEECH";
+    // 말은 들었는데 어디로 가는지 알아듣지 못한 것은 출발역을 더하라는 안내가 아니라 다시 말해 달라는 안내다
+    if (error.code === "VOICE_INTENT_NOT_UNDERSTOOD") return "NOT_FOUND";
     if (error.status === 401) return "LOGIN";
     if (error.status === 429) return "BUSY";
     if (error.status === 404) return "NOT_FOUND";
