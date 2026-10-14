@@ -185,7 +185,9 @@ export function groupRouteOptions(
   for (const option of options) {
     const key = routeSignature(option);
     const group = bySignature.get(key);
-    if (group) group.modes.push(option.mode);
+    if (group) {
+      if (!group.modes.includes(option.mode)) group.modes.push(option.mode);
+    }
     else bySignature.set(key, { option, modes: [option.mode] });
   }
 
