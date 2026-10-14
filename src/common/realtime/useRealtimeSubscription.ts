@@ -4,7 +4,7 @@ import { useRealtimeStore } from "./realtime-store";
 import type {
   JoinTrainPayload,
   ReportLocationPayload,
-  TrainCongestionDto,
+  TrainCongestionResponse,
   EtaTickPayload,
   SmartAlertPayload,
   OffRouteAlertPayload,
@@ -27,7 +27,7 @@ export function useRealtimeSubscription(train?: JoinTrainPayload | null) {
         return;
       }
 
-      const onCongestionTick = (data: TrainCongestionDto) => {
+      const onCongestionTick = (data: TrainCongestionResponse) => {
         actions.setCongestion(data);
       };
 

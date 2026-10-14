@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type {
-  TrainCongestionDto,
+  TrainCongestionResponse,
   CarCongestionDto,
   EtaTickPayload,
   SmartAlertPayload,
@@ -11,14 +11,14 @@ import type {
 export interface RealtimeState {
   isConnected: boolean;
   currentTrain: JoinTrainPayload | null;
-  congestion: TrainCongestionDto | null;
+  congestion: TrainCongestionResponse | null;
   cars: Record<number, CarCongestionDto>;
   eta: EtaTickPayload | null;
   latestAlert: SmartAlertPayload | OffRouteAlertPayload | null;
   actions: {
     setConnected: (connected: boolean) => void;
     setCurrentTrain: (train: JoinTrainPayload | null) => void;
-    setCongestion: (congestion: TrainCongestionDto) => void;
+    setCongestion: (congestion: TrainCongestionResponse) => void;
     setEta: (eta: EtaTickPayload) => void;
     setAlert: (alert: SmartAlertPayload | OffRouteAlertPayload) => void;
     clearAlert: () => void;

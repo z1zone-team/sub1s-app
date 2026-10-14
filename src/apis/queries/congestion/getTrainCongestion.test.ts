@@ -1,5 +1,5 @@
 import * as client from "@/apis/client";
-import { getTrainCongestion } from "./getTrainCongestion";
+import { getTrainCongestion, type TrainCongestionResponse } from "./getTrainCongestion";
 import { useTrainCongestionQuery } from "./useTrainCongestionQuery";
 
 const mockUseQuery = jest.fn();
@@ -25,11 +25,12 @@ describe("Congestion Domain APIs & Hooks", () => {
     jest.clearAllMocks();
   });
 
-  const mockCongestionData = {
+  const mockCongestionData: TrainCongestionResponse = {
     lineId: "2호선",
     trainId: "2145",
     stationId: "0222",
     averageRate: 48,
+    source: "STATISTICS",
     cars: [
       { carNo: 1, rate: 32, level: "여유" as const, isWeakAirConditioned: false },
       { carNo: 2, rate: 58, level: "보통" as const, isWeakAirConditioned: true },

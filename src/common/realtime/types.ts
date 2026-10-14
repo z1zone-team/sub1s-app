@@ -1,8 +1,8 @@
 import type { VoiceRouteRecommendResponseDto } from "../../apis/mutations/voice/voiceRouteTypes";
 import type {
-  TrainCongestionDto,
+  TrainCongestionResponse,
   CarCongestionDto,
-} from "../../features/congestion";
+} from "../../apis/queries/congestion/getTrainCongestion";
 
 export interface EtaTickPayload {
   sessionId: string;
@@ -73,7 +73,7 @@ export interface ClientToServerEvents {
 }
 
 export interface ServerToClientEvents {
-  congestion_tick: (data: TrainCongestionDto) => void;
+  congestion_tick: (data: TrainCongestionResponse) => void;
   eta_tick: (data: EtaTickPayload) => void;
   smart_alert: (data: SmartAlertPayload) => void;
   offroute_alert: (data: OffRouteAlertPayload) => void;
@@ -83,4 +83,4 @@ export interface ServerToClientEvents {
   voice_failed: (data: VoiceFailedPayload) => void;
 }
 
-export type { TrainCongestionDto, CarCongestionDto };
+export type { TrainCongestionResponse, CarCongestionDto };

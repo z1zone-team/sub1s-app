@@ -13,6 +13,7 @@ export interface TrainCongestionResponse {
   trainId: string;
   stationId: string;
   averageRate: number;
+  source: "STATISTICS" | "MOCK";
   cars: CarCongestionDto[];
   updatedAt: string;
 }
