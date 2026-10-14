@@ -98,11 +98,12 @@ export function SearchScreen({
         setOrigin(endpoint);
         if (!destination) setActive("destination");
       } else {
+        void recent.addDestination(endpoint);
         setDestination(endpoint);
         if (!origin) setActive("origin");
       }
     },
-    [pickPlace, savePlace, navigation, active, destination, origin]
+    [pickPlace, savePlace, navigation, active, destination, origin, recent.addDestination]
   );
 
   const swap = useCallback(() => {

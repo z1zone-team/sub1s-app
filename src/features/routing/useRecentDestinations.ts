@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { useStationsQuery } from "@/apis/queries/stations/useStationsQuery";
 import { useRecentRoutes } from "@/common/storage/useRecentRoutes";
+import { isValidEndpoint, type RouteEndpoint } from "./endpoint";
 import {
   staleStationIds,
   toRecentDestinations,
@@ -13,6 +14,17 @@ import {
  */
 export function useRecentDestinations() {
   const { routes, isLoading, addRoute, removeRoute, clearRoutes, reload } = useRecentRoutes();
+
+  const addDestination = useCallback((destination: RouteEndpoint) => {
+    if (!isValidEndpoint(destination)) return Promise.resolve();
+    return addRoute({
+      origin: "",
+      destination: destination.name,
+      destStationId: destination.stationId,
+      destLat: destination.lat,
+      destLng: destination.lng,
+    });
+  }, [addRoute]);
 
   const destinations = useMemo(() => toRecentDestinations(routes), [routes]);
   const stationIds = useMemo(
@@ -58,6 +70,7 @@ export function useRecentDestinations() {
     linesOfStation,
     isLoading,
     addRoute,
+    addDestination,
     remove,
     clear: clearRoutes,
     reload,

@@ -1,5 +1,5 @@
 import type { RecentRouteItem } from "@/common/storage/useRecentRoutes";
-import { endpointKey, type RouteEndpoint } from "./endpoint";
+import { endpointKey, isValidEndpoint, type RouteEndpoint } from "./endpoint";
 
 export interface RecentDestination {
   endpoint: RouteEndpoint;
@@ -61,6 +61,7 @@ export interface RecentRouteChip {
 /** 최근 경로를 홈 바로가기 칩으로 바꾼다. 최신순이고 같은 출발지와 도착지는 하나만 남긴다 */
 export function toRecentRouteChips(routes: RecentRouteItem[], limit: number): RecentRouteChip[] {
   return [...routes]
+    .filter((route) => isValidEndpoint({ name: route.origin, stationId: route.originStationId, lat: route.originLat, lng: route.originLng }))
     .sort((a, b) => b.searchedAt.localeCompare(a.searchedAt))
     .slice(0, limit)
     .map((route) => ({

@@ -299,4 +299,11 @@ describe("toRecentRouteChips", () => {
     expect(chips[0].origin).toMatchObject({ name: "가좌", stationId: "가좌-id" });
     expect(chips[0].destination).toMatchObject({ name: "홍대입구", lat: 37.5, lng: 127 });
   });
+
+  it("도착지만 고른 기록은 최근 도착지에 남기고 경로 칩에서 제외한다", () => {
+    const selected = { id: "place", origin: "", destination: "교보타워", destLat: 37.5, destLng: 127, searchedAt: "2026-10-14T00:00:00Z" };
+    const pair = route("pair", "가양", "신논현", "2026-10-01T00:00:00Z");
+    expect(toRecentDestinations([selected, pair])[0].endpoint.name).toBe("교보타워");
+    expect(toRecentRouteChips([selected, pair], 1).map((chip) => chip.label)).toEqual(["가양 → 신논현"]);
+  });
 });
