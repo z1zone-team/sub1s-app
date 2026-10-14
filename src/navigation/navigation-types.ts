@@ -8,7 +8,7 @@ import type { RouteEndpoint } from "@/features/routing/endpoint";
 
 export type BottomTabParamList = {
   RankingTab: undefined;
-  HomeTab: undefined;
+  HomeTab: { recenterRequest?: number } | undefined;
   ProfileTab: undefined;
 };
 

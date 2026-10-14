@@ -1,7 +1,7 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, View, type LayoutChangeEvent } from "react-native";
 import { useAuth } from "@clerk/expo";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation, useRoute, type RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -36,7 +36,7 @@ import { useSelectedPlaceStore } from "@/features/search/selected-place-store";
 import { VWorldMap } from "@/features/map/VWorldMap";
 import { useHomeMapData } from "@/features/map/useHomeMapData";
 import { useOnboardingPrompt } from "@/features/onboarding/useOnboardingPrompt";
-import type { RootStackParamList } from "@/navigation/navigation-types";
+import type { BottomTabParamList, RootStackParamList } from "@/navigation/navigation-types";
 
 const PLACE_ICON: Record<PlaceKind, DesignIconName> = { HOME: "home", SCHOOL: "school" };
 /** 지도 검색에서 장소를 고르면 시트 대신 보이는 하단 카드의 대략적인 높이. 안내 복귀 버튼이 그 위에 놓인다 */
@@ -78,6 +78,7 @@ function FloatingButton({
 
 export function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const route = useRoute<RouteProp<BottomTabParamList, "HomeTab">>();
   const insets = useSafeAreaInsets();
   useOnboardingPrompt();
   const recent = useRecentDestinations();
@@ -103,6 +104,14 @@ export function HomeScreen() {
   const [areaWidth, setAreaWidth] = useState(0);
   const [is3d, setIs3d] = useState(false);
   const [recenterCount, setRecenterCount] = useState(0);
+
+  // 안내에서 돌아오면 선택한 장소 대신 현재 위치를 중심으로 다시 맞춘다.
+  const recenterRequest = route.params?.recenterRequest;
+  useEffect(() => {
+    if (recenterRequest === undefined) return;
+    clearSelectedPlace();
+    setRecenterCount((count) => count + 1);
+  }, [recenterRequest, clearSelectedPlace]);
 
   // 현재 위치 버튼을 누르면 같은 좌표라도 지도를 다시 맞추도록 새 객체를 만든다
   const mapData = useMemo(
