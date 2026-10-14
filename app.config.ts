@@ -30,6 +30,21 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         backgroundColor: "#0B0F19",
       },
       predictiveBackGestureEnabled: false,
+      // 초대 링크만 처리한다. 도메인에 assetlinks.json 배포 후 앱 재빌드가 필요하다.
+      intentFilters: [
+        {
+          action: "VIEW",
+          autoVerify: true,
+          data: [
+            {
+              scheme: "https",
+              host: "sub1s.devnoco.com",
+              pathPrefix: "/invite/",
+            },
+          ],
+          category: ["BROWSABLE", "DEFAULT"],
+        },
+      ],
     },
     plugins: [
       "expo-secure-store",

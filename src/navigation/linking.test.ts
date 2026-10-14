@@ -3,7 +3,7 @@ import { linking } from "./linking";
 describe("Deep Linking Configuration", () => {
   it("should have correct scheme prefixes", () => {
     expect(linking.prefixes).toContain("sub1s://");
-    expect(linking.prefixes).toContain("https://sub1s.com");
+    expect(linking.prefixes).toContain("https://sub1s.devnoco.com");
   });
 
   it("should have correct screen path mappings", () => {

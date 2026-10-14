@@ -3,7 +3,7 @@ import { acceptErrorMessage, inviteLink, inviteMessage, isInviteToken } from "./
 
 describe("inviteLink", () => {
   it("토큰으로 초대 링크를 만든다", () => {
-    expect(inviteLink("abcDEF1234567890")).toBe("https://sub1s.com/invite/abcDEF1234567890");
+    expect(inviteLink("abcDEF1234567890")).toBe("https://sub1s.devnoco.com/invite/abcDEF1234567890");
   });
 
   it("공유 문구에 링크를 담는다", () => {
