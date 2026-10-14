@@ -15,7 +15,10 @@ import { formatClockKst } from "@/common/utils/format";
 import { WALK_LINE_ID } from "@/theme";
 
 export const MODE_TITLE: Record<RouteMode, string> = {
-  OPTIMAL: "최적",
+  OPTIMAL: "종합 최적",
+  FASTEST: "최소시간",
+  LEAST_WALK: "최소 도보",
+  FEWEST_TRANSFERS: "최소 환승",
   COMFORTABLE: "여유",
   PERSONAL: "추천",
   CHEAPEST: "최소 비용",
@@ -23,13 +26,16 @@ export const MODE_TITLE: Record<RouteMode, string> = {
 };
 
 const MODE_TAGLINE: Partial<Record<RouteMode, string>> = {
-  OPTIMAL: "가장 빨리 도착해요",
+  OPTIMAL: "시간·요금·환승·혼잡·도보를 함께 비교했어요",
+  FASTEST: "총 소요시간이 가장 짧아요",
+  LEAST_WALK: "출발·환승·도착의 도보거리가 가장 짧아요",
+  FEWEST_TRANSFERS: "환승 횟수가 가장 적어요",
   COMFORTABLE: "혼잡한 구간과 칸을 피했어요",
   CHEAPEST: "요금이 가장 적어요",
 };
 
 /** 추천 카드를 맨 위에 두고 나머지는 이 순서로 보여 준다 */
-const MODE_ORDER: RouteMode[] = ["PERSONAL", "OPTIMAL", "COMFORTABLE", "CHEAPEST", "ONLY_WALK"];
+const MODE_ORDER: RouteMode[] = ["PERSONAL", "OPTIMAL", "FASTEST", "LEAST_WALK", "FEWEST_TRANSFERS", "COMFORTABLE", "CHEAPEST", "ONLY_WALK"];
 
 /** 서버 `highlights` 태그를 사용자에게 보이는 말로 */
 const HIGHLIGHT_PHRASE: Record<RouteHighlight, string> = {
@@ -187,6 +193,7 @@ export function groupRouteOptions(
     const group = bySignature.get(key);
     if (group) {
       if (!group.modes.includes(option.mode)) group.modes.push(option.mode);
+      if (meta?.modelVersion === "route-preference-v2" && option.mode === "PERSONAL") group.option = option;
     }
     else bySignature.set(key, { option, modes: [option.mode] });
   }
@@ -194,10 +201,13 @@ export function groupRouteOptions(
   const entries = [...bySignature.values()];
 
   // 서버가 추천 근거를 준 경우(로그인)에만 종합 점수로 추천을 고른다. 그렇지 않으면 서버가 표시한 PERSONAL을 쓴다
-  const scoredPick = meta
+  const serverPersonal = meta?.modelVersion === "route-preference-v2"
+    ? options.find((option) => option.routeId === meta.personalRouteId) ?? options.find((option) => option.mode === "PERSONAL")
+    : undefined;
+  const scoredPick = meta && meta.modelVersion !== "route-preference-v2"
     ? pickRecommended(scoreOptions(entries.map((entry) => entry.option), factorWeights(meta)))
     : undefined;
-  const recommendedKey = scoredPick ? routeSignature(scoredPick.option) : undefined;
+  const recommendedKey = serverPersonal ? routeSignature(serverPersonal) : scoredPick ? routeSignature(scoredPick.option) : undefined;
   const isRecommended = (entry: { option: SubwayRouteOptionDto; modes: RouteMode[] }): boolean =>
     recommendedKey !== undefined ? routeSignature(entry.option) === recommendedKey : entry.modes.includes("PERSONAL");
 

@@ -28,7 +28,7 @@ describe("선택지", () => {
       "COMMUTE", "SCHOOL", "MEETING", "TRAVEL", "EXERCISE", "SHOPPING", "HOSPITAL", "DATE",
     ]);
     expect(ROUTE_PREFS.map((option) => option.code)).toEqual([
-      "FAST", "FEW_TRANSFERS", "WEAK_AC", "UNCROWDED", "LESS_WALK", "SEAT", "ELEVATOR",
+      "FAST", "FEW_TRANSFERS", "WEAK_AC", "UNCROWDED", "LESS_WALK", "SEAT", "ELEVATOR", "LOW_FARE", "AVOID_STAIRS", "EXPRESS", "FAMILIAR_ROUTE",
     ]);
   });
 });

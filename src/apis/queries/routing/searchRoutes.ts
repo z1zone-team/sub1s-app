@@ -5,7 +5,10 @@ export type RouteMode =
   | "COMFORTABLE"
   | "PERSONAL"
   | "CHEAPEST"
-  | "ONLY_WALK";
+  | "ONLY_WALK"
+  | "FASTEST"
+  | "LEAST_WALK"
+  | "FEWEST_TRANSFERS";
 
 export type CongestionLevel = "여유" | "보통" | "혼잡";
 
@@ -71,6 +74,8 @@ export interface PathSegmentDto {
 }
 
 export interface SubwayRouteOptionDto {
+  routeId?: string;
+  walkDistanceSource?: "ESTIMATED" | "NONE";
   mode: RouteMode;
   totalDurationSec: number;
   totalDistanceKm: number;
@@ -91,6 +96,10 @@ export interface SubwayRouteOptionDto {
 
 /** 서버가 추천(PERSONAL)의 가중치를 만든 근거. 로그인한 사용자에게만 온다 (API_SPEC 2.2) */
 export interface RecommendationMeta {
+  modelVersion?: string;
+  preferenceSource?: "AI" | "SURVEY";
+  unsupportedPreferences?: string[];
+  personalRouteId?: string;
   /** 출발 시각의 상황: WEEKDAY_MORNING_RUSH, WEEKDAY_MIDDAY, WEEKDAY_EVENING_RUSH, WEEKDAY_NIGHT, LATE_NIGHT, EARLY_MORNING, WEEKEND_DAYTIME, WEEKEND_OTHER */
   context: string;
   /** 근거 코드: PREF_*(설문), PURPOSE_*(이동 목적), CONTEXT_*(시간대), HISTORY_*(이전에 고른 모드) */

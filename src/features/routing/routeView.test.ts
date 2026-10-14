@@ -112,7 +112,7 @@ describe("groupRouteOptions", () => {
 
     const groups = groupRouteOptions([fast, calm, personal, cheap]);
 
-    expect(groups.map((g) => g.title)).toEqual(["추천", "최적", "여유", "최소 비용"]);
+    expect(groups.map((g) => g.title)).toEqual(["추천", "종합 최적", "여유", "최소 비용"]);
     expect(groups.map((g) => g.recommended)).toEqual([true, false, false, false]);
   });
 
@@ -130,7 +130,7 @@ describe("groupRouteOptions", () => {
       option("OPTIMAL"),
     ]);
 
-    expect(groups.map((g) => g.title)).toEqual(["최적", "도보"]);
+    expect(groups.map((g) => g.title)).toEqual(["종합 최적", "도보"]);
   });
 
   it("returns nothing for no options", () => {
@@ -150,7 +150,7 @@ describe("reasonText", () => {
   });
 
   it("falls back to the mode tagline, then to the route highlights, when no preference fits", () => {
-    expect(reasonText(["FASTEST"], ["OPTIMAL"], ["UNCROWDED"])).toBe("가장 빨리 도착해요");
+    expect(reasonText(["FASTEST"], ["OPTIMAL"], ["UNCROWDED"])).toBe("시간·요금·환승·혼잡·도보를 함께 비교했어요");
     expect(reasonText(["LEAST_WALK", "CHEAPEST", "FASTEST"], ["PERSONAL"], [])).toBe(
       "걷는 거리가 가장 짧아요 · 요금이 가장 적어요"
     );
@@ -363,7 +363,7 @@ describe("점수로 고르는 추천", () => {
     const groups = groupRouteOptions([fast, calm, cheap]);
 
     expect(groups.map((g) => g.recommended)).toEqual([false, false, false]);
-    expect(groups.map((g) => g.title)).toEqual(["최적", "여유", "최소 비용"]);
+    expect(groups.map((g) => g.title)).toEqual(["종합 최적", "여유", "최소 비용"]);
   });
 
   it("추천 근거가 있으면 종합 점수가 가장 좋은 후보를 추천으로 올린다", () => {
@@ -474,4 +474,27 @@ describe("hasRecommendedCar", () => {
     expect(hasRecommendedCar({ recommendedCarNo: -1 })).toBe(false);
     expect(hasRecommendedCar({ recommendedCarNo: Number.NaN })).toBe(false);
   });
+});
+
+it("uses the versioned server personal winner instead of recomputing it in the app", () => {
+  const fast = option("OPTIMAL", { totalDurationSec: 600, totalFare: 1700, routeId: "common" });
+  const personal = option("PERSONAL", { totalDurationSec: 900, totalFare: 1500, routeId: "personal" });
+  const groups = groupRouteOptions([fast, personal], [], {
+    context: "WEEKDAY_MIDDAY", reasons: [], fareSensitive: false, usedHistory: false,
+    weights: { congestion: 0, transferSec: 0 }, modelVersion: "route-preference-v2", personalRouteId: "personal",
+  });
+  expect(groups[0].option.routeId).toBe("personal");
+  expect(groups[0].recommended).toBe(true);
+});
+
+it("preserves personal car guidance and selection ID when a public and personal path merge", () => {
+  const common = option("OPTIMAL", { routeId: "common" });
+  const personal = option("PERSONAL", { routeId: "personal" });
+  const groups = groupRouteOptions([common, personal], [], {
+    context: "WEEKDAY_MIDDAY", reasons: [], fareSensitive: false, usedHistory: false,
+    weights: { congestion: 0, transferSec: 0 }, modelVersion: "route-preference-v2", personalRouteId: "personal",
+  });
+  expect(groups).toHaveLength(1);
+  expect(groups[0].option).toBe(personal);
+  expect(groups[0].modes).toEqual(["PERSONAL", "OPTIMAL"]);
 });

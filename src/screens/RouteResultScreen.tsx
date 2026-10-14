@@ -1,3 +1,4 @@
+import { ROUTE_PREFS } from "@/features/onboarding/options";
 import React, { useMemo, useRef } from "react";
 import { ActivityIndicator, Alert, FlatList, Pressable, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -166,6 +167,18 @@ export function RouteResultScreen({
         <FlatList
           className="flex-1 bg-surface"
           data={groups}
+          ListHeaderComponent={
+            <View className="px-5 pt-3">
+              {(search.data?.recommendation?.unsupportedPreferences?.length ?? 0) > 0 ? (
+                <Text className="text-small text-text-secondary">
+                  {`아직 반영하지 못한 선호: ${search.data?.recommendation?.unsupportedPreferences?.map((code) => ROUTE_PREFS.find((item) => item.code === code)?.label).filter(Boolean).join(" · ")}`}
+                </Text>
+              ) : null}
+              {search.data?.options.some((option) => option.walkDistanceSource === "ESTIMATED") ? (
+                <Text className="text-small text-text-secondary">도보거리는 추정값이에요.</Text>
+              ) : null}
+            </View>
+          }
           keyExtractor={(group) => group.option.mode + group.option.totalDurationSec}
           renderItem={({ item, index }) => (
             <RiseIn>
