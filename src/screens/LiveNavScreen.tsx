@@ -113,7 +113,7 @@ function Guide({ navigation, sessionId, option, startedAtMs }: GuideProps) {
   const trackReached = Math.max(0, trackIndexes.filter((position) => position <= stripCurrent).length - 1);
   const fill = trackFill(trackIndexes, stripCurrent);
 
-  // 하차 1개 역 전 알림: 내릴 역의 엘리베이터와 가까운 문, 환승이면 갈아타기 빠른 문
+  // 하차 1개 역 전 알림: 빠른 하차(엘리베이터 인접 문) 또는 빠른 환승 문
   const showAlight = upcoming?.kind === "ALIGHT" && upcomingAway === 1;
   const showTransfer = upcoming?.kind === "TRANSFER" && upcomingAway === 1;
   const arrivedAtEnd = stopsLeft <= 0;
@@ -123,13 +123,13 @@ function Guide({ navigation, sessionId, option, startedAtMs }: GuideProps) {
   const alightExits = facilities.data?.available ? facilities.data.exits : [];
   const popupDetail = showAlight
     ? [
-        alightDoors.length > 0 ? `${alightDoors.map(describeDoor).join(", ")}에서 내리면 엘리베이터가 가까워요` : "",
+        alightDoors.length > 0 ? `빠른 하차 · 엘리베이터 · ${alightDoors.map(describeDoor).join(", ")}` : "",
         alightExits.length > 0 ? `출구 ${alightExits.map((exit) => exit.exitNo).join(", ")}번` : "",
       ]
         .filter(Boolean)
         .join(" · ")
     : showTransfer && doors.length > 0
-      ? `갈아타기 빠른 문 ${doors.map(describeDoor).join(", ")}`
+      ? `빠른 환승 · ${doors.map(describeDoor).join(", ")}`
       : "";
 
   const arrive = () => {

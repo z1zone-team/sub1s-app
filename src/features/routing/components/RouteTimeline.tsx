@@ -144,7 +144,7 @@ function BoardContent({ row }: { row: Extract<TimelineRow, { kind: "board" }> })
   );
 }
 
-/** 하차나 환승 행. 최종 하차는 역의 엘리베이터와 가까운 문과 출구를, 환승은 갈아타기 빠른 문을 안내한다 */
+/** 하차나 환승 행. 빠른 하차는 엘리베이터 인접 문과 출구를, 빠른 환승은 환승 문을 안내한다 */
 function AlightContent({
   segment,
   transfer,
@@ -160,10 +160,10 @@ function AlightContent({
 
   const detail = transfer
     ? segment.recommendedDoors && segment.recommendedDoors.length > 0
-      ? `갈아타기 빠른 문 ${segment.recommendedDoors.map(describeDoor).join(", ")}`
+      ? `빠른 환승 · ${segment.recommendedDoors.map(describeDoor).join(", ")}`
       : ""
     : [
-        doors.length > 0 ? `${doors.map(describeDoor).join(", ")}에서 내리면 엘리베이터가 가까워요` : "",
+        doors.length > 0 ? `빠른 하차 · 엘리베이터 · ${doors.map(describeDoor).join(", ")}` : "",
         exits.length > 0 ? `출구 ${exits.map((exit) => exit.exitNo).join(", ")}번` : "",
       ]
         .filter(Boolean)

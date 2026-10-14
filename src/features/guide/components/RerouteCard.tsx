@@ -44,12 +44,12 @@ function NextTrainLine({ segment }: { segment: PathSegmentDto }) {
   );
 }
 
-/** 도착 행 부제: 엘리베이터와 가까운 문과 뒤따르는 걷기 */
+/** 도착 행 부제: 빠른 하차(엘리베이터 인접 문)와 뒤따르는 걷기 */
 function ArriveDetail({ row }: { row: Extract<RerouteRow, { kind: "arrive" }> }) {
   const facilities = useStationFacilitiesQuery(row.stationId);
   const doors = facilities.data?.available ? facilities.data.elevatorDoors : [];
   const text = [
-    doors.length > 0 ? `${doors.map(describeDoor).join(", ")}에서 내리면 엘리베이터가 가까워요` : "",
+    doors.length > 0 ? `빠른 하차 · 엘리베이터 · ${doors.map(describeDoor).join(", ")}` : "",
     row.walkTo && row.walkMinutes ? `${row.walkTo}까지 걸어서 ${row.walkMinutes}분` : "",
   ]
     .filter(Boolean)
