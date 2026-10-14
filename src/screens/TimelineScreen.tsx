@@ -158,7 +158,7 @@ export function TimelineScreen() {
         </View>
 
         <View className="mx-5 mt-7">
-          <BarChart bars={bars} />
+          <BarChart bars={bars} scrollable={period === "MONTH"} />
         </View>
 
         <Text className="mx-5 mt-9 text-title-lg font-sans-bold">이동 지도</Text>
