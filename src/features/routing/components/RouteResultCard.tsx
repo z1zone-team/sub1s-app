@@ -13,7 +13,7 @@ import {
   separateFareLineNames,
   splitDuration,
 } from "../routeCardView";
-import { clockRange, congestionPhrase, operationLabel, walkSeconds, withTopicParticle, type RouteGroup } from "../routeView";
+import { clockRange, congestionPhrase, MODE_TITLE, operationLabel, walkSeconds, withTopicParticle, type RouteGroup } from "../routeView";
 import { InfoChip } from "./InfoChip";
 import { PillSegmentBar } from "./PillSegmentBar";
 import { RideBadge } from "./RideBadge";
@@ -150,6 +150,16 @@ export function RouteResultCard({ group, boarding, onPress }: RouteResultCardPro
           </Text>
         ) : null}
         {group.alias ? <Text className="text-small font-sans-semibold text-text-secondary">· {group.alias}</Text> : null}
+      </View>
+
+      <View className="mt-2 flex-row flex-wrap gap-1.5">
+        {group.modes.map((mode) => (
+          <View key={mode} className="rounded-pill bg-surface px-2 py-1">
+            <Text className="text-small font-sans-semibold text-text-secondary">
+              {mode === "PERSONAL" ? "개인 선호" : MODE_TITLE[mode]}
+            </Text>
+          </View>
+        ))}
       </View>
 
       <View className="mt-3 flex-row items-baseline justify-between">

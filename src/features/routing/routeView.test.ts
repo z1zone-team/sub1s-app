@@ -98,6 +98,12 @@ describe("groupRouteOptions", () => {
     expect(groups[0].recommended).toBe(true);
   });
 
+  it("keeps each mode once when identical options are repeated", () => {
+    const groups = groupRouteOptions([option("OPTIMAL"), option("CHEAPEST"), option("OPTIMAL")]);
+    expect(groups).toHaveLength(1);
+    expect(groups[0].modes).toEqual(["OPTIMAL", "CHEAPEST"]);
+  });
+
   it("keeps different routes apart, with the recommended one first and the rest in mode order", () => {
     const fast = option("OPTIMAL", { totalDurationSec: 1800 });
     const calm = option("COMFORTABLE", { totalDurationSec: 2400 });
