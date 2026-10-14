@@ -21,6 +21,8 @@ import { MicButton } from "@/features/voice/components/MicButton";
 import { VoiceFailMascot } from "@/features/voice/components/VoiceFailMascot";
 import { WaveBars } from "@/features/voice/components/WaveBars";
 import { MODE_TITLE } from "@/features/routing/routeView";
+import { useRecentDestinations } from "@/features/routing/useRecentDestinations";
+import { saveVoiceDestination } from "@/features/voice/saveVoiceDestination";
 import {
   destinationLineId,
   endpointsOfOption,
@@ -64,6 +66,7 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
   const recorder = useAudioRecorder();
   const recommend = useVoiceJobMutation();
   const briefingVoice = useBriefingVoice();
+  const { addDestination } = useRecentDestinations();
   const [phase, setPhase] = useState<Phase>({ name: "listening" });
   const started = useRef(false);
   const mounted = useRef(true);
@@ -83,13 +86,16 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
         recommend.mutate(
           { audio: { uri: recording.uri, name: "voice_query.m4a", type: "audio/m4a" }, ...coords },
           {
-            onSuccess: (data) => setPhase({ name: "result", data }),
+            onSuccess: (data) => {
+              void saveVoiceDestination(data, addDestination);
+              setPhase({ name: "result", data });
+            },
             onError: (error) => setPhase({ name: "failed", failure: failureOf(error) }),
           }
         );
       });
     },
-    [recommend]
+    [recommend, addDestination]
   );
 
   const listen = useCallback(async () => {

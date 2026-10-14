@@ -88,6 +88,7 @@ export function MapSearchScreen({ navigation }: NativeStackScreenProps<RootStack
             row={item}
             onPress={() => {
               selectPlace(item);
+              void recent.addDestination(item.endpoint);
               navigation.goBack();
             }}
           />
@@ -97,6 +98,7 @@ export function MapSearchScreen({ navigation }: NativeStackScreenProps<RootStack
             <RecentSearchList
               recent={recent}
               onSelect={(endpoint) => {
+                void recent.addDestination(endpoint);
                 const lineIds = endpoint.stationId ? recent.linesOfStation.get(endpoint.stationId) ?? [] : [];
                 selectPlace(rowFromEndpoint(endpoint, lineIds));
                 navigation.goBack();
