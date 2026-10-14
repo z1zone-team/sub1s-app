@@ -37,7 +37,7 @@ export function LiveNavScreen({ navigation, route }: Props) {
     return (
       <Screen edges={[]} contentClassName="items-center justify-center gap-4 p-6">
         <Text className="text-center">진행 중인 안내를 찾지 못했어요.</Text>
-        <Button label="홈으로" onPress={() => navigation.navigate("MainTabs", { screen: "HomeTab" })} />
+        <Button label="홈으로" onPress={() => navigation.navigate("MainTabs", { screen: "HomeTab", params: { recenterRequest: Date.now() } })} />
       </Screen>
     );
   }
@@ -176,7 +176,7 @@ function Guide({ navigation, sessionId, option, startedAtMs }: GuideProps) {
           stopsLeft={stopsLeft}
           remainingLabel={progress.remainingSec > 0 ? `약 ${formatDurationSec(progress.remainingSec)}` : ""}
           weakAcCars={weakAcCars}
-          onBack={() => navigation.navigate("MainTabs", { screen: "HomeTab" })}
+          onBack={() => navigation.navigate("MainTabs", { screen: "HomeTab", params: { recenterRequest: Date.now() } })}
         />
       </View>
 
@@ -253,7 +253,7 @@ function Guide({ navigation, sessionId, option, startedAtMs }: GuideProps) {
           <View className="mt-2 flex-row gap-2">
             <Pressable
               accessibilityRole="button"
-              onPress={() => navigation.navigate("MainTabs", { screen: "HomeTab" })}
+              onPress={() => navigation.navigate("MainTabs", { screen: "HomeTab", params: { recenterRequest: Date.now() } })}
               className="h-14 flex-1 items-center justify-center rounded-lg bg-surface"
             >
               <Text className="text-base font-sans-semibold">홈 보기</Text>
@@ -262,7 +262,7 @@ function Guide({ navigation, sessionId, option, startedAtMs }: GuideProps) {
               accessibilityRole="button"
               onPress={() => {
                 useActiveGuideStore.getState().end();
-                navigation.navigate("MainTabs", { screen: "HomeTab" });
+                navigation.navigate("MainTabs", { screen: "HomeTab", params: { recenterRequest: Date.now() } });
               }}
               className="h-14 flex-1 items-center justify-center rounded-lg bg-surface"
             >
