@@ -1,6 +1,6 @@
 import { ApiError } from "@/apis/client";
 
-export const INVITE_WEB_BASE = "https://sub1s.com/invite";
+export const INVITE_WEB_BASE = "https://sub1s.devnoco.com/invite";
 
 /** 서버는 토큰만 주므로 초대 링크는 앱이 만든다 */
 export function inviteLink(token: string): string {
