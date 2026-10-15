@@ -11,6 +11,8 @@ import {
   carInsight,
   hasRecommendedCar,
   congestionPhrase,
+  congestionText,
+  isEstimatedCongestion,
   clockRange,
   describeDoor,
   formatWaiting,
@@ -314,6 +316,26 @@ describe("congestionPhrase", () => {
     expect(congestionPhrase("혼잡")).toBe("많이 붐벼요");
     expect(congestionPhrase("보통")).toBe("적당히 붐벼요");
     expect(congestionPhrase("여유")).toBe("여유 있어요");
+  });
+});
+
+describe("isEstimatedCongestion", () => {
+  it("추정(MOCK)만 추정이고 통계와 출처를 모르는 응답은 통계로 본다", () => {
+    expect(isEstimatedCongestion("MOCK")).toBe(true);
+    expect(isEstimatedCongestion("STATISTICS")).toBe(false);
+    expect(isEstimatedCongestion(undefined)).toBe(false);
+  });
+});
+
+describe("congestionText", () => {
+  it("통계 값은 단계와 퍼센트를 함께 쓴다", () => {
+    expect(congestionText("보통", 50.6, false)).toBe("적당히 붐벼요 51%");
+    expect(congestionText("여유", 12, false)).toBe("여유 있어요 12%");
+  });
+
+  it("추정 값은 퍼센트 없이 단계만 쓴다", () => {
+    expect(congestionText("보통", 51, true)).toBe("적당히 붐벼요");
+    expect(congestionText("혼잡", 88, true)).toBe("많이 붐벼요");
   });
 });
 

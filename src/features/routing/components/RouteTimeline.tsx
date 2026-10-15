@@ -10,7 +10,7 @@ import { formatClock24Kst, formatDistanceKm, formatDurationSec } from "@/common/
 import { CONGESTION_BG, CONGESTION_TEXT, getLineInfo, useTheme } from "@/theme";
 import { cn } from "@/lib/cn";
 import { buildTimeline, timeLabel, type TimelineRow } from "../routeTimeline";
-import { congestionPhrase, describeDoor, formatWaiting, hasRecommendedCar, operationLabel, pickNextTrain } from "../routeView";
+import { congestionText, describeDoor, formatWaiting, hasRecommendedCar, isEstimatedCongestion, operationLabel, pickNextTrain } from "../routeView";
 import { CarCongestionCard } from "./CarCongestionCard";
 import { RideBadge } from "./RideBadge";
 
@@ -100,9 +100,9 @@ function RideSummaryBox({ segment }: { segment: PathSegmentDto }) {
       >
         {operation ? `${operation.text} · ` : ""}
         <Text className={cn("text-body-sm font-sans-bold", CONGESTION_TEXT[segment.congestionLevel])}>
-          {congestionPhrase(segment.congestionLevel)} {Math.round(segment.congestionRate)}%
+          {congestionText(segment.congestionLevel, segment.congestionRate, isEstimatedCongestion(segment.congestionSource))}
         </Text>
-        {segment.congestionSource === "MOCK" ? <Text className="text-body-sm text-text-secondary"> (추정)</Text> : null}
+        {isEstimatedCongestion(segment.congestionSource) ? <Text className="text-body-sm text-text-secondary"> (추정)</Text> : null}
       </InfoLine>
     </View>
   );
@@ -135,6 +135,7 @@ function BoardContent({ row }: { row: Extract<TimelineRow, { kind: "board" }> })
         <CarCongestionCard
           cars={segment.cars}
           recommendedCarNo={segment.recommendedCarNo}
+          estimated={isEstimatedCongestion(segment.congestionSource)}
           forecastLabel={row.timeMs === undefined ? "탈 때 예상이에요" : `${formatClock24Kst(row.timeMs)}에 탈 때 예상이에요`}
         />
       ) : hasRecommendedCar(segment) ? (

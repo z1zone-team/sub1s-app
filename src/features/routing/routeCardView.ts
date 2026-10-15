@@ -2,6 +2,7 @@ import type { PathSegmentDto, SubwayRouteOptionDto } from "@/apis/queries/routin
 import { formatClock24Kst } from "@/common/utils/format";
 import { getLineInfo, levelOfRate, WALK_LINE_ID, type CongestionLevel } from "@/theme";
 import type { RouteEndpoint } from "./endpoint";
+import { isEstimatedCongestion } from "./routeView";
 
 /** 통합 요금이 아니라 별도 운임이 붙는 노선 (신분당선, 의정부경전철, GTX-A). DATA_PIPELINE.md 1.4절 */
 const SEPARATE_FARE_LINE_IDS = ["SB", "UJ", "GA"];
@@ -25,10 +26,13 @@ export function splitDuration(seconds: number): { hours: number; minutes: number
   return { hours: Math.floor(total / 60), minutes: total % 60 };
 }
 
-/** 탑승 구간의 혼잡도를 소요 시간으로 가중 평균해 한 줄로 요약한다. 탑승 구간이 없으면 undefined */
+/**
+ * 탑승 구간의 혼잡도를 소요 시간으로 가중 평균해 한 줄로 요약한다. 탑승 구간이 없으면 undefined.
+ * 탑승 구간 하나라도 통계가 아닌 추정이면 estimated이고, 화면은 이때 퍼센트를 보이지 않는다
+ */
 export function overallCongestion(
   option: SubwayRouteOptionDto
-): { level: CongestionLevel; ratePercent: number } | undefined {
+): { level: CongestionLevel; ratePercent: number; estimated: boolean } | undefined {
   const rides = option.segments.filter(isRide);
   const weight = rides.reduce((sum, segment) => sum + Math.max(0, segment.durationSec), 0);
   if (rides.length === 0) return undefined;
@@ -38,7 +42,11 @@ export function overallCongestion(
       ? rides.reduce((sum, segment) => sum + segment.congestionRate * Math.max(0, segment.durationSec), 0) / weight
       : rides.reduce((sum, segment) => sum + segment.congestionRate, 0) / rides.length;
   const ratePercent = Math.round(rate);
-  return { level: levelOfRate(ratePercent), ratePercent };
+  return {
+    level: levelOfRate(ratePercent),
+    ratePercent,
+    estimated: rides.some((segment) => isEstimatedCongestion(segment.congestionSource)),
+  };
 }
 
 export interface PillSegment {

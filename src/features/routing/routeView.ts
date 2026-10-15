@@ -1,4 +1,5 @@
 import type {
+  CongestionSource,
   OperationNotice,
   OperationStatus,
   PathSegmentDto,
@@ -71,6 +72,17 @@ export function congestionPhrase(level: CongestionLevel): string {
   if (level === "혼잡") return "많이 붐벼요";
   if (level === "보통") return "적당히 붐벼요";
   return "여유 있어요";
+}
+
+/** 혼잡도가 서울교통공사 통계가 아닌 추정이면 true. 출처를 모르는 응답은 통계로 본다 */
+export function isEstimatedCongestion(source?: CongestionSource): boolean {
+  return source === "MOCK";
+}
+
+/** "적당히 붐벼요 51%". 추정이면 정확한 값처럼 보이지 않게 숫자를 빼고 "적당히 붐벼요"만 준다 */
+export function congestionText(level: CongestionLevel, ratePercent: number, estimated: boolean): string {
+  const phrase = congestionPhrase(level);
+  return estimated ? phrase : `${phrase} ${Math.round(ratePercent)}%`;
 }
 
 /** 마지막 글자 받침에 따라 은 또는 는을 붙인다: "신분당선은", "공항철도는" (한글이 아니면 는) */

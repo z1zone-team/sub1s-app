@@ -13,7 +13,7 @@ import {
   separateFareLineNames,
   splitDuration,
 } from "../routeCardView";
-import { clockRange, congestionPhrase, MODE_TITLE, operationLabel, walkSeconds, withTopicParticle, type RouteGroup } from "../routeView";
+import { clockRange, congestionText, MODE_TITLE, operationLabel, walkSeconds, withTopicParticle, type RouteGroup } from "../routeView";
 import { InfoChip } from "./InfoChip";
 import { PillSegmentBar } from "./PillSegmentBar";
 import { RideBadge } from "./RideBadge";
@@ -185,7 +185,7 @@ export function RouteResultCard({ group, boarding, onPress }: RouteResultCardPro
           <InfoChip
             tone={chipTone}
             leading={<View className={cn("h-2 w-2 rounded-pill", CONGESTION_BG[congestion.level])} />}
-            label={`${congestionPhrase(congestion.level)} ${congestion.ratePercent}%`}
+            label={`${congestionText(congestion.level, congestion.ratePercent, congestion.estimated)}${congestion.estimated ? " (추정)" : ""}`}
           />
         ) : null}
         {!recommended && cars ? <InfoChip tone={chipTone} label={`${cars.carNo}번째 칸이 한산해요`} /> : null}
