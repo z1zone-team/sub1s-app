@@ -23,6 +23,10 @@ export const ROUTE_PREFS: Option[] = [
   { code: "LESS_WALK", label: "덜 걷게" },
   { code: "SEAT", label: "앉아서 가기" },
   { code: "ELEVATOR", label: "엘리베이터 있는 역" },
+  { code: "LOW_FARE", label: "요금 아끼기" },
+  { code: "AVOID_STAIRS", label: "계단 피하기" },
+  { code: "EXPRESS", label: "급행 선호" },
+  { code: "FAMILIAR_ROUTE", label: "익숙한 경로" },
 ];
 
 /** 이미 골랐으면 빼고 아니면 더한다. 고른 순서를 유지한다 */

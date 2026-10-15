@@ -74,7 +74,7 @@ describe("failureOf", () => {
 describe("modeReasonText", () => {
   it("모드마다 문구가 다르다", () => {
     expect(modeReasonText("PERSONAL")).toBe("취향에 맞춘 경로로 찾았어요");
-    expect(modeReasonText("OPTIMAL")).toBe("가장 빠른 경로로 찾았어요");
+    expect(modeReasonText("OPTIMAL")).toBe("종합 최적 경로로 찾았어요");
   });
 });
 

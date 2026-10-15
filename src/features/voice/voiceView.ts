@@ -82,11 +82,14 @@ export const FAILURE_TEXT: Record<VoiceFailure, { title: string; body: string }>
 export const VOICE_EXAMPLES = ["강남역 가는 길", "집으로 가자"];
 
 const MODE_REASON: Record<RouteMode, string> = {
-  OPTIMAL: "가장 빠른 경로",
+  OPTIMAL: "종합 최적 경로",
   COMFORTABLE: "여유로운 경로",
   PERSONAL: "취향에 맞춘 경로",
   CHEAPEST: "요금이 가장 적은 경로",
   ONLY_WALK: "걸어서 가는 경로",
+  FASTEST: "소요시간이 가장 짧은 경로",
+  LEAST_WALK: "도보거리가 가장 짧은 경로",
+  FEWEST_TRANSFERS: "환승이 가장 적은 경로",
 };
 
 /** 결과 화면에서 굵게 보이는 경로 종류 ("취향에 맞춘 경로") */
