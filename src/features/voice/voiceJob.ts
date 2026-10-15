@@ -1,5 +1,5 @@
 import type { VoiceJobError, VoiceJobStatusResponse } from "@/apis/mutations/voice/voiceJobs";
-import type { VoiceRouteRecommendResponseDto } from "@/apis/mutations/voice/voiceRouteTypes";
+import type { VoiceResultDto } from "@/apis/mutations/voice/voiceRouteTypes";
 
 /** 이 시간 안에 결과가 없으면 실패로 본다. 서버 작업 제한(35초)과 AI 전사 대기(25초)보다 넉넉하게 둔다 */
 export const VOICE_JOB_TIMEOUT_MS = 60_000;
@@ -28,7 +28,7 @@ export class VoiceJobAbortedError extends Error {
 }
 
 export type VoiceJobEvent =
-  | { kind: "result"; jobId: string; result: VoiceRouteRecommendResponseDto }
+  | { kind: "result"; jobId: string; result: VoiceResultDto }
   | { kind: "failed"; jobId: string; error: VoiceJobError };
 
 /**
@@ -88,7 +88,7 @@ const isNotFound = (error: unknown): boolean =>
  * 2) 이벤트를 놓치거나 소켓을 못 쓰면 `GET /voice/jobs/:jobId` 조회가 같은 결과를 준다.
  * 둘 중 먼저 오는 쪽을 쓰고, 제한 시간이 지나거나 중단되면 실패다.
  */
-export async function runVoiceJob(deps: VoiceJobDeps, options: VoiceJobOptions = {}): Promise<VoiceRouteRecommendResponseDto> {
+export async function runVoiceJob(deps: VoiceJobDeps, options: VoiceJobOptions = {}): Promise<VoiceResultDto> {
   const timeoutMs = options.timeoutMs ?? VOICE_JOB_TIMEOUT_MS;
   const firstPollMs = options.firstPollMs ?? VOICE_JOB_FIRST_POLL_MS;
   const pollIntervalMs = options.pollIntervalMs ?? VOICE_JOB_POLL_INTERVAL_MS;
@@ -100,7 +100,7 @@ export async function runVoiceJob(deps: VoiceJobDeps, options: VoiceJobOptions =
   try {
     const { jobId } = await deps.submit();
 
-    return await new Promise<VoiceRouteRecommendResponseDto>((resolve, reject) => {
+    return await new Promise<VoiceResultDto>((resolve, reject) => {
       let settled = false;
       let pollTimer: ReturnType<typeof setTimeout> | undefined;
       let timeoutTimer: ReturnType<typeof setTimeout> | undefined;
@@ -137,7 +137,7 @@ export async function runVoiceJob(deps: VoiceJobDeps, options: VoiceJobOptions =
           const status = await deps.poll(jobId);
           if (settled) return;
           if (status.status === "COMPLETED" && status.result) {
-            finish(() => resolve(status.result as VoiceRouteRecommendResponseDto));
+            finish(() => resolve(status.result as VoiceResultDto));
             return;
           }
           if (status.status === "FAILED") {

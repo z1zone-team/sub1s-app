@@ -1,5 +1,6 @@
 import { ApiError } from "@/apis/client";
 import { VoiceJobFailedError } from "./voiceJob";
+import type { VoiceDestinationCandidateDto, VoiceOriginDto } from "@/apis/mutations/voice/voiceRouteTypes";
 import type { RouteMode, SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
 import type { RouteEndpoint } from "@/features/routing/endpoint";
 import { WALK_LINE_ID } from "@/theme";
@@ -128,4 +129,35 @@ export function endpointsOfOption(option: SubwayRouteOptionDto): {
     origin: { name: first.fromStationName, stationId: first.fromStationId },
     destination: { name: last.toStationName, stationId: last.toStationId },
   };
+}
+
+/** 서버가 해석한 출발지를 경로 검색 출발지로 바꾼다. 역도 좌표도 없으면 null */
+export function originToEndpoint(origin: VoiceOriginDto): RouteEndpoint | null {
+  if (origin.stationId) return { name: origin.name, stationId: origin.stationId };
+  if (Number.isFinite(origin.lat) && Number.isFinite(origin.lng)) {
+    return { name: origin.name, lat: origin.lat, lng: origin.lng };
+  }
+  return null;
+}
+
+/** 고른 후보를 경로 검색 도착지로 바꾼다. 역이면 역 ID로, 장소이면 좌표와 이름으로 찾는다 */
+export function candidateToEndpoint(candidate: VoiceDestinationCandidateDto): RouteEndpoint {
+  if (candidate.type === "STATION" && candidate.stationId) {
+    return { name: candidate.name, stationId: candidate.stationId };
+  }
+  return { name: candidate.name, lat: candidate.lat, lng: candidate.lng };
+}
+
+/** 후보 아래에 보여 줄 줄. 장소는 주소, 역은 "지하철역" */
+export function candidateAddress(candidate: VoiceDestinationCandidateDto): string {
+  if (candidate.type === "STATION") return "지하철역";
+  return candidate.address ?? "";
+}
+
+/** 장소 후보에서 가장 가까운 역까지의 걸음: "가좌역에서 걸어서 12분". 역 후보와 정보가 없으면 null */
+export function candidateNearestText(candidate: VoiceDestinationCandidateDto): string | null {
+  const nearest = candidate.nearestStation;
+  if (candidate.type !== "PLACE" || !nearest) return null;
+  const minutes = Math.max(1, Math.round(nearest.walkDurationSec / 60));
+  return `${nearest.name}역에서 걸어서 ${minutes}분`;
 }
