@@ -100,6 +100,122 @@ pnpm start
 
 ---
 
+## 🤖 안드로이드 에뮬레이터와 adb
+
+실기기가 없을 때와 화면, 위치, 서버 연동을 반복해서 확인할 때 쓰는 설정입니다. 아래 값과 명령은 이 프로젝트에서 실제로 쓴 것입니다(Windows 기준, Git Bash나 PowerShell).
+
+### 1. 준비
+
+- **Android Studio**를 설치하면 SDK, `platform-tools`(adb), `emulator`가 함께 들어옵니다. 기본 위치는 `%LOCALAPPDATA%\Android\Sdk`입니다.
+- **PATH**에 `%LOCALAPPDATA%\Android\Sdk\platform-tools`를 넣으면 어디서든 `adb`를 쓸 수 있습니다. `emulator`는 같은 SDK의 `emulator\emulator.exe`입니다.
+- **JDK 21**: 네이티브 빌드(`expo run:android`, gradle)는 Android Studio에 들어 있는 JDK 21을 `JAVA_HOME`으로 지정합니다. PATH의 다른 Java(JDK 8 등)는 쓰지 않습니다.
+- **하드웨어 가속**: x86_64 에뮬레이터는 PC의 가상화(Windows 하이퍼바이저 플랫폼 등)가 켜져 있어야 빠르게 돌아갑니다.
+
+### 2. AVD 만들기 (Android Studio > Device Manager > Create Virtual Device)
+
+| 항목 | 값 |
+| :--- | :--- |
+| 이름 | `sub1s-dev` |
+| 기기 | Pixel 5 (1080 x 2340, 440dpi) |
+| 시스템 이미지 | API 36(Android 16), **Google Play**, **x86_64** |
+| RAM | 4096 MB (Show Advanced Settings에서 지정) |
+| 내부 저장소 | 6 GB |
+| CPU 코어 / GPU | 4 / Automatic |
+| 키보드 | 하드웨어 키보드 입력 켬(PC 키보드로 입력) |
+
+- 저장 위치를 바꾸려면 환경 변수 `ANDROID_AVD_HOME`을 지정하거나 `%USERPROFILE%\.android\avd\<이름>.ini`의 `path`를 수정합니다(이 프로젝트의 AVD는 `D:\android-avd\sub1s-dev.avd`에 있습니다).
+- 실행은 Device Manager의 ▶ 버튼이나 아래 명령입니다.
+
+```powershell
+& "$env:LOCALAPPDATA\Android\Sdk\emulator\emulator.exe" -avd sub1s-dev -no-snapshot-load -gpu auto
+adb devices   # emulator-5554 device 가 보이면 준비 끝
+```
+
+- **한글 입력**: 설정 > 시스템 > 언어 및 입력 > 화상 키보드 > Gboard > 언어에서 `한국어(두벌식)`를 추가합니다. `adb shell input text`는 영문과 숫자만 되고 한글은 입력되지 않습니다.
+
+### 3. 앱 설치와 실행
+
+- 패키지 이름은 `com.z1zone.sub1s.<APP_ENV>`이고 `APP_ENV`를 지정하지 않으면 `local`이라 **`com.z1zone.sub1s.local`**입니다(앱 이름 `Sub1S (Dev)`).
+- 이 앱은 네이티브 기능을 써서 Expo Go가 아닌 **개발 빌드**를 설치해야 합니다.
+
+```bash
+pnpm install
+npx expo run:android          # 에뮬레이터나 연결된 기기에 개발 빌드를 설치하고 Metro를 띄움
+pnpm start                    # 이미 설치돼 있다면 Metro만 다시 띄움
+```
+
+- 에뮬레이터는 서버 주소 기본값 `http://10.0.2.2:3000`(호스트 PC의 `localhost`)으로 로컬 서버에 닿습니다(위 "기기에서 실행" 참고).
+- 빌드를 줄이려면 gradle에 대상 ABI만 지정합니다. 에뮬레이터는 `x86_64`, 실기기는 `arm64-v8a`입니다.
+
+```bash
+cd android && ./gradlew app:assembleDebug -PreactNativeArchitectures=x86_64      # 에뮬레이터
+cd android && ./gradlew app:assembleDebug -PreactNativeArchitectures=arm64-v8a   # 실기기(약 3분)
+```
+
+- `expo prebuild`나 `expo run:android`가 `package.json`의 `android`, `ios` 스크립트와 `tsconfig.json`을 바꾸는 경우가 있으니 커밋 전에 `git diff`로 의도하지 않은 변경을 되돌립니다.
+
+### 4. 실기기 연결과 adb 기본
+
+```bash
+adb devices                       # 연결된 기기 목록(에뮬레이터와 폰이 함께 보일 수 있음)
+adb -s emulator-5554 shell ...    # 기기가 둘 이상이면 -s <시리얼>이 꼭 필요함("more than one device" 오류)
+```
+
+- **USB**: 개발자 옵션에서 USB 디버깅을 켜고 연결해 허용합니다.
+- **무선 디버깅**(Android 11 이상): 개발자 옵션 > 무선 디버깅 > 페어링 코드로 기기 페어링에서 보이는 주소와 코드로 `adb pair <IP:포트>`, 이어서 `adb connect <IP:포트>`를 실행합니다.
+- **서버와 Metro 연결**: 폰은 PC의 `localhost`에 닿지 않으므로 포트를 넘겨 줍니다.
+
+```bash
+adb reverse tcp:3000 tcp:3000    # 서버
+adb reverse tcp:8081 tcp:8081    # Metro
+# Metro를 서버 주소를 지정해 시작
+EXPO_PUBLIC_API_BASE_URL=http://localhost:3000 EXPO_PUBLIC_WS_URL=http://localhost:3000/ws/subway pnpm start
+```
+
+### 5. 에뮬레이터에 위치 넣기
+
+앱의 현재 위치(홈 지도, 음성 검색의 출발지)를 확인하려면 위치를 넣어야 합니다. **`adb emu geo fix`는 위치를 한 번만 내보내서 앱이 못 받는 경우가 많습니다**(앱은 2분 안의 마지막 위치나 2초 안의 새 위치만 씁니다). 아래 테스트 프로바이더 방식을 씁니다(Git Bash 기준).
+
+```bash
+adb shell appops set 2000 android:mock_location allow
+for p in gps fused network; do
+  adb shell cmd location providers remove-test-provider $p 2>/dev/null
+  adb shell cmd location providers add-test-provider $p
+  adb shell cmd location providers set-test-provider-enabled $p true
+  adb shell cmd location providers set-test-provider-location $p --location 37.2380,127.1903 --accuracy 5
+done
+```
+
+- 좌표는 위도,경도 순서입니다(예시는 명지대 자연캠퍼스 근처).
+- **넣은 위치는 2분이 지나면 앱이 받지 못합니다.** 음성이나 현재 위치 확인 직전에 `set-test-provider-location`만 다시 실행하세요.
+- 위치 권한은 앱에서 허용돼 있어야 합니다.
+
+### 6. 자주 쓰는 명령
+
+```bash
+# 스크린샷
+MSYS_NO_PATHCONV=1 adb shell screencap -p /sdcard/s.png && MSYS_NO_PATHCONV=1 adb pull /sdcard/s.png ./s.png
+
+# 화면 요소와 bounds
+MSYS_NO_PATHCONV=1 adb shell uiautomator dump /sdcard/u.xml && MSYS_NO_PATHCONV=1 adb pull /sdcard/u.xml ./u.xml
+
+adb shell input tap 540 1200            # 화면 터치(좌표는 1080 x 2340 기준 픽셀)
+adb shell input keyevent KEYCODE_BACK   # 뒤로 가기
+adb logcat -s ReactNativeJS             # 앱 JS 로그
+adb shell pm list packages | grep sub1s # 설치된 앱 확인
+```
+
+- **Git Bash에서는 `/sdcard/...` 경로가 `/Files/Git/sdcard/...`로 바뀌어 실패합니다.** `/sdcard`를 쓰는 명령(`screencap`, `uiautomator dump`, `pull`, `push`)에는 `MSYS_NO_PATHCONV=1`을 앞에 붙입니다(PowerShell과 cmd는 필요 없음).
+
+- 440dpi라 dp는 `픽셀 / 2.75`입니다. `uiautomator dump`의 bounds를 2.75로 나누면 dp 크기를 알 수 있습니다.
+- 스크린샷 이미지를 줄여서 보면 좌표가 어긋나므로 터치 좌표는 원본(1080 x 2340) 기준으로 환산합니다.
+
+### 7. 음성 검색 확인
+
+에뮬레이터의 마이크는 가상 입력이라 말한 내용이 STT로 인식되지 않습니다. 에뮬레이터에서 음성 흐름을 확인할 때는 서버의 `POST /voice/jobs`가 받는 텍스트 힌트(`transcriptHint`)를 씁니다. 앱의 요청 본문을 만드는 `buildVoiceFormData`에 확인할 동안만 `formData.append("transcriptHint", "문화로 67-1에서 강남역까지 가자")`를 넣고, **확인이 끝나면 지우고 커밋하지 않습니다.** 실제 음성과 STT는 실기기에서 확인합니다.
+
+---
+
 ## 🧭 화면과 서버 의존
 
 | 화면 | 서버 API | 비고 |
