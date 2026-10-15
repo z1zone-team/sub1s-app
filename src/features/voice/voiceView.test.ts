@@ -1,12 +1,17 @@
 import { ApiError } from "@/apis/client";
 import type { SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
+import type { VoiceDestinationCandidateDto } from "@/apis/mutations/voice/voiceRouteTypes";
 import {
+  candidateAddress,
+  candidateNearestText,
+  candidateToEndpoint,
   destinationLineId,
   endpointsOfOption,
   failureOf,
   FAILURE_TEXT,
   modeLabel,
   modeReasonText,
+  originToEndpoint,
   WAVE_HEIGHTS,
   waveDelayMs,
 } from "./voiceView";
@@ -125,5 +130,60 @@ describe("endpointsOfOption", () => {
 
   it("탑승 구간이 없으면 null이다", () => {
     expect(endpointsOfOption({ segments: [segment("WALK", "a", "b")] } as unknown as SubwayRouteOptionDto)).toBeNull();
+  });
+});
+
+describe("음성 도착지 후보", () => {
+  const place: VoiceDestinationCandidateDto = {
+    type: "PLACE",
+    name: "명지대학교/인문캠퍼스",
+    address: "서울 서대문구 거북골로 34",
+    lat: 37.58,
+    lng: 126.92,
+    nearestStation: { stationId: "GJ_K315", name: "가좌", walkDistanceM: 900, walkDurationSec: 1440 },
+  };
+  const station: VoiceDestinationCandidateDto = {
+    type: "STATION",
+    name: "서울숲",
+    lat: 37.54,
+    lng: 127.04,
+    stationId: "BD_K211",
+  };
+
+  it("역 후보는 역 ID로, 장소 후보는 좌표와 이름으로 경로를 찾는다", () => {
+    expect(candidateToEndpoint(station)).toEqual({ name: "서울숲", stationId: "BD_K211" });
+    expect(candidateToEndpoint(place)).toEqual({ name: "명지대학교/인문캠퍼스", lat: 37.58, lng: 126.92 });
+  });
+
+  it("역 후보인데 역 ID가 없으면 좌표로 찾는다", () => {
+    expect(candidateToEndpoint({ ...station, stationId: undefined })).toEqual({ name: "서울숲", lat: 37.54, lng: 127.04 });
+  });
+
+  it("후보 아래 줄: 장소는 주소, 역은 지하철역", () => {
+    expect(candidateAddress(place)).toBe("서울 서대문구 거북골로 34");
+    expect(candidateAddress(station)).toBe("지하철역");
+    expect(candidateAddress({ ...place, address: undefined })).toBe("");
+  });
+
+  it("가장 가까운 역까지 걸어서 몇 분인지 말해 준다(최소 1분)", () => {
+    expect(candidateNearestText(place)).toBe("가좌역에서 걸어서 24분");
+    expect(candidateNearestText({ ...place, nearestStation: { ...place.nearestStation!, walkDurationSec: 20 } })).toBe(
+      "가좌역에서 걸어서 1분"
+    );
+  });
+
+  it("역 후보와 가까운 역 정보가 없는 후보는 걸음 문구가 없다", () => {
+    expect(candidateNearestText(station)).toBeNull();
+    expect(candidateNearestText({ ...place, nearestStation: undefined })).toBeNull();
+  });
+
+  it("출발지는 역이면 역 ID, 현재 위치나 장소이면 좌표로 바꾸고 둘 다 없으면 null이다", () => {
+    expect(originToEndpoint({ name: "강남", stationId: "02_222" })).toEqual({ name: "강남", stationId: "02_222" });
+    expect(originToEndpoint({ name: "현재 위치", lat: 37.2, lng: 127.1 })).toEqual({
+      name: "현재 위치",
+      lat: 37.2,
+      lng: 127.1,
+    });
+    expect(originToEndpoint({ name: "어딘가" })).toBeNull();
   });
 });

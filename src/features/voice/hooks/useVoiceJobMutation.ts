@@ -3,7 +3,7 @@ import { useMutation, type UseMutationResult } from "@tanstack/react-query";
 import { getVoiceJob, submitVoiceJob } from "@/apis/mutations/voice/voiceJobs";
 import type {
   VoiceRouteRecommendRequest,
-  VoiceRouteRecommendResponseDto,
+  VoiceResultDto,
 } from "@/apis/mutations/voice/voiceRouteTypes";
 import { subwaySocketClient, type SubwaySocket, type VoiceFailedPayload, type VoiceResultPayload } from "@/common/realtime";
 import { runVoiceJob, VoiceEventChannel, type VoiceJobDeps } from "../voiceJob";
@@ -63,7 +63,7 @@ async function openSocketChannel(): ReturnType<VoiceJobDeps["openChannel"]> {
  * 이벤트를 놓치면 작업 조회가 같은 결과를 주고, 화면을 벗어나면 기다림을 멈춘다
  */
 export const useVoiceJobMutation = (): UseMutationResult<
-  VoiceRouteRecommendResponseDto,
+  VoiceResultDto,
   Error,
   VoiceRouteRecommendRequest
 > => {

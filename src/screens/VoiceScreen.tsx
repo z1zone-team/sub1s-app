@@ -1,9 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Pressable, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import { useAuth } from "@clerk/expo";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import type { VoiceRouteRecommendResponseDto } from "@/apis/mutations/voice/voiceRouteTypes";
+import {
+  isDestinationConfirm,
+  type VoiceDestinationCandidateDto,
+  type VoiceDestinationConfirmDto,
+  type VoiceRouteRecommendResponseDto,
+} from "@/apis/mutations/voice/voiceRouteTypes";
 import { DesignIcon } from "@/common/components/DesignIcon";
 import { LineBadge } from "@/common/components/LineBadge";
 import { LoginRequired } from "@/common/components/LoginRequired";
@@ -24,12 +29,16 @@ import { MODE_TITLE } from "@/features/routing/routeView";
 import { useRecentDestinations } from "@/features/routing/useRecentDestinations";
 import { saveVoiceDestination } from "@/features/voice/saveVoiceDestination";
 import {
+  candidateAddress,
+  candidateNearestText,
+  candidateToEndpoint,
   destinationLineId,
   endpointsOfOption,
   failureOf,
   FAILURE_TEXT,
   MIN_SPEECH_MS,
   modeLabel,
+  originToEndpoint,
   VOICE_EXAMPLES,
   type VoiceFailure,
 } from "@/features/voice/voiceView";
@@ -39,6 +48,7 @@ type Phase =
   | { name: "listening" }
   | { name: "processing" }
   | { name: "result"; data: VoiceRouteRecommendResponseDto }
+  | { name: "confirm"; data: VoiceDestinationConfirmDto }
   | { name: "failed"; failure: VoiceFailure };
 
 /** 세 상태(듣는 중, 결과, 실패)가 함께 쓰는 위쪽 줄: 닫기, 가운데 제목 */
@@ -87,6 +97,11 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
           { audio: { uri: recording.uri, name: "voice_query.m4a", type: "audio/m4a" }, ...coords },
           {
             onSuccess: (data) => {
+              // 도착지 후보가 여럿이면 경로 대신 "이 곳이 맞나요?"를 묻는다
+              if (isDestinationConfirm(data)) {
+                setPhase({ name: "confirm", data });
+                return;
+              }
               void saveVoiceDestination(data, addDestination);
               setPhase({ name: "result", data });
             },
@@ -135,6 +150,18 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
     submit(recording);
   };
 
+  // 후보를 고르면 서버가 해석한 출발지와 고른 도착지로 경로를 찾는다
+  const choose = (data: VoiceDestinationConfirmDto, candidate: VoiceDestinationCandidateDto) => {
+    const origin = originToEndpoint(data.origin);
+    if (!origin) {
+      setPhase({ name: "failed", failure: "GENERIC" });
+      return;
+    }
+    const destination = candidateToEndpoint(candidate);
+    void addDestination(destination);
+    navigation.replace("RouteResult", { origin, destination, mode: data.interpretedIntent.preferredMode });
+  };
+
   if (!isSignedIn) {
     return (
       <Screen>
@@ -178,6 +205,60 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
           >
             <DesignIcon name="retry" size={20} tone="onPrimary" />
             <Text className="text-base font-sans-bold text-on-primary">재시도</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => navigation.replace("Search")}
+            className="h-13 items-center justify-center rounded-md-plus border border-border"
+          >
+            <Text className="text-subtitle font-sans-semibold">글자로 찾기</Text>
+          </Pressable>
+        </View>
+      </Screen>
+    );
+  }
+
+  if (phase.name === "confirm") {
+    const { data } = phase;
+    return (
+      <Screen>
+        <VoiceHeader onClose={close} />
+        <View className="flex-1 px-5 pt-10">
+          <RiseIn from={8} durationMs={400}>
+            <View className="items-center px-2">
+              <Text className="text-subtitle font-sans-medium text-text-secondary">이 곳이 맞나요?</Text>
+              <Text className="mt-3 text-center text-display-sm font-sans-bold leading-snug">“{data.transcript}”</Text>
+            </View>
+          </RiseIn>
+          <ScrollView className="mt-6" contentContainerClassName="gap-2 pb-4" showsVerticalScrollIndicator={false}>
+            {data.candidates.map((candidate, index) => {
+              const nearest = candidateNearestText(candidate);
+              return (
+                <Pressable
+                  key={`${candidate.type}-${candidate.stationId ?? candidate.name}-${index}`}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${candidate.name}, ${candidateAddress(candidate)}`}
+                  onPress={() => choose(data, candidate)}
+                  className="rounded-md-plus border border-border bg-bg px-4 py-3.5"
+                >
+                  <Text className="text-body font-sans-bold">{candidate.name}</Text>
+                  {candidateAddress(candidate) ? (
+                    <Text className="mt-0.5 text-body-sm text-text-secondary">{candidateAddress(candidate)}</Text>
+                  ) : null}
+                  {nearest ? <Text className="mt-0.5 text-body-sm text-primary">{nearest}</Text> : null}
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+        <View style={{ paddingBottom: bottomPadding }} className="gap-2 px-5">
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => void listen()}
+            className="h-14 flex-row items-center justify-center gap-2 rounded-lg bg-primary"
+          >
+            <DesignIcon name="retry" size={20} tone="onPrimary" />
+            <Text className="text-base font-sans-bold text-on-primary">다시 말하기</Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"

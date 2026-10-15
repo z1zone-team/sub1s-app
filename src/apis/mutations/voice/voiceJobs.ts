@@ -2,7 +2,7 @@ import { get, postMultipart, type RequestOptions } from "@/apis/client";
 import {
   buildVoiceFormData,
   type VoiceRouteRecommendRequest,
-  type VoiceRouteRecommendResponseDto,
+  type VoiceResultDto,
 } from "./voiceRouteTypes";
 
 export interface VoiceJobSubmitResponse {
@@ -23,7 +23,7 @@ export interface VoiceJobStatusResponse {
   jobId: string;
   status: VoiceJobStatus;
   /** `COMPLETED`일 때만 */
-  result?: VoiceRouteRecommendResponseDto;
+  result?: VoiceResultDto;
   /** `FAILED`일 때만 */
   error?: VoiceJobError;
 }

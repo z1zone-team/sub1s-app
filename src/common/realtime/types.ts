@@ -1,4 +1,4 @@
-import type { VoiceRouteRecommendResponseDto } from "../../apis/mutations/voice/voiceRouteTypes";
+import type { VoiceResultDto } from "../../apis/mutations/voice/voiceRouteTypes";
 import type {
   TrainCongestionResponse,
   CarCongestionDto,
@@ -57,7 +57,7 @@ export interface RankingUpdatePayload {
 /** 음성 작업이 성공했을 때 요청한 본인에게만 오는 신호 */
 export interface VoiceResultPayload {
   jobId: string;
-  result: VoiceRouteRecommendResponseDto;
+  result: VoiceResultDto;
 }
 
 /** 음성 작업이 실패했을 때 요청한 본인에게만 오는 신호 (HTTP 오류 응답과 같은 코드와 메시지) */
