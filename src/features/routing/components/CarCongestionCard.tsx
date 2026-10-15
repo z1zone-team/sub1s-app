@@ -9,6 +9,8 @@ import { carInsight } from "../routeView";
 interface CarCongestionCardProps {
   cars: SegmentCar[];
   recommendedCarNo: number;
+  /** 구간 혼잡도가 통계가 아닌 추정이면 퍼센트 숫자를 보이지 않는다 */
+  estimated?: boolean;
   /** "14:19 기준"처럼 예측이 어느 시각인지 */
   forecastLabel: string;
 }
@@ -23,7 +25,7 @@ const LEGEND = [
  * 프로토타입의 "칸별 혼잡도" 카드. 서버가 준 칸(그 열차의 칸 수만큼)을 네모 안에 아래에서 차오르는 막대로 보여 주고,
  * 추천 칸은 primary 테두리와 "추천", 약냉방칸은 "약냉"으로 표시한다. 막대 높이와 색은 값마다 달라 style로 준다
  */
-export function CarCongestionCard({ cars, recommendedCarNo, forecastLabel }: CarCongestionCardProps) {
+export function CarCongestionCard({ cars, recommendedCarNo, estimated = false, forecastLabel }: CarCongestionCardProps) {
   const { colors } = useTheme();
   const insight = carInsight(cars, recommendedCarNo);
 
@@ -36,7 +38,7 @@ export function CarCongestionCard({ cars, recommendedCarNo, forecastLabel }: Car
       {insight?.betterThanAveragePercent ? (
         <Text className="mt-1 text-body-sm text-text-secondary">
           <Text className="text-body-sm font-sans-bold text-primary">{recommendedCarNo}번째 칸</Text>이 평균보다{" "}
-          {insight.betterThanAveragePercent}% 한산해요
+          {estimated ? "한산해요" : `${insight.betterThanAveragePercent}% 한산해요`}
         </Text>
       ) : null}
 
@@ -47,7 +49,7 @@ export function CarCongestionCard({ cars, recommendedCarNo, forecastLabel }: Car
           return (
             <View key={car.carNo} className="flex-1 items-center gap-1">
               <View
-                accessibilityLabel={`${car.carNo}번째 칸 혼잡도 ${Math.round(rate)}%`}
+                accessibilityLabel={`${car.carNo}번째 칸 혼잡도 ${estimated ? levelOfRate(rate) : `${Math.round(rate)}%`}`}
                 className={cn(
                   "h-8.5 w-full justify-end overflow-hidden rounded-xs-plus bg-bg",
                   recommended ? "border-2 border-primary" : "border border-border"

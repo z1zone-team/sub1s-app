@@ -80,7 +80,7 @@ describe("overallCongestion", () => {
     const result = overallCongestion(
       option([segment({ durationSec: 1800, congestionRate: 40 }), segment({ durationSec: 600, congestionRate: 80 }), walk(480)])
     );
-    expect(result).toEqual({ level: "보통", ratePercent: 50 });
+    expect(result).toEqual({ level: "보통", ratePercent: 50, estimated: false });
   });
 
   it("단계는 서버와 같은 기준이다 (35 미만 여유, 70 초과 혼잡)", () => {
@@ -90,6 +90,19 @@ describe("overallCongestion", () => {
 
   it("탑승 구간이 없으면 없다", () => {
     expect(overallCongestion(option([walk(600)]))).toBeUndefined();
+  });
+
+  it("탑승 구간이 모두 통계이거나 출처를 모르면 추정이 아니다", () => {
+    expect(
+      overallCongestion(option([segment({ congestionSource: "STATISTICS" }), segment({ congestionSource: undefined })]))?.estimated
+    ).toBe(false);
+  });
+
+  it("탑승 구간 하나라도 추정이면 추정이다 (도보 구간은 보지 않는다)", () => {
+    expect(
+      overallCongestion(option([segment({ congestionSource: "STATISTICS" }), segment({ congestionSource: "MOCK" })]))?.estimated
+    ).toBe(true);
+    expect(overallCongestion(option([segment({ congestionSource: "STATISTICS" }), walk(300)]))?.estimated).toBe(false);
   });
 });
 
