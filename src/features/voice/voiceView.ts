@@ -1,6 +1,11 @@
 import { ApiError } from "@/apis/client";
 import { VoiceJobFailedError } from "./voiceJob";
-import type { VoiceDestinationCandidateDto, VoiceOriginDto } from "@/apis/mutations/voice/voiceRouteTypes";
+import type {
+  VoiceDestinationCandidateDto,
+  VoiceDestinationConfirmDto,
+  VoiceOriginConfirmDto,
+  VoiceOriginDto,
+} from "@/apis/mutations/voice/voiceRouteTypes";
 import type { RouteMode, SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
 import type { RouteEndpoint } from "@/features/routing/endpoint";
 import { WALK_LINE_ID } from "@/theme";
@@ -161,3 +166,62 @@ export function candidateNearestText(candidate: VoiceDestinationCandidateDto): s
   const minutes = Math.max(1, Math.round(nearest.walkDurationSec / 60));
   return `${nearest.name}역에서 걸어서 ${minutes}분`;
 }
+
+/** 후보 확인에서 지금 무엇을 묻는지 */
+export type ConfirmQuestion = "ORIGIN" | "DESTINATION";
+
+/**
+ * 후보 확인의 한 단계. 정해진 쪽은 `origin`, `destination`에 들어 있고 묻는 쪽은 null이다.
+ * 출발을 묻고 도착도 후보가 여럿이면 출발을 고른 뒤 `nextCandidates`로 도착을 묻는다
+ */
+export interface ConfirmStep {
+  question: ConfirmQuestion;
+  candidates: VoiceDestinationCandidateDto[];
+  origin: RouteEndpoint | null;
+  destination: RouteEndpoint | null;
+  nextCandidates: VoiceDestinationCandidateDto[];
+  mode: RouteMode;
+}
+
+/** 서버의 확인 결과를 첫 확인 단계로 바꾼다. 정해진 지점이 경로 검색에 쓸 수 없으면 null */
+export function confirmStepOf(result: VoiceDestinationConfirmDto | VoiceOriginConfirmDto): ConfirmStep | null {
+  const mode = result.interpretedIntent.preferredMode;
+  if (result.kind === "CONFIRM_DESTINATION") {
+    const origin = originToEndpoint(result.origin);
+    if (!origin) return null;
+    return { question: "DESTINATION", candidates: result.candidates, origin, destination: null, nextCandidates: [], mode };
+  }
+  const destination = result.destination ? originToEndpoint(result.destination) : null;
+  if (result.destination && !destination) return null;
+  const nextCandidates = result.destinationCandidates ?? [];
+  if (!destination && nextCandidates.length === 0) return null;
+  return { question: "ORIGIN", candidates: result.originCandidates, origin: null, destination, nextCandidates, mode };
+}
+
+export type PickOutcome =
+  | { kind: "route"; origin: RouteEndpoint; destination: RouteEndpoint }
+  | { kind: "next"; step: ConfirmStep };
+
+/** 후보를 고른 결과. 두 지점이 다 정해지면 경로, 도착이 더 남았으면 다음 단계다 */
+export function pickCandidate(step: ConfirmStep, candidate: VoiceDestinationCandidateDto): PickOutcome | null {
+  const picked = candidateToEndpoint(candidate);
+  if (step.question === "DESTINATION") {
+    return step.origin ? { kind: "route", origin: step.origin, destination: picked } : null;
+  }
+  if (step.destination) return { kind: "route", origin: picked, destination: step.destination };
+  if (step.nextCandidates.length === 0) return null;
+  return {
+    kind: "next",
+    step: {
+      question: "DESTINATION",
+      candidates: step.nextCandidates,
+      origin: picked,
+      destination: null,
+      nextCandidates: [],
+      mode: step.mode,
+    },
+  };
+}
+
+export const confirmTitle = (question: ConfirmQuestion): string =>
+  question === "ORIGIN" ? "출발지가 맞나요?" : "이 곳이 맞나요?";

@@ -5,6 +5,8 @@ import {
   candidateAddress,
   candidateNearestText,
   candidateToEndpoint,
+  confirmStepOf,
+  confirmTitle,
   destinationLineId,
   endpointsOfOption,
   failureOf,
@@ -12,6 +14,7 @@ import {
   modeLabel,
   modeReasonText,
   originToEndpoint,
+  pickCandidate,
   WAVE_HEIGHTS,
   waveDelayMs,
 } from "./voiceView";
@@ -185,5 +188,84 @@ describe("음성 도착지 후보", () => {
       lng: 127.1,
     });
     expect(originToEndpoint({ name: "어딘가" })).toBeNull();
+  });
+});
+
+describe("후보 확인 단계", () => {
+  const intent = { originStationName: "x", destStationName: "y", preferredMode: "OPTIMAL", reason: "" } as never;
+  const cand = (name: string): VoiceDestinationCandidateDto => ({ type: "PLACE", name, lat: 37.5, lng: 127.0 });
+  const gangnam = { name: "강남", stationId: "02_222" };
+
+  it("도착 확인 결과는 정해진 출발지로 도착을 묻는 단계가 된다", () => {
+    const step = confirmStepOf({
+      kind: "CONFIRM_DESTINATION",
+      transcript: "t",
+      interpretedIntent: intent,
+      origin: gangnam,
+      candidates: [cand("가"), cand("나")],
+    });
+
+    expect(step).toMatchObject({ question: "DESTINATION", origin: { name: "강남", stationId: "02_222" }, destination: null });
+    expect(step?.candidates).toHaveLength(2);
+  });
+
+  it("출발지가 경로 검색에 쓸 수 없으면 단계를 만들지 않는다", () => {
+    expect(
+      confirmStepOf({
+        kind: "CONFIRM_DESTINATION",
+        transcript: "t",
+        interpretedIntent: intent,
+        origin: { name: "어딘가" },
+        candidates: [cand("가")],
+      })
+    ).toBeNull();
+  });
+
+  it("출발 확인 결과는 도착이 정해졌으면 출발을 묻는 단계, 고르면 바로 경로다", () => {
+    const step = confirmStepOf({
+      kind: "CONFIRM_ORIGIN",
+      transcript: "t",
+      interpretedIntent: intent,
+      originCandidates: [cand("가"), cand("나")],
+      destination: gangnam,
+    })!;
+
+    expect(step.question).toBe("ORIGIN");
+    expect(pickCandidate(step, cand("나"))).toEqual({
+      kind: "route",
+      origin: { name: "나", lat: 37.5, lng: 127.0 },
+      destination: { name: "강남", stationId: "02_222" },
+    });
+  });
+
+  it("출발과 도착이 모두 모호하면 출발을 고른 뒤 도착을 묻고, 도착을 고르면 경로다", () => {
+    const first = confirmStepOf({
+      kind: "CONFIRM_ORIGIN",
+      transcript: "t",
+      interpretedIntent: intent,
+      originCandidates: [cand("출발1"), cand("출발2")],
+      destinationCandidates: [cand("도착1"), cand("도착2")],
+    })!;
+
+    const next = pickCandidate(first, cand("출발2"));
+    expect(next).toMatchObject({ kind: "next", step: { question: "DESTINATION", origin: { name: "출발2" } } });
+    if (next?.kind !== "next") return;
+    expect(next.step.candidates.map((c) => c.name)).toEqual(["도착1", "도착2"]);
+    expect(pickCandidate(next.step, cand("도착1"))).toEqual({
+      kind: "route",
+      origin: { name: "출발2", lat: 37.5, lng: 127.0 },
+      destination: { name: "도착1", lat: 37.5, lng: 127.0 },
+    });
+  });
+
+  it("도착 정보가 하나도 없는 출발 확인은 단계를 만들지 않는다", () => {
+    expect(
+      confirmStepOf({ kind: "CONFIRM_ORIGIN", transcript: "t", interpretedIntent: intent, originCandidates: [cand("가")] })
+    ).toBeNull();
+  });
+
+  it("질문 문구: 출발은 출발지가 맞나요, 도착은 이 곳이 맞나요", () => {
+    expect(confirmTitle("ORIGIN")).toBe("출발지가 맞나요?");
+    expect(confirmTitle("DESTINATION")).toBe("이 곳이 맞나요?");
   });
 });
