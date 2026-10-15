@@ -51,11 +51,27 @@ export interface VoiceDestinationConfirmDto {
   candidates: VoiceDestinationCandidateDto[];
 }
 
+/**
+ * 출발지로 말한 이름의 후보가 여럿이라 "출발지가 맞나요?"를 물어야 하는 결과. 경로는 아직 계산하지 않았다.
+ * 도착지가 정해졌으면 `destination`, 도착지도 후보가 여럿이면 `destinationCandidates`가 있다(둘 중 하나)
+ */
+export interface VoiceOriginConfirmDto {
+  kind: "CONFIRM_ORIGIN";
+  transcript: string;
+  interpretedIntent: InterpretedIntentDto;
+  originCandidates: VoiceDestinationCandidateDto[];
+  destination?: VoiceOriginDto;
+  destinationCandidates?: VoiceDestinationCandidateDto[];
+}
+
 /** 음성 작업의 결과. 작업 조회와 소켓 `voice_result`가 같은 형태다 */
-export type VoiceResultDto = VoiceRouteRecommendResponseDto | VoiceDestinationConfirmDto;
+export type VoiceResultDto = VoiceRouteRecommendResponseDto | VoiceDestinationConfirmDto | VoiceOriginConfirmDto;
 
 export const isDestinationConfirm = (result: VoiceResultDto): result is VoiceDestinationConfirmDto =>
   result.kind === "CONFIRM_DESTINATION";
+
+export const isOriginConfirm = (result: VoiceResultDto): result is VoiceOriginConfirmDto =>
+  result.kind === "CONFIRM_ORIGIN";
 
 export interface VoiceRouteRecommendRequest {
   audio: Blob | File | { uri: string; name: string; type: string };

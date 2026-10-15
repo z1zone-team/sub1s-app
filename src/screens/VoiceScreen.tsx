@@ -5,8 +5,8 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   isDestinationConfirm,
+  isOriginConfirm,
   type VoiceDestinationCandidateDto,
-  type VoiceDestinationConfirmDto,
   type VoiceRouteRecommendResponseDto,
 } from "@/apis/mutations/voice/voiceRouteTypes";
 import { DesignIcon } from "@/common/components/DesignIcon";
@@ -31,15 +31,17 @@ import { saveVoiceDestination } from "@/features/voice/saveVoiceDestination";
 import {
   candidateAddress,
   candidateNearestText,
-  candidateToEndpoint,
+  confirmStepOf,
+  confirmTitle,
   destinationLineId,
   endpointsOfOption,
   failureOf,
   FAILURE_TEXT,
   MIN_SPEECH_MS,
   modeLabel,
-  originToEndpoint,
+  pickCandidate,
   VOICE_EXAMPLES,
+  type ConfirmStep,
   type VoiceFailure,
 } from "@/features/voice/voiceView";
 import type { RootStackParamList } from "@/navigation/navigation-types";
@@ -48,7 +50,7 @@ type Phase =
   | { name: "listening" }
   | { name: "processing" }
   | { name: "result"; data: VoiceRouteRecommendResponseDto }
-  | { name: "confirm"; data: VoiceDestinationConfirmDto }
+  | { name: "confirm"; transcript: string; step: ConfirmStep }
   | { name: "failed"; failure: VoiceFailure };
 
 /** 세 상태(듣는 중, 결과, 실패)가 함께 쓰는 위쪽 줄: 닫기, 가운데 제목 */
@@ -97,9 +99,10 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
           { audio: { uri: recording.uri, name: "voice_query.m4a", type: "audio/m4a" }, ...coords },
           {
             onSuccess: (data) => {
-              // 도착지 후보가 여럿이면 경로 대신 "이 곳이 맞나요?"를 묻는다
-              if (isDestinationConfirm(data)) {
-                setPhase({ name: "confirm", data });
+              // 출발지나 도착지 후보가 여럿이면 경로 대신 "이 곳이 맞나요?"를 묻는다
+              if (isDestinationConfirm(data) || isOriginConfirm(data)) {
+                const step = confirmStepOf(data);
+                setPhase(step ? { name: "confirm", transcript: data.transcript, step } : { name: "failed", failure: "GENERIC" });
                 return;
               }
               void saveVoiceDestination(data, addDestination);
@@ -150,16 +153,19 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
     submit(recording);
   };
 
-  // 후보를 고르면 서버가 해석한 출발지와 고른 도착지로 경로를 찾는다
-  const choose = (data: VoiceDestinationConfirmDto, candidate: VoiceDestinationCandidateDto) => {
-    const origin = originToEndpoint(data.origin);
-    if (!origin) {
+  // 후보를 고르면 두 지점이 다 정해졌을 때 경로를 찾고, 도착이 더 남았으면 이어서 묻는다
+  const choose = (phase: Extract<Phase, { name: "confirm" }>, candidate: VoiceDestinationCandidateDto) => {
+    const outcome = pickCandidate(phase.step, candidate);
+    if (!outcome) {
       setPhase({ name: "failed", failure: "GENERIC" });
       return;
     }
-    const destination = candidateToEndpoint(candidate);
-    void addDestination(destination);
-    navigation.replace("RouteResult", { origin, destination, mode: data.interpretedIntent.preferredMode });
+    if (outcome.kind === "next") {
+      setPhase({ name: "confirm", transcript: phase.transcript, step: outcome.step });
+      return;
+    }
+    void addDestination(outcome.destination);
+    navigation.replace("RouteResult", { origin: outcome.origin, destination: outcome.destination, mode: phase.step.mode });
   };
 
   if (!isSignedIn) {
@@ -219,26 +225,26 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
   }
 
   if (phase.name === "confirm") {
-    const { data } = phase;
+    const { transcript, step } = phase;
     return (
       <Screen>
         <VoiceHeader onClose={close} />
         <View className="flex-1 px-5 pt-10">
           <RiseIn from={8} durationMs={400}>
             <View className="items-center px-2">
-              <Text className="text-subtitle font-sans-medium text-text-secondary">이 곳이 맞나요?</Text>
-              <Text className="mt-3 text-center text-display-sm font-sans-bold leading-snug">“{data.transcript}”</Text>
+              <Text className="text-subtitle font-sans-medium text-text-secondary">{confirmTitle(step.question)}</Text>
+              <Text className="mt-3 text-center text-display-sm font-sans-bold leading-snug">“{transcript}”</Text>
             </View>
           </RiseIn>
           <ScrollView className="mt-6" contentContainerClassName="gap-2 pb-4" showsVerticalScrollIndicator={false}>
-            {data.candidates.map((candidate, index) => {
+            {step.candidates.map((candidate, index) => {
               const nearest = candidateNearestText(candidate);
               return (
                 <Pressable
                   key={`${candidate.type}-${candidate.stationId ?? candidate.name}-${index}`}
                   accessibilityRole="button"
                   accessibilityLabel={`${candidate.name}, ${candidateAddress(candidate)}`}
-                  onPress={() => choose(data, candidate)}
+                  onPress={() => choose(phase, candidate)}
                   className="rounded-md-plus border border-border bg-bg px-4 py-3.5"
                 >
                   <Text className="text-body font-sans-bold">{candidate.name}</Text>
