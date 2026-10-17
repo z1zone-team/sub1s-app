@@ -24,6 +24,7 @@ import { LoginScreen } from "@/screens/LoginScreen";
 import { OffRouteScreen } from "@/screens/OffRouteScreen";
 import { ArrivedScreen } from "@/screens/ArrivedScreen";
 import { LiveNavScreen } from "@/screens/LiveNavScreen";
+import { WalkNavScreen } from "@/screens/WalkNavScreen";
 import { MoveMapScreen } from "@/screens/MoveMapScreen";
 import { TimelineScreen } from "@/screens/TimelineScreen";
 import { SplashScreen } from "@/common/components/SplashScreen";
@@ -139,6 +140,11 @@ export function RootNavigator() {
         <Stack.Screen
           name="LiveNav"
           component={LiveNavScreen}
+          options={{ headerShown: false, gestureEnabled: false }}
+        />
+        <Stack.Screen
+          name="WalkNav"
+          component={WalkNavScreen}
           options={{ headerShown: false, gestureEnabled: false }}
         />
         <Stack.Screen

@@ -35,3 +35,9 @@ describe("buildMapHtml 길게 누르기", () => {
     expect(html).toContain('"touchend", cancelPress');
   });
 });
+
+describe("buildMapHtml 타일", () => {
+  it("고밀도 화면에서 흐리지 않도록 선명한 타일을 쓴다", () => {
+    expect(buildMapHtml("key")).toContain("detectRetina: true");
+  });
+});

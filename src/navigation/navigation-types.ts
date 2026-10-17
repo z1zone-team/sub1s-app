@@ -58,6 +58,12 @@ export type RootStackParamList = {
     origin?: RouteEndpoint;
     destination?: RouteEndpoint;
   };
+  /** 지하철 없이 걷기만 하는 경로의 안내. 서버 세션 없이 앱 안에서만 동작한다 */
+  WalkNav: {
+    option: SubwayRouteOptionDto;
+    origin: RouteEndpoint;
+    destination: RouteEndpoint;
+  };
   OffRoute: {
     alert: OffRouteAlert;
     /** 이탈을 감지한 시점에 원래 경로에서 남아 있던 시간(초) */

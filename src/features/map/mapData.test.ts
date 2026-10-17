@@ -63,6 +63,11 @@ describe("homeMapData", () => {
     expect(data.markers[0].kind).toBe("me");
   });
 
+  it("내 위치만 있을 때 처음 확대 수준은 15이고 고른 장소가 있으면 16이다", () => {
+    expect(homeMapData({ me: { lat: 37.5, lng: 127 } }).zoom).toBe(15);
+    expect(homeMapData({ me: { lat: 37.5, lng: 127 }, pin: { lat: 37.56, lng: 126.97 } }).zoom).toBe(16);
+  });
+
   it("고른 장소가 있으면 핀을 더하고 그곳을 중심으로 보여 준다", () => {
     const data = homeMapData({ me: { lat: 37.5, lng: 127 }, pin: { lat: 37.56, lng: 126.97 } });
     expect(data.markers.map((marker) => marker.kind)).toEqual(["me", "pin"]);

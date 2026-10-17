@@ -32,6 +32,8 @@ export function RouteDetailScreen({
   const { isSignedIn } = useAuth();
   const startTracking = useStartTrackingMutation();
   const canGuide = firstRideIndex >= 0 && (option.stationIds?.length ?? 0) > 1;
+  const canWalkGuide =
+    firstRideIndex < 0 && option.segments.length > 0 && Boolean(endpointCoords(origin)) && Boolean(endpointCoords(destination));
 
   // 지도: 경로가 지나는 역의 좌표를 받아 호선 색 선으로 잇는다
   const stationIds = useMemo(() => mapStationIds(option), [option]);
@@ -131,17 +133,19 @@ export function RouteDetailScreen({
         >
           <Text className="text-base font-sans-semibold">다른 경로</Text>
         </Pressable>
-        {canGuide ? (
+        {canGuide || canWalkGuide ? (
           <Pressable
             accessibilityRole="button"
             accessibilityState={{ busy: startTracking.isPending }}
             disabled={startTracking.isPending}
-            onPress={startGuide}
+            onPress={canGuide ? startGuide : () => navigation.navigate("WalkNav", { option, origin, destination })}
             style={{ flex: 2 }}
             className="h-14 flex-row items-center justify-center gap-1.5 rounded-lg bg-primary"
           >
             <DesignIcon name="navigate" size={16} tone="onPrimary" />
-            <Text className="text-base font-sans-bold text-on-primary">{formatDurationSec(option.totalDurationSec)} 안내 시작</Text>
+            <Text className="text-base font-sans-bold text-on-primary">
+              {formatDurationSec(option.totalDurationSec)} {canGuide ? "안내 시작" : "걸어서 안내 시작"}
+            </Text>
           </Pressable>
         ) : null}
       </View>
