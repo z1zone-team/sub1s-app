@@ -4,6 +4,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
 import { Button } from "@/common/components/Button";
+import { DraggableSheet } from "@/common/components/DraggableSheet";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { LAST_KNOWN_MAX_AGE_MS, useForegroundLocation } from "@/common/device";
@@ -76,6 +77,8 @@ function WalkGuide({ option, destination, from, to, onHome }: WalkGuideProps) {
   const parts = remainingParts(progress.remainingSec, Date.now());
   const denied = location.error === "LOCATION_PERMISSION_DENIED";
 
+  const bottomPadding = Math.max(insets.bottom, 12) + 10;
+
   return (
     <View className="flex-1 bg-surface">
       <VWorldMap data={mapData} className="absolute inset-0" />
@@ -89,31 +92,36 @@ function WalkGuide({ option, destination, from, to, onHome }: WalkGuideProps) {
         />
       </View>
 
-      <View
-        style={{ paddingBottom: Math.max(insets.bottom, 12) + 10 }}
-        className="absolute inset-x-0 bottom-0 rounded-t-xl border-t border-border bg-bg px-5 pt-2.5"
+      <DraggableSheet
+        label="도보 안내"
+        className="px-5"
+        bottomInset={bottomPadding}
+        coverBottom
+        header={
+          arrived ? (
+            <Text className="text-headline font-sans-bold">도착했어요</Text>
+          ) : (
+            <View className="flex-row items-baseline">
+              <Text className="text-headline font-sans-bold">{parts.amount}</Text>
+              <Text className="ml-1.5 text-body-sm text-text-secondary">{parts.rest}</Text>
+            </View>
+          )
+        }
       >
-        <View className="mb-3.5 h-1 w-9 self-center rounded-pill bg-border" />
-        {arrived ? (
-          <Text className="text-headline font-sans-bold">도착했어요</Text>
-        ) : (
-          <View className="flex-row items-baseline">
-            <Text className="text-headline font-sans-bold">{parts.amount}</Text>
-            <Text className="ml-1.5 text-body-sm text-text-secondary">{parts.rest}</Text>
-          </View>
-        )}
-        {!arrived && !me ? (
-          <Text className="mt-2 text-small text-text-secondary">
-            {denied ? "위치 권한이 없어 남은 거리를 정확히 알 수 없어요." : "현재 위치를 찾는 중이에요."}
-          </Text>
-        ) : null}
-        <Button
-          label={arrived ? "홈으로" : "안내 끝내기"}
-          variant={arrived ? "primary" : "secondary"}
-          onPress={onHome}
-          className="mt-3"
-        />
-      </View>
+        <View style={{ paddingBottom: bottomPadding }}>
+          {!arrived && !me ? (
+            <Text className="mt-2 text-small text-text-secondary">
+              {denied ? "위치 권한이 없어 남은 거리를 정확히 알 수 없어요." : "현재 위치를 찾는 중이에요."}
+            </Text>
+          ) : null}
+          <Button
+            label={arrived ? "홈으로" : "안내 끝내기"}
+            variant={arrived ? "primary" : "secondary"}
+            onPress={onHome}
+            className="mt-3"
+          />
+        </View>
+      </DraggableSheet>
     </View>
   );
 }

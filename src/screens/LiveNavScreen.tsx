@@ -8,6 +8,7 @@ import { useDeviateCheckMutation } from "@/apis/mutations/tracking/useDeviateChe
 import { useStationFacilitiesQuery } from "@/apis/queries/stations/useStationFacilitiesQuery";
 import { Button } from "@/common/components/Button";
 import { DesignIcon } from "@/common/components/DesignIcon";
+import { DraggableSheet } from "@/common/components/DraggableSheet";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { formatDurationSec } from "@/common/utils/format";
@@ -82,7 +83,8 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
   const createLog = useCreateTravelLogMutation();
   const deviate = useDeviateCheckMutation();
   const [picking, setPicking] = useState(false);
-  const [bottomHeight, setBottomHeight] = useState(0);
+  const [sheetVisible, setSheetVisible] = useState(0);
+  const [popupHeight, setPopupHeight] = useState(0);
   const [bannerHeight, setBannerHeight] = useState(0);
 
   // 홈으로 나가도 안내가 이어지도록 진행 중인 안내를 기억한다
@@ -127,9 +129,9 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
         info,
         coords ? { lat: coords.latitude, lng: coords.longitude } : undefined,
         { origin: endpointCoords(origin), destination: endpointCoords(destinationEndpoint) },
-        { top: insets.top + BANNER_TOP_OFFSET + bannerHeight, bottom: bottomHeight }
+        { top: insets.top + BANNER_TOP_OFFSET + bannerHeight, bottom: sheetVisible + popupHeight }
       ),
-    [option, info, coords, origin, destinationEndpoint, bottomHeight, bannerHeight, insets.top]
+    [option, info, coords, origin, destinationEndpoint, sheetVisible, popupHeight, bannerHeight, insets.top]
   );
 
   // 진행 막대: 역이 많아도 6개만 보여 준다
@@ -158,6 +160,13 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
     : showTransfer && doors.length > 0
       ? `빠른 환승 · ${doors.map(describeDoor).join(", ")}`
       : "";
+
+  const bottomPadding = Math.max(insets.bottom, 12) + 10;
+  const hasPopup = showAlight || showTransfer || arrivedAtEnd;
+  // 알림이 사라지면 그 높이를 지도 계산에서 뺀다
+  useEffect(() => {
+    if (!hasPopup) setPopupHeight(0);
+  }, [hasPopup]);
 
   const arrive = () => {
     const origin = stops[0]?.stationId;
@@ -212,48 +221,49 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
         />
       </View>
 
-      <View
-        className="absolute inset-x-0 bottom-0"
-        onLayout={(event) => setBottomHeight(Math.round(event.nativeEvent.layout.height))}
-      >
-        {showAlight || showTransfer || arrivedAtEnd ? (
-          <View className="mx-3 mb-3">
-            <ArrivalPopup
-              title={
-                arrivedAtEnd
-                  ? `${destination || "도착역"}에 도착했어요`
-                  : upcomingMessage({ ...upcoming!, stopsAway: upcomingAway }, nameAt(upcoming!.index))
-              }
-              detail={arrivedAtEnd ? "" : popupDetail}
-              onArrive={showAlight || arrivedAtEnd ? arrive : undefined}
-              loading={createLog.isPending}
-            />
-            {createLog.error ? (
-              <Text className="mt-1.5 text-center text-body-sm text-error">이동 기록을 저장하지 못했어요. 다시 시도해 주세요.</Text>
-            ) : null}
-          </View>
-        ) : null}
-
-        <View
-          style={{ paddingBottom: Math.max(insets.bottom, 12) + 10 }}
-          className="rounded-t-xl border-t border-border bg-bg px-5 pt-2.5"
-        >
-          <View className="mb-3.5 h-1 w-9 self-center rounded-pill bg-border" />
-          <View className="flex-row items-baseline justify-between">
-            <View className="flex-row items-baseline">
-              <Text className="text-headline font-sans-bold">{parts.amount}</Text>
-              <Text className="ml-1.5 text-body-sm text-text-secondary">{parts.rest}</Text>
-            </View>
-            {segment ? (
-              <RideBadge
-                lineId={segment.lineId}
-                kind={segment.isExpress ? "급행" : segment.lineId === "09" ? "일반" : undefined}
-                size="md"
-                full
+      <DraggableSheet
+        label="안내"
+        className="px-5"
+        bottomInset={bottomPadding}
+        coverBottom
+        onVisibleHeightChange={setSheetVisible}
+        above={
+          hasPopup ? (
+            <View className="mx-3 mb-3" onLayout={(event) => setPopupHeight(Math.round(event.nativeEvent.layout.height))}>
+              <ArrivalPopup
+                title={
+                  arrivedAtEnd
+                    ? `${destination || "도착역"}에 도착했어요`
+                    : upcomingMessage({ ...upcoming!, stopsAway: upcomingAway }, nameAt(upcoming!.index))
+                }
+                detail={arrivedAtEnd ? "" : popupDetail}
+                onArrive={showAlight || arrivedAtEnd ? arrive : undefined}
+                loading={createLog.isPending}
               />
-            ) : null}
-          </View>
-
+              {createLog.error ? (
+                <Text className="mt-1.5 text-center text-body-sm text-error">이동 기록을 저장하지 못했어요. 다시 시도해 주세요.</Text>
+              ) : null}
+            </View>
+          ) : null
+        }
+        header={
+              <View className="flex-row items-baseline justify-between">
+                <View className="flex-row items-baseline">
+                  <Text className="text-headline font-sans-bold">{parts.amount}</Text>
+                  <Text className="ml-1.5 text-body-sm text-text-secondary">{parts.rest}</Text>
+                </View>
+                {segment ? (
+                  <RideBadge
+                    lineId={segment.lineId}
+                    kind={segment.isExpress ? "급행" : segment.lineId === "09" ? "일반" : undefined}
+                    size="md"
+                    full
+                  />
+                ) : null}
+              </View>
+        }
+      >
+        <View style={{ paddingBottom: bottomPadding }}>
           <ProgressTrack names={trackNames} reachedIndex={trackReached} fill={fill} color={lineColor} />
 
           {phase === "WALK_TO_STATION" && boardingIndex !== undefined ? (
@@ -325,7 +335,7 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
             </Pressable>
           </View>
         </View>
-      </View>
+      </DraggableSheet>
 
       {picking ? (
         <View style={{ top: insets.top + 130 }} className="absolute inset-x-3 max-h-80 rounded-lg border border-border bg-bg">
