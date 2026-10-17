@@ -6,6 +6,8 @@ import { RiseIn } from "@/common/components/RiseIn";
 import { Text } from "@/common/components/Text";
 
 interface GuideBannerProps {
+  /** 맨 위 작은 글자. 기본은 "다음 역" */
+  label?: string;
   nextStationName: string;
   destinationName: string;
   stopsLeft: number;
@@ -17,6 +19,7 @@ interface GuideBannerProps {
 
 /** 안내 지도 위쪽의 primary 배너. 다음 역, 안내 중 표시, 도착지까지 남은 역과 시간, 약냉방칸을 보여 준다 */
 export function GuideBanner({
+  label = "다음 역",
   nextStationName,
   destinationName,
   stopsLeft,
@@ -38,7 +41,7 @@ export function GuideBanner({
             <DesignIcon name="back" size={20} tone="onPrimary" strokeWidth={2.2} />
           </Pressable>
           <View className="flex-1">
-            <Text className="text-small font-sans-semibold text-on-primary opacity-85">다음 역</Text>
+            <Text className="text-small font-sans-semibold text-on-primary opacity-85">{label}</Text>
             <Text numberOfLines={1} className="text-headline-md font-sans-bold text-on-primary">
               {nextStationName}
             </Text>

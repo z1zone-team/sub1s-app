@@ -7,11 +7,23 @@ import { useForegroundLocation } from "@/common/device/location/useForegroundLoc
 import {
   buildStops,
   currentSegment,
+  distanceMeters,
   guideProgress,
   nearestStopIndex,
   upcomingAction,
   type Anchor,
+  type Coordinate,
 } from "./progress";
+import { useActiveGuideStore } from "./active-guide-store";
+import {
+  boardingStopIndexes,
+  guidePhase,
+  needsWalkToStation,
+  nextBoardingIndex,
+  ridesBoardedBy,
+  walkPhaseRemainingSec,
+  type PhaseState,
+} from "./guidePhase";
 import { isOffRouteAlert, shouldShowAlert } from "./offRoute";
 import { useOffRouteStore } from "./offroute-store";
 import { useStopInfo } from "./useStopInfo";
@@ -24,9 +36,11 @@ interface UseGuideArgs {
   option: SubwayRouteOptionDto;
   sessionId: string;
   startedAtMs: number;
+  /** 출발지가 좌표(현재 위치나 장소)일 때의 좌표. 역이면 없고, 그러면 첫 탑승역까지 걷는 단계가 없다 */
+  originCoords?: Coordinate;
 }
 
-export function useGuide({ option, sessionId, startedAtMs }: UseGuideArgs) {
+export function useGuide({ option, sessionId, startedAtMs, originCoords }: UseGuideArgs) {
   const stationIds = option.stationIds ?? [];
   const stops = useMemo(() => buildStops(option, stationIds), [option, stationIds]);
   const info = useStopInfo(stationIds);
@@ -42,26 +56,63 @@ export function useGuide({ option, sessionId, startedAtMs }: UseGuideArgs) {
   }, []);
 
   const [nowMs, setNowMs] = useState(() => Date.now());
-  const [anchor, setAnchor] = useState<Anchor | undefined>();
+  // 홈에 다녀와 안내 화면을 다시 열어도 단계가 이어지도록 저장소에서 읽는다
+  const [saved] = useState(() => {
+    const active = useActiveGuideStore.getState().guide;
+    return active?.sessionId === sessionId ? active.progress : undefined;
+  });
+  const [anchor, setAnchor] = useState<Anchor | undefined>(saved?.anchor);
+  const [phaseState, setPhaseState] = useState<PhaseState>(saved?.phase ?? { boardedRides: 0, stationReached: false });
+
+  useEffect(() => {
+    useActiveGuideStore.getState().setProgress({ anchor, phase: phaseState });
+  }, [anchor, phaseState]);
 
   useEffect(() => {
     const timer = setInterval(() => setNowMs(Date.now()), TICK_MS);
     return () => clearInterval(timer);
   }, []);
 
-  const progress = guideProgress(stops, startedAtMs, nowMs, anchor);
+  const boardingIndexes = useMemo(() => boardingStopIndexes(option, stops), [option, stops]);
+  const gate = nextBoardingIndex(boardingIndexes, phaseState.boardedRides);
+  const baseProgress = guideProgress(stops, startedAtMs, nowMs, anchor, gate);
 
   const confirmStop = useCallback(
-    (index: number) => {
+    (index: number, source: "user" | "gps" = "user") => {
       const stop = stops[index];
       if (!stop) return;
+      if (gate !== undefined && index > gate) {
+        // 위치만으로 승차를 판단하지 않는다. 사용자가 더 뒤의 역에 있다고 알리면 그만큼 탄 것으로 본다
+        if (source === "gps") return;
+        setPhaseState((previous) => ({
+          boardedRides: Math.max(previous.boardedRides, ridesBoardedBy(boardingIndexes, index)),
+          stationReached: true,
+        }));
+      } else if (gate !== undefined && index === gate) {
+        setPhaseState((previous) => (previous.stationReached ? previous : { ...previous, stationReached: true }));
+      }
       const now = Date.now();
       setAnchor({ index, atMs: now });
       setNowMs(now);
       reportRef.current({ sessionId, currentStationId: stop.stationId });
     },
-    [stops, sessionId]
+    [stops, sessionId, gate, boardingIndexes]
   );
+
+  /** "열차에 탔어요": 지금 기다리던 열차를 탄 것으로 보고 이 역에서부터 시간을 센다 */
+  const board = useCallback(() => {
+    if (gate === undefined || !stops[gate]) return;
+    const now = Date.now();
+    setPhaseState((previous) => ({ boardedRides: previous.boardedRides + 1, stationReached: true }));
+    setAnchor({ index: gate, atMs: now });
+    setNowMs(now);
+    reportRef.current({ sessionId, currentStationId: stops[gate].stationId });
+  }, [gate, stops, sessionId]);
+
+  /** "역에 도착했어요": 첫 탑승역까지 걷는 단계를 마치고 승강장 대기로 넘어간다 */
+  const reachStation = useCallback(() => {
+    setPhaseState((previous) => (previous.stationReached ? previous : { ...previous, stationReached: true }));
+  }, []);
 
   const location = useForegroundLocation({ autoStart: true, timeInterval: TICK_MS, distanceInterval: 30 });
   const coords = location.coords;
@@ -95,8 +146,28 @@ export function useGuide({ option, sessionId, startedAtMs }: UseGuideArgs) {
     );
     if (index < 0 || index >= stops.length - 1 || index === lastGpsIndex.current) return;
     lastGpsIndex.current = index;
-    confirmStop(index);
+    confirmStop(index, "gps");
   }, [coords, info, stops, confirmStop]);
+
+  const boardingStation = gate !== undefined ? info.get(stops[gate]?.stationId ?? "") : undefined;
+  const boardingCoords = boardingStation ? { lat: boardingStation.lat, lng: boardingStation.lng } : undefined;
+  const position = coords ? { lat: coords.latitude, lng: coords.longitude } : undefined;
+  const phase = guidePhase({
+    boardingIndexes,
+    state: phaseState,
+    currentIndex: baseProgress.currentIndex,
+    walkNeeded: needsWalkToStation(originCoords, position, boardingCoords, GPS_MAX_DISTANCE_M),
+  });
+  // 걷는 동안은 걷는 시간까지 더한 남은 시간을 보여 준다
+  const progress =
+    phase === "WALK_TO_STATION"
+      ? {
+          ...baseProgress,
+          remainingSec: walkPhaseRemainingSec(baseProgress.remainingSec, option.totalDurationSec, (nowMs - startedAtMs) / 1000),
+        }
+      : baseProgress;
+  const from = position ?? originCoords;
+  const walkDistanceM = from && boardingCoords ? Math.round(distanceMeters(from, boardingCoords)) : undefined;
 
   return {
     stops,
@@ -104,6 +175,13 @@ export function useGuide({ option, sessionId, startedAtMs }: UseGuideArgs) {
     progress,
     nowMs,
     confirmStop,
+    phase,
+    /** 지금 기다리거나 걸어가는 대상인 탑승역의 순번. 모두 탔으면 없다 */
+    boardingIndex: gate,
+    /** 첫 탑승역까지 남은 거리(m). 걷는 단계에서 보여 준다. 위치와 출발지를 모르면 없다 */
+    walkDistanceM,
+    board,
+    reachStation,
     segment: currentSegment(option, stops, progress.currentIndex),
     upcoming: upcomingAction(stops, progress.currentIndex),
     alert,

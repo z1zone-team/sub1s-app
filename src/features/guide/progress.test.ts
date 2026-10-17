@@ -136,6 +136,41 @@ describe("guideProgress", () => {
   });
 });
 
+describe("guideProgress 탑승 전 멈춤(gate)", () => {
+  const stops = buildStops(option, IDS);
+  const start = 1_000_000;
+
+  it("타기 전에는 시간이 지나도 탑승역을 넘지 않는다", () => {
+    const progress = guideProgress(stops, start, start + 900_000, undefined, 0);
+    expect(progress.currentIndex).toBe(0);
+  });
+
+  it("기다리는 동안 남은 시간은 줄지 않고 탑승역부터 도착까지의 시간이다", () => {
+    const early = guideProgress(stops, start, start, undefined, 0);
+    const late = guideProgress(stops, start, start + 600_000, undefined, 0);
+    expect(early.remainingSec).toBe(1000);
+    expect(late.remainingSec).toBe(1000);
+  });
+
+  it("환승역에서 다음 열차를 타기 전에는 그 역에서 멈추고 남은 시간이 그 역부터의 값이다", () => {
+    const progress = guideProgress(stops, start, start + 900_000, { index: 0, atMs: start }, 3);
+    expect(progress).toMatchObject({ currentIndex: 3, remainingSec: 500, atFinalStop: false });
+  });
+
+  it("탑승역에 닿기 전에는 평소처럼 진행한다", () => {
+    const progress = guideProgress(stops, start, start + 150_000, { index: 0, atMs: start }, 3);
+    expect(progress.currentIndex).toBe(0);
+    expect(progress.remainingSec).toBe(850);
+  });
+
+  it("탔다고 확인한 뒤(gate 없음)에는 그 시각부터 이어서 센다", () => {
+    const boardedAt = start + 700_000;
+    const progress = guideProgress(stops, start, boardedAt + 250_000, { index: 3, atMs: boardedAt });
+    expect(progress.currentIndex).toBe(4);
+    expect(progress.remainingSec).toBe(250);
+  });
+});
+
 describe("upcomingAction", () => {
   const stops = buildStops(option, IDS);
 
