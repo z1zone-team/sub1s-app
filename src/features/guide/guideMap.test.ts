@@ -53,6 +53,19 @@ describe("guideMapData", () => {
     expect(data.lines.length).toBeGreaterThan(0);
   });
 
+  it("위의 배너와 아래의 시트 높이를 지도에 넘겨 내 위치가 보이는 영역의 가운데에 오게 한다", () => {
+    const data = guideMapData(option, stations, { lat: 37.51, lng: 126.85 }, undefined, { top: 180, bottom: 420 });
+    expect(data.topInset).toBe(180);
+    expect(data.bottomInset).toBe(420);
+    expect(data.center).toEqual([37.51, 126.85]);
+  });
+
+  it("위치를 모르고 경로 전체를 맞출 때는 시트 높이를 넘기지 않는다", () => {
+    const data = guideMapData(option, stations, undefined, undefined, { top: 180, bottom: 420 });
+    expect(data.bottomInset).toBeUndefined();
+    expect(data.topInset).toBeUndefined();
+  });
+
   it("역 좌표를 모르면 선 없이 내 위치만 보여 준다", () => {
     const data = guideMapData(option, new Map(), { lat: 37.51, lng: 126.85 });
     expect(data.lines).toEqual([]);

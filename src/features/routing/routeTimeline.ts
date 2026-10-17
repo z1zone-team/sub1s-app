@@ -2,6 +2,7 @@ import type { PathSegmentDto, SubwayRouteOptionDto } from "@/apis/queries/routin
 import type { MapData, MapLine, MapMarker } from "@/features/map/mapHtml";
 import { formatClock24Kst } from "@/common/utils/format";
 import { getLineInfo, WALK_LINE_ID } from "@/theme";
+import { decodePolyline } from "./polyline";
 
 const isRide = (segment: PathSegmentDto): boolean => segment.lineId !== WALK_LINE_ID;
 
@@ -132,6 +133,15 @@ export function routeMapData(option: SubwayRouteOptionDto, coords: StationCoords
     if (ride && start >= 0 && end > start) {
       points = ids.slice(start, end + 1).map(point).filter((p): p is [number, number] => Boolean(p));
       searchFrom = end;
+    }
+    if (!ride && segment.path) {
+      // 실제 보행 경로 선. 선 끝은 가장 가까운 보행로에 붙은 점이라 출발지와 역 좌표를 양 끝에 이어 붙인다
+      const route = decodePolyline(segment.path);
+      if (route.length >= 2) {
+        const from = point(segment.fromStationId);
+        const to = point(segment.toStationId);
+        points = [...(from ? [from] : []), ...route, ...(to ? [to] : [])];
+      }
     }
     if (points.length < 2) {
       points = [point(segment.fromStationId), point(segment.toStationId)].filter((p): p is [number, number] => Boolean(p));

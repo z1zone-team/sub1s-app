@@ -71,11 +71,14 @@ export interface PathSegmentDto {
   isEstimated?: boolean;
   walkCalories?: number;
   walkSteps?: number;
+  /** 도보 구간의 실제 보행 경로 선(구글 인코딩 폴리라인, 정밀도 5, 위도 경도 순). 직선 추정인 구간에는 없다 */
+  path?: string;
 }
 
 export interface SubwayRouteOptionDto {
   routeId?: string;
-  walkDistanceSource?: "ESTIMATED" | "NONE";
+  /** ROUTED는 출발지, 도착지와 역 사이를 실제 보행로로 구한 값, ESTIMATED는 직선 추정이나 환승 시간 환산이 섞인 값 */
+  walkDistanceSource?: "ROUTED" | "ESTIMATED" | "NONE";
   mode: RouteMode;
   totalDurationSec: number;
   totalDistanceKm: number;
