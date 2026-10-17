@@ -135,6 +135,34 @@ describe("routeMapData", () => {
     expect(data.lines[0].points).toEqual([[37.5, 126.8], [37.5, 127.0]]);
   });
 
+  it("도보만 있는 경로는 출발지와 도착지 좌표로 점선을 잇는다", () => {
+    const data = routeMapData(
+      option([walk(1200, "ORIGIN_COORDINATE", "DEST_COORDINATE")]),
+      new Map(),
+      { origin: { lat: 37.4, lng: 127.1 }, destination: { lat: 37.41, lng: 127.12 } }
+    );
+    expect(data.lines).toHaveLength(1);
+    expect(data.lines[0].dashed).toBe(true);
+    expect(data.lines[0].points).toEqual([[37.4, 127.1], [37.41, 127.12]]);
+    expect(data.markers).toHaveLength(2);
+    expect(data.fit).toBe(true);
+  });
+
+  it("역까지 걷는 첫 구간도 출발지 좌표에서 시작하는 점선이 된다", () => {
+    const data = routeMapData(
+      option([walk(300, "ORIGIN_COORDINATE", "a"), segment({ fromStationId: "a", toStationId: "c" })], ["a", "b", "c"]),
+      coords,
+      { origin: { lat: 37.49, lng: 126.79 } }
+    );
+    expect(data.lines[0].dashed).toBe(true);
+    expect(data.lines[0].points).toEqual([[37.49, 126.79], [37.5, 126.8]]);
+  });
+
+  it("출발지 좌표를 모르면 그 걷기 구간은 그리지 않는다", () => {
+    const data = routeMapData(option([walk(300, "ORIGIN_COORDINATE", "a")]), coords);
+    expect(data.lines).toHaveLength(0);
+  });
+
   it("좌표가 하나도 없으면 맞추지 않는다", () => {
     expect(routeMapData(option([segment({})], ["a"]), new Map()).fit).toBe(false);
   });

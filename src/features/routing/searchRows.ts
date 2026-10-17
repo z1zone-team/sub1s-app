@@ -1,3 +1,4 @@
+import type { ReversePlaceItem } from "@/apis/queries/places/reversePlace";
 import type {
   PlaceSearchResultItem,
 } from "@/apis/queries/places/searchPlaces";
@@ -23,6 +24,23 @@ export interface SearchRow {
   endpoint: RouteEndpoint;
 }
 
+/** 장소 한 건의 행. 가까운 역이 없으면(지도에서 직접 고른 먼 곳) 걸어서 안내한다는 문구를 붙인다 */
+export function toPlaceRow(item: ReversePlaceItem): SearchRow {
+  const nearest = item.nearestStation;
+  return {
+    key: `place:${item.lat},${item.lng}:${item.name}`,
+    kind: "PLACE",
+    title: item.name,
+    subtitle: item.address || undefined,
+    hint: nearest
+      ? `${nearest.name}역에서 도보 ${formatDurationSec(nearest.walkDurationSec)}`
+      : "가까운 지하철역이 없어요. 걸어서 안내해 드려요.",
+    lineIds: [],
+    coords: { lat: item.lat, lng: item.lng },
+    endpoint: endpointFromPlace(item),
+  };
+}
+
 /** 서버가 이미 정렬(역 먼저, 장소 다음)해서 주므로 순서는 바꾸지 않는다 */
 export function toSearchRows(items: PlaceSearchResultItem[]): SearchRow[] {
   return items.map((item): SearchRow => {
@@ -37,16 +55,6 @@ export function toSearchRows(items: PlaceSearchResultItem[]): SearchRow[] {
       };
     }
 
-    const walk = formatDurationSec(item.nearestStation.walkDurationSec);
-    return {
-      key: `place:${item.lat},${item.lng}:${item.name}`,
-      kind: "PLACE",
-      title: item.name,
-      subtitle: item.address || undefined,
-      hint: `${item.nearestStation.name}역에서 도보 ${walk}`,
-      lineIds: [],
-      coords: { lat: item.lat, lng: item.lng },
-      endpoint: endpointFromPlace(item),
-    };
+    return toPlaceRow(item);
   });
 }

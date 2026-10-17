@@ -1,4 +1,5 @@
 import * as client from "@/apis/client";
+import { reversePlace } from "./reversePlace";
 import {
   MAX_PLACE_QUERY_LENGTH,
   normalizePlaceQuery,
@@ -55,6 +56,30 @@ describe("places api", () => {
       (client.get as jest.Mock).mockRejectedValue(limited);
 
       await expect(searchPlaces({ q: "강남" })).rejects.toBe(limited);
+    });
+  });
+
+  describe("reversePlace", () => {
+    it("calls GET /places/reverse with the coordinates", async () => {
+      const item = { type: "PLACE", name: "서울특별시 강남구 강남대로 396" };
+      (client.get as jest.Mock).mockResolvedValue(item);
+      const controller = new AbortController();
+
+      const response = await reversePlace({ lat: 37.4985, lng: 127.0278 }, { signal: controller.signal });
+
+      expect(response).toBe(item);
+      expect(client.get).toHaveBeenCalledWith(
+        "/places/reverse",
+        { lat: 37.4985, lng: 127.0278 },
+        { signal: controller.signal }
+      );
+    });
+
+    it("passes the no-station error through", async () => {
+      const outOfArea = new client.ApiError("PLACE_OUT_OF_SERVICE_AREA", "no station", 422);
+      (client.get as jest.Mock).mockRejectedValue(outOfArea);
+
+      await expect(reversePlace({ lat: 33.5, lng: 126.5 })).rejects.toBe(outOfArea);
     });
   });
 });

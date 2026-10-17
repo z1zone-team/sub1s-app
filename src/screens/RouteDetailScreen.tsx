@@ -11,6 +11,7 @@ import { formatClockKst, formatDurationSec, formatFare } from "@/common/utils/fo
 import { VWorldMap } from "@/features/map/VWorldMap";
 import { RouteTimeline } from "@/features/routing/components/RouteTimeline";
 import { splitDuration } from "@/features/routing/routeCardView";
+import { endpointCoords } from "@/features/routing/endpoint";
 import { clockRangeShort, mapStationIds, routeMapData } from "@/features/routing/routeTimeline";
 import type { RootStackParamList } from "@/navigation/navigation-types";
 import { WALK_LINE_ID } from "@/theme";
@@ -23,7 +24,7 @@ export function RouteDetailScreen({
   navigation,
   route,
 }: NativeStackScreenProps<RootStackParamList, "RouteDetail">) {
-  const { option, title, tagline, destination } = route.params;
+  const { option, title, tagline, origin, destination } = route.params;
   const insets = useSafeAreaInsets();
 
   const lastRide = [...option.segments].reverse().find((segment) => segment.lineId !== WALK_LINE_ID);
@@ -37,8 +38,11 @@ export function RouteDetailScreen({
   const stations = useStationsQuery(stationIds);
   const mapData = useMemo(() => {
     const coords = new Map((stations.data?.items ?? []).map((item) => [item.stationId, { lat: item.lat, lng: item.lng }]));
-    return routeMapData(option, coords);
-  }, [option, stations.data]);
+    return routeMapData(option, coords, {
+      origin: endpointCoords(origin),
+      destination: endpointCoords(destination),
+    });
+  }, [option, stations.data, origin, destination]);
 
   const startGuide = () => {
     if (startTracking.isPending) return;
