@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Pressable, TextInput, View } from "react-native";
+import { FlatList, TextInput, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { ApiError } from "@/apis/client";
 import { usePlaceSearchQuery } from "@/apis/queries/places/usePlaceSearchQuery";
 import { useSavePlaceMutation, useUserPlacesQuery } from "@/apis/queries/users/useUserPlaces";
-import { DesignIcon } from "@/common/components/DesignIcon";
+import { BackButton } from "@/common/components/BackButton";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { LAST_KNOWN_MAX_AGE_MS, LOCATION_FIX_TIMEOUT_MS, useForegroundLocation } from "@/common/device";
@@ -151,14 +151,7 @@ export function SearchScreen({
   return (
     <Screen surface>
       <View className="px-4 pt-2">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="뒤로"
-          onPress={() => navigation.goBack()}
-          className="-ml-3 h-control w-control items-center justify-center"
-        >
-          <DesignIcon name="back" />
-        </Pressable>
+        <BackButton onPress={() => navigation.goBack()} className="-ml-3" />
         {pickPlace ? (
           <Text className="pb-1 text-title font-sans-bold">{PLACE_LABEL[pickPlace]}으로 지정할 장소</Text>
         ) : null}

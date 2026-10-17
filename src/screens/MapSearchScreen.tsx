@@ -3,6 +3,7 @@ import { FlatList, Pressable, TextInput, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { ApiError } from "@/apis/client";
 import { usePlaceSearchQuery } from "@/apis/queries/places/usePlaceSearchQuery";
+import { BackButton } from "@/common/components/BackButton";
 import { DesignIcon } from "@/common/components/DesignIcon";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
@@ -47,14 +48,7 @@ export function MapSearchScreen({ navigation }: NativeStackScreenProps<RootStack
   return (
     <Screen>
       <View className="flex-row items-center gap-1.5 px-4 pb-3 pt-2">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="뒤로"
-          onPress={() => navigation.goBack()}
-          className="h-control w-control items-center justify-center"
-        >
-          <DesignIcon name="back" />
-        </Pressable>
+        <BackButton onPress={() => navigation.goBack()} />
         <View className="h-12 flex-1 flex-row items-center gap-2 rounded-md bg-surface pl-3.5 pr-1.5">
           <DesignIcon name="search" size={18} tone="secondary" />
           <TextInput

@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLineMapQuery } from "@/apis/queries/profile/useLineMapQuery";
 import { useTimelineQuery } from "@/apis/queries/profile/useTimelineQuery";
 import { useTravelStatsQuery } from "@/apis/queries/profile/useTravelStatsQuery";
-import { DesignIcon } from "@/common/components/DesignIcon";
+import { BackButton } from "@/common/components/BackButton";
 import { Text } from "@/common/components/Text";
 import { formatDistanceKm } from "@/common/utils/format";
 import { valueParts } from "@/features/guide/arrivedView";
@@ -53,14 +53,7 @@ export function MoveMapScreen({ navigation, route }: NativeStackScreenProps<Root
       <VWorldMap data={data} className="absolute inset-0" />
 
       <View className="absolute left-4 right-4 flex-row items-center gap-2.5" style={{ top: insets.top + 8 }}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="뒤로"
-          onPress={() => navigation.goBack()}
-          className="h-control w-control items-center justify-center rounded-pill border border-border bg-bg"
-        >
-          <DesignIcon name="back" size={22} strokeWidth={2} />
-        </Pressable>
+        <BackButton onPress={() => navigation.goBack()} variant="floating" iconSize={22} strokeWidth={2} />
         <View className="h-control justify-center rounded-pill border border-border bg-bg px-4">
           <Text className="text-subtitle font-sans-bold">이동 지도</Text>
         </View>

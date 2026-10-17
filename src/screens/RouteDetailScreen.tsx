@@ -5,6 +5,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useStartTrackingMutation } from "@/apis/mutations/tracking/useStartTrackingMutation";
 import { useStationsQuery } from "@/apis/queries/stations/useStationsQuery";
+import { BackButton } from "@/common/components/BackButton";
 import { DesignIcon } from "@/common/components/DesignIcon";
 import { Text } from "@/common/components/Text";
 import { formatClockKst, formatDurationSec, formatFare } from "@/common/utils/format";
@@ -75,15 +76,7 @@ export function RouteDetailScreen({
         <VWorldMap data={mapData} className="flex-1" />
       </View>
 
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="뒤로"
-        onPress={() => navigation.goBack()}
-        style={{ top: insets.top + 10 }}
-        className="absolute left-4 h-control w-control items-center justify-center rounded-pill border border-border bg-bg"
-      >
-        <DesignIcon name="back" size={22} />
-      </Pressable>
+      <BackButton onPress={() => navigation.goBack()} variant="floating" iconSize={22} style={{ top: insets.top + 10 }} className="absolute left-4" />
 
       <View style={{ top: SHEET_TOP }} className="absolute inset-x-0 bottom-0 rounded-t-xl border-t border-border bg-bg">
         <View className="mb-0.5 mt-2.5 h-1 w-9 self-center rounded-pill bg-border" />
