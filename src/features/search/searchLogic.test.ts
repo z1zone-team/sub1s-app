@@ -6,6 +6,7 @@ import {
   pickRecommendedGroups,
   recommendedPair,
   rowFromEndpoint,
+  shouldOfferOriginFallback,
   summarizeRoute,
   swapEndpoints,
   transferAndWalkText,
@@ -142,5 +143,30 @@ describe("rowFromEndpoint", () => {
     expect(row.kind).toBe("PLACE");
     expect(row.lineIds).toEqual([]);
     expect(row.endpoint.lat).toBe(37.56);
+  });
+});
+
+describe("shouldOfferOriginFallback", () => {
+  const base = { fixTimedOut: false, locationDenied: false, originChosenByUser: false, origin: undefined };
+  const origin = { name: "현재 위치", lat: 37.5, lng: 127 };
+
+  it("위치를 기다리는 동안에는 보이지 않는다", () => {
+    expect(shouldOfferOriginFallback(base)).toBe(false);
+  });
+
+  it("제한 시간 안에 위치를 못 잡으면 보인다", () => {
+    expect(shouldOfferOriginFallback({ ...base, fixTimedOut: true })).toBe(true);
+  });
+
+  it("위치 권한이 없으면 바로 보인다", () => {
+    expect(shouldOfferOriginFallback({ ...base, locationDenied: true })).toBe(true);
+  });
+
+  it("출발지가 이미 정해졌으면 보이지 않는다", () => {
+    expect(shouldOfferOriginFallback({ ...base, fixTimedOut: true, origin })).toBe(false);
+  });
+
+  it("사용자가 출발지를 골랐으면 보이지 않는다", () => {
+    expect(shouldOfferOriginFallback({ ...base, locationDenied: true, originChosenByUser: true })).toBe(false);
   });
 });

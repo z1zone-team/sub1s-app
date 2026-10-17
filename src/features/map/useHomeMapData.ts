@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
-import { useForegroundLocation } from "@/common/device";
+import { LAST_KNOWN_MAX_AGE_MS, useForegroundLocation } from "@/common/device";
 import { getCurrentCoordinates, type CurrentCoordinates } from "@/common/device/location/getCurrentCoordinates";
 import { homeMapData } from "./mapData";
 import type { MapData } from "./mapHtml";
@@ -11,7 +11,7 @@ const LOCATION_MAX_AGE_MS = 2 * 60 * 1000;
 
 /** 홈 지도에 올릴 내 위치와, 지도 검색에서 고른 장소(있으면). 프로토타입 홈 지도에는 그 밖의 핀이 없다 */
 export function useHomeMapData(pin?: { lat: number; lng: number }): MapData {
-  const location = useForegroundLocation({ autoStart: true });
+  const location = useForegroundLocation({ autoStart: true, lastKnownMaxAgeMs: LAST_KNOWN_MAX_AGE_MS });
   const coords = location.coords;
   const [initialLocation, setInitialLocation] = useState(() =>
     lastHomeLocation && Date.now() - lastHomeLocation.timestamp <= LOCATION_MAX_AGE_MS

@@ -8,7 +8,7 @@ export interface CurrentCoordinates {
 /** 이 시간 안에 위치가 오지 않으면 위치 없이 진행한다 */
 export const CURRENT_POSITION_TIMEOUT_MS = 2000;
 /** 마지막으로 알려진 위치를 그대로 써도 되는 나이 */
-const LAST_KNOWN_MAX_AGE_MS = 2 * 60 * 1000;
+export const LAST_KNOWN_MAX_AGE_MS = 2 * 60 * 1000;
 
 function toCoordinates(position: Location.LocationObject | null): CurrentCoordinates | null {
   if (!position) return null;

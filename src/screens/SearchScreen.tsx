@@ -3,11 +3,11 @@ import { FlatList, Pressable, TextInput, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { ApiError } from "@/apis/client";
 import { usePlaceSearchQuery } from "@/apis/queries/places/usePlaceSearchQuery";
-import { useSavePlaceMutation } from "@/apis/queries/users/useUserPlaces";
+import { useSavePlaceMutation, useUserPlacesQuery } from "@/apis/queries/users/useUserPlaces";
 import { DesignIcon } from "@/common/components/DesignIcon";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
-import { useForegroundLocation } from "@/common/device";
+import { LAST_KNOWN_MAX_AGE_MS, LOCATION_FIX_TIMEOUT_MS, useForegroundLocation } from "@/common/device";
 import {
   endpointFromCoords,
   isSameEndpoint,
@@ -16,11 +16,12 @@ import {
 } from "@/features/routing/endpoint";
 import { toSearchRows } from "@/features/routing/searchRows";
 import { useRecentDestinations } from "@/features/routing/useRecentDestinations";
-import { endpointToSaveBody, PLACE_LABEL } from "@/features/places/placeEndpoint";
+import { endpointToSaveBody, PLACE_LABEL, placeOfKind, placeToEndpoint } from "@/features/places/placeEndpoint";
+import { OriginFallback } from "@/features/search/components/OriginFallback";
 import { RecentSearchList } from "@/features/search/components/RecentSearchList";
 import { RouteEndpointBox, type EndpointField } from "@/features/search/components/RouteEndpointBox";
 import { SearchResultRow } from "@/features/search/components/SearchResultRow";
-import { swapEndpoints } from "@/features/search/searchLogic";
+import { shouldOfferOriginFallback, swapEndpoints } from "@/features/search/searchLogic";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import type { RootStackParamList } from "@/navigation/navigation-types";
 
@@ -43,8 +44,22 @@ export function SearchScreen({
   const [originChosenByUser, setOriginChosenByUser] = useState(Boolean(presetOrigin));
   const navigated = useRef(false);
 
-  const location = useForegroundLocation({ autoStart: true });
+  const location = useForegroundLocation({
+    autoStart: true,
+    lastKnownMaxAgeMs: LAST_KNOWN_MAX_AGE_MS,
+    fixTimeoutMs: LOCATION_FIX_TIMEOUT_MS,
+  });
   const recent = useRecentDestinations();
+  const places = useUserPlacesQuery();
+  const homePlace = placeOfKind(places.data, "HOME");
+
+  // 지도 선택 화면에서 돌아오며 넘긴 출발지. 사용자가 정한 것이라 이후 위치가 와도 바꾸지 않는다
+  useEffect(() => {
+    if (!presetOrigin) return;
+    setOrigin(presetOrigin);
+    setOriginChosenByUser(true);
+    setActive("destination");
+  }, [presetOrigin]);
 
   // 위치를 받으면 사용자가 출발지를 직접 고르기 전까지 현재 위치를 출발지로 쓴다
   useEffect(() => {
@@ -53,6 +68,9 @@ export function SearchScreen({
   }, [location.coords, originChosenByUser]);
 
   const locationDenied = location.error === "LOCATION_PERMISSION_DENIED";
+  const offerOriginFallback =
+    !pickPlace &&
+    shouldOfferOriginFallback({ fixTimedOut: location.fixTimedOut, locationDenied, originChosenByUser, origin });
   useEffect(() => {
     if (!pickPlace && locationDenied && !origin) setActive("origin");
   }, [pickPlace, locationDenied, origin]);
@@ -173,8 +191,18 @@ export function SearchScreen({
 
       <View className="gap-1 px-5 pt-2">
         {savePlace.error ? <Text className="text-small text-error">저장하지 못했어요. 다시 시도해 주세요.</Text> : null}
-        {locationDenied && !pickPlace ? (
-          <Text className="text-small text-text-secondary">위치 권한이 없어 출발지를 직접 입력해야 해요.</Text>
+        {offerOriginFallback ? (
+          <OriginFallback
+            denied={locationDenied}
+            homeName={homePlace ? homePlace.name : undefined}
+            onHome={() => {
+              if (!homePlace) return;
+              setOriginChosenByUser(true);
+              setOrigin(placeToEndpoint(homePlace));
+              if (!destination) setActive("destination");
+            }}
+            onPickOnMap={() => navigation.navigate("MapPick")}
+          />
         ) : null}
         {sameStationWarning ? (
           <Text className="text-small text-error">출발지와 도착지가 같아요. 다른 곳을 골라 주세요.</Text>
