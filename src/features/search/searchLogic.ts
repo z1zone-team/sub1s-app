@@ -14,6 +14,20 @@ export function swapEndpoints(
   return { origin: destination, destination: origin };
 }
 
+/**
+ * 출발지를 현재 위치로 잡지 못했을 때 대체 안내(저장한 집, 지도에서 선택)를 보일지.
+ * 사용자가 출발지를 정했거나 위치가 이미 잡혔으면 보이지 않는다
+ */
+export function shouldOfferOriginFallback(input: {
+  fixTimedOut: boolean;
+  locationDenied: boolean;
+  originChosenByUser: boolean;
+  origin: RouteEndpoint | undefined;
+}): boolean {
+  if (input.originChosenByUser || input.origin) return false;
+  return input.fixTimedOut || input.locationDenied;
+}
+
 export interface RecommendedPair {
   origin: RouteEndpoint;
   destination: RouteEndpoint;

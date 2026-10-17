@@ -25,6 +25,8 @@ export type RootStackParamList = {
   MainTabs: NavigatorScreenParams<BottomTabParamList>;
   /** 홈의 검색 필. 입력 한 칸으로 장소를 찾아 지도에서 확인한다 */
   MapSearch: undefined;
+  /** 길찾기에서 현재 위치를 잡지 못했을 때 지도를 길게 눌러 출발지를 정한다 */
+  MapPick: undefined;
   /** 길찾기. 출발과 도착 두 칸 */
   Search: {
     /** 지도에서 고른 장소를 출발지로 정해서 들어올 때 */

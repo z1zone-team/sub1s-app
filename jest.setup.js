@@ -91,6 +91,7 @@ jest.mock("expo-location", () => ({
   },
   requestForegroundPermissionsAsync: jest.fn().mockResolvedValue({ status: "granted" }),
   watchPositionAsync: jest.fn().mockResolvedValue({ remove: jest.fn() }),
+  getLastKnownPositionAsync: jest.fn().mockResolvedValue(null),
 }));
 
 // Mock expo-audio
