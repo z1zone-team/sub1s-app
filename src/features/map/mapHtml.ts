@@ -33,6 +33,29 @@ export interface MapData {
   zoom?: number;
 }
 
+/** 지도를 길게 눌렀을 때 WebView가 앱에 보내는 메시지 */
+export interface MapLongPress {
+  lat: number;
+  lng: number;
+}
+
+/** WebView 메시지에서 길게 누른 좌표를 꺼낸다. 형식이 맞지 않으면 null */
+export function parseMapLongPress(raw: string): MapLongPress | null {
+  try {
+    const message = JSON.parse(raw) as { type?: unknown; lat?: unknown; lng?: unknown };
+    if (message.type !== "longPress") return null;
+    const { lat, lng } = message;
+    if (typeof lat !== "number" || typeof lng !== "number") return null;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    return { lat, lng };
+  } catch {
+    return null;
+  }
+}
+
+export const LONG_PRESS_MS = 600;
+const LONG_PRESS_SLOP_PX = 10;
+
 export const DEFAULT_CENTER: [number, number] = [37.5665, 126.978];
 export const DEFAULT_ZOOM = 12;
 
@@ -94,6 +117,34 @@ export function buildMapHtml(vworldKey: string): string {
         '<path d="M12 1.5C6.8 1.5 2.5 5.7 2.5 10.9c0 6.7 9.5 17.6 9.5 17.6s9.5-10.9 9.5-17.6C21.5 5.7 17.2 1.5 12 1.5z" fill="#002968" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round"/>' +
         '<circle cx="12" cy="10.8" r="3.6" fill="#FFFFFF"/></svg>'
     });
+    var pressTimer = null;
+    var pressStart = null;
+    var mapEl = map.getContainer();
+    function cancelPress() {
+      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+    }
+    mapEl.addEventListener("touchstart", function (e) {
+      cancelPress();
+      if (e.touches.length !== 1) return;
+      pressStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      pressTimer = setTimeout(function () {
+        pressTimer = null;
+        var rect = mapEl.getBoundingClientRect();
+        var latlng = map.containerPointToLatLng([pressStart.x - rect.left, pressStart.y - rect.top]);
+        if (window.ReactNativeWebView) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({ type: "longPress", lat: latlng.lat, lng: latlng.lng }));
+        }
+      }, ${LONG_PRESS_MS});
+    }, { passive: true });
+    mapEl.addEventListener("touchmove", function (e) {
+      if (!pressTimer) return;
+      var dx = e.touches[0].clientX - pressStart.x;
+      var dy = e.touches[0].clientY - pressStart.y;
+      if (Math.sqrt(dx * dx + dy * dy) > ${LONG_PRESS_SLOP_PX}) cancelPress();
+    }, { passive: true });
+    mapEl.addEventListener("touchend", cancelPress, { passive: true });
+    mapEl.addEventListener("touchcancel", cancelPress, { passive: true });
+    mapEl.addEventListener("contextmenu", function (e) { e.preventDefault(); });
     window.updateMap = function (data) {
       layer.clearLayers();
       var bounds = [];
