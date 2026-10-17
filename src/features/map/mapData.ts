@@ -73,6 +73,6 @@ export function homeMapData({ me, pin }: HomeMapInput): MapData {
     lines: [],
     fit: false,
     center: [focus.lat, focus.lng],
-    zoom: pin ? 16 : 14,
+    zoom: pin ? 16 : 15,
   };
 }

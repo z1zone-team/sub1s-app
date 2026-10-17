@@ -96,7 +96,8 @@ export function buildMapHtml(vworldKey: string): string {
   } else {
     var map = L.map("map", { zoomControl: false, attributionControl: false }).setView([${DEFAULT_CENTER[0]}, ${DEFAULT_CENTER[1]}], ${DEFAULT_ZOOM});
     L.tileLayer("https://api.vworld.kr/req/wmts/1.0.0/${key}/Base/{z}/{y}/{x}.png", {
-      maxZoom: 19
+      maxZoom: 19,
+      detectRetina: true
     }).addTo(map);
     var layer = L.layerGroup().addTo(map);
     var ME_ICON = L.divIcon({
