@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { Pressable, View } from "react-native";
+import { View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useReversePlaceMutation } from "@/apis/queries/places/useReversePlaceMutation";
-import { DesignIcon } from "@/common/components/DesignIcon";
+import { BackButton } from "@/common/components/BackButton";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { PickConfirmCard } from "@/features/map/components/PickConfirmCard";
@@ -38,15 +38,7 @@ export function MapPickScreen({ navigation }: NativeStackScreenProps<RootStackPa
       <View className="flex-1 bg-surface">
         <VWorldMap data={mapData} className="flex-1" onLongPress={onLongPress} />
 
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="뒤로"
-          onPress={() => navigation.goBack()}
-          style={{ top: insets.top + 10 }}
-          className="absolute left-4 h-control w-control items-center justify-center rounded-pill border border-border bg-bg"
-        >
-          <DesignIcon name="back" />
-        </Pressable>
+        <BackButton onPress={() => navigation.goBack()} variant="floating" style={{ top: insets.top + 10 }} className="absolute left-4" />
 
         {pick ? null : (
           <View

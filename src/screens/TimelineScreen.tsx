@@ -7,6 +7,7 @@ import type { TravelStatsPeriod } from "@/apis/queries/profile/getTravelStats";
 import { useLineMapQuery } from "@/apis/queries/profile/useLineMapQuery";
 import { useTimelineQuery } from "@/apis/queries/profile/useTimelineQuery";
 import { useTravelStatsQuery } from "@/apis/queries/profile/useTravelStatsQuery";
+import { BackButton } from "@/common/components/BackButton";
 import { Bob } from "@/common/components/Bob";
 import { DesignIcon } from "@/common/components/DesignIcon";
 import { LoadingGhost } from "@/common/components/LoadingGhost";
@@ -61,14 +62,7 @@ export function TimelineScreen() {
   const mapData = useMemo(() => visitedMapData(lineMap.data), [lineMap.data]);
 
   const back = (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel="뒤로"
-      onPress={() => navigation.goBack()}
-      className="ml-3 h-control w-control items-center justify-center"
-    >
-      <DesignIcon name="back" size={24} strokeWidth={2} />
-    </Pressable>
+    <BackButton onPress={() => navigation.goBack()} iconSize={24} strokeWidth={2} className="ml-3" />
   );
 
   if (!isSignedIn) {

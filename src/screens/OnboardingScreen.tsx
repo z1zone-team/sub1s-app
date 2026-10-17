@@ -4,8 +4,8 @@ import { useAuth } from "@clerk/expo";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { usePreferencesQuery } from "@/apis/queries/users/usePreferencesQuery";
 import { useUpdatePreferencesMutation } from "@/apis/mutations/users/useUpdatePreferencesMutation";
+import { BackButton } from "@/common/components/BackButton";
 import { Button } from "@/common/components/Button";
-import { DesignIcon } from "@/common/components/DesignIcon";
 import { Chip } from "@/common/components/Chip";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
@@ -71,14 +71,7 @@ export function OnboardingScreen({
   return (
     <Screen edges={["top", "bottom"]} contentClassName="px-3">
       <View className="flex-row items-center justify-between">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="뒤로"
-          onPress={step === 1 ? leave : () => setStep(1)}
-          className="h-control w-control items-center justify-center"
-        >
-          <DesignIcon name="back" size={24} strokeWidth={2} />
-        </Pressable>
+        <BackButton onPress={step === 1 ? leave : () => setStep(1)} iconSize={24} strokeWidth={2} />
         <Pressable accessibilityRole="button" onPress={close} className="h-control justify-center px-2">
           <Text className="text-body font-sans-semibold text-text-secondary">{editing ? "닫기" : "건너뛰기"}</Text>
         </Pressable>
