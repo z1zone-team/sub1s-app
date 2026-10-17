@@ -39,6 +39,9 @@ import { cn } from "@/lib/cn";
 
 type Props = NativeStackScreenProps<RootStackParamList, "LiveNav">;
 
+/** 안내 배너가 상태 표시줄 아래에서 떨어진 거리 */
+const BANNER_TOP_OFFSET = 8;
+
 export function LiveNavScreen({ navigation, route }: Props) {
   const { sessionId, option, startedAtMs, origin, destination } = route.params;
 
@@ -79,6 +82,8 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
   const createLog = useCreateTravelLogMutation();
   const deviate = useDeviateCheckMutation();
   const [picking, setPicking] = useState(false);
+  const [bottomHeight, setBottomHeight] = useState(0);
+  const [bannerHeight, setBannerHeight] = useState(0);
 
   // 홈으로 나가도 안내가 이어지도록 진행 중인 안내를 기억한다
   useEffect(() => {
@@ -121,9 +126,10 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
         option,
         info,
         coords ? { lat: coords.latitude, lng: coords.longitude } : undefined,
-        { origin: endpointCoords(origin), destination: endpointCoords(destinationEndpoint) }
+        { origin: endpointCoords(origin), destination: endpointCoords(destinationEndpoint) },
+        { top: insets.top + BANNER_TOP_OFFSET + bannerHeight, bottom: bottomHeight }
       ),
-    [option, info, coords, origin, destinationEndpoint]
+    [option, info, coords, origin, destinationEndpoint, bottomHeight, bannerHeight, insets.top]
   );
 
   // 진행 막대: 역이 많아도 6개만 보여 준다
@@ -190,7 +196,11 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
     <View className="flex-1 bg-surface">
       <VWorldMap data={mapData} className="absolute inset-0" />
 
-      <View style={{ top: insets.top + 8 }} className="absolute inset-x-3">
+      <View
+        style={{ top: insets.top + BANNER_TOP_OFFSET }}
+        className="absolute inset-x-3"
+        onLayout={(event) => setBannerHeight(Math.round(event.nativeEvent.layout.height))}
+      >
         <GuideBanner
           label={phaseBannerLabel(phase)}
           nextStationName={riding || boardingIndex === undefined ? nameAt(nextVisible) : nameAt(boardingIndex)}
@@ -202,7 +212,10 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
         />
       </View>
 
-      <View className="absolute inset-x-0 bottom-0">
+      <View
+        className="absolute inset-x-0 bottom-0"
+        onLayout={(event) => setBottomHeight(Math.round(event.nativeEvent.layout.height))}
+      >
         {showAlight || showTransfer || arrivedAtEnd ? (
           <View className="mx-3 mb-3">
             <ArrivalPopup

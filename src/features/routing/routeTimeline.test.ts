@@ -166,4 +166,45 @@ describe("routeMapData", () => {
   it("좌표가 하나도 없으면 맞추지 않는다", () => {
     expect(routeMapData(option([segment({})], ["a"]), new Map()).fit).toBe(false);
   });
+
+  describe("실제 보행 경로 선(path)", () => {
+    // 구글 문서 예시 선: (38.5, -120.2), (40.7, -120.95), (43.252, -126.453)
+    const PATH = "_p~iF~ps|U_ulLnnqC_mqNvxq`@";
+    const routedWalk = (from: string, to: string): PathSegmentDto => ({ ...walk(300, from, to), path: PATH });
+
+    it("도보 구간에 path가 있으면 그 점들로 점선을 그리고 양 끝에 출발지와 역 좌표를 이어 붙인다", () => {
+      const data = routeMapData(
+        option([routedWalk("ORIGIN_COORDINATE", "a"), segment({ fromStationId: "a", toStationId: "c" })], ["a", "b", "c"]),
+        coords,
+        { origin: { lat: 37.49, lng: 126.79 } }
+      );
+      expect(data.lines[0].dashed).toBe(true);
+      expect(data.lines[0].points).toEqual([
+        [37.49, 126.79],
+        [38.5, -120.2],
+        [40.7, -120.95],
+        [43.252, -126.453],
+        [37.5, 126.8],
+      ]);
+    });
+
+    it("출발지 좌표를 몰라도 path가 있으면 그린다(알려진 쪽 끝만 이어 붙인다)", () => {
+      const data = routeMapData(option([routedWalk("ORIGIN_COORDINATE", "a")]), coords);
+      expect(data.lines).toHaveLength(1);
+      expect(data.lines[0].points[0]).toEqual([38.5, -120.2]);
+      expect(data.lines[0].points[data.lines[0].points.length - 1]).toEqual([37.5, 126.8]);
+    });
+
+    it("path가 깨져 있으면 지금처럼 두 점을 직선으로 잇는다", () => {
+      const broken: PathSegmentDto = { ...walk(300, "ORIGIN_COORDINATE", "a"), path: "_p~iF" };
+      const data = routeMapData(option([broken]), coords, { origin: { lat: 37.49, lng: 126.79 } });
+      expect(data.lines[0].points).toEqual([[37.49, 126.79], [37.5, 126.8]]);
+    });
+
+    it("탑승 구간은 path가 있어도 역 순서로 그린다", () => {
+      const ride: PathSegmentDto = { ...segment({ fromStationId: "a", toStationId: "c" }), path: PATH };
+      const data = routeMapData(option([ride], ["a", "b", "c"]), coords);
+      expect(data.lines[0].points).toEqual([[37.5, 126.8], [37.52, 126.9], [37.5, 127.0]]);
+    });
+  });
 });

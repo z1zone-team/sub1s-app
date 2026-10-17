@@ -13,7 +13,9 @@ export function guideMapData(
   option: SubwayRouteOptionDto,
   stations: ReadonlyMap<string, { lat: number; lng: number }>,
   me?: { lat: number; lng: number },
-  endpoints?: RouteEndpointCoords
+  endpoints?: RouteEndpointCoords,
+  /** 위의 배너와 아래의 시트가 지도를 덮은 높이(px). 내 위치가 그 사이 보이는 영역의 가운데에 오게 한다 */
+  insets?: { top?: number; bottom?: number }
 ): MapData {
   const route = routeMapData(option, stations, endpoints);
   if (!me) return route;
@@ -24,5 +26,7 @@ export function guideMapData(
     fit: false,
     center: [me.lat, me.lng],
     zoom: GUIDE_ZOOM,
+    bottomInset: insets?.bottom,
+    topInset: insets?.top,
   };
 }
