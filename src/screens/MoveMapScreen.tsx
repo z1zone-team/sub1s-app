@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from "react";
-import { Pressable, ScrollView, useWindowDimensions, View } from "react-native";
+import { Pressable, useWindowDimensions, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLineMapQuery } from "@/apis/queries/profile/useLineMapQuery";
 import { useTimelineQuery } from "@/apis/queries/profile/useTimelineQuery";
 import { useTravelStatsQuery } from "@/apis/queries/profile/useTravelStatsQuery";
 import { BackButton } from "@/common/components/BackButton";
+import { DraggableSheet } from "@/common/components/DraggableSheet";
 import { Text } from "@/common/components/Text";
 import { formatDistanceKm } from "@/common/utils/format";
 import { valueParts } from "@/features/guide/arrivedView";
@@ -25,8 +26,7 @@ import type { RootStackParamList } from "@/navigation/navigation-types";
 import { cn } from "@/lib/cn";
 import { getLineInfo, lineTextColor, useTheme } from "@/theme";
 
-const SHEET_RADIUS = 24;
-const SHEET_MAX_RATIO = 0.55;
+const SHEET_MAX_RATIO = 0.7;
 
 /** 프로토타입 MoveMap.dc.html: 전체 화면 지도 위에 둥근 뒤로 버튼과 제목, 아래에 이동 요약 시트 */
 export function MoveMapScreen({ navigation, route }: NativeStackScreenProps<RootStackParamList, "MoveMap">) {
@@ -44,6 +44,7 @@ export function MoveMapScreen({ navigation, route }: NativeStackScreenProps<Root
     () => ({ ...visitedMapData(lineMap.data, focus), bottomInset: sheetHeight }),
     [lineMap.data, focus, sheetHeight]
   );
+  const bottomPadding = Math.max(insets.bottom, 12) + 10;
   const rows = lineRows(stats.data?.lineBreakdown);
   const logs = logsForPeriod(timeline.data?.logs ?? [], period, stats.data?.buckets);
   const [distance] = valueParts(formatDistanceKm(stats.data?.totalDistanceKm ?? 0));
@@ -59,28 +60,34 @@ export function MoveMapScreen({ navigation, route }: NativeStackScreenProps<Root
         </View>
       </View>
 
-      <View
-        onLayout={(event) => setSheetHeight(Math.round(event.nativeEvent.layout.height))}
-        className="absolute inset-x-0 bottom-0 border-t border-border bg-bg px-5 pt-2.5"
-        style={{ borderTopLeftRadius: SHEET_RADIUS, borderTopRightRadius: SHEET_RADIUS, paddingBottom: Math.max(insets.bottom, 12) + 10 }}
+      <DraggableSheet
+        label="이동 요약"
+        className="px-5"
+        bottomInset={bottomPadding}
+        coverBottom
+        maxHeight={height * SHEET_MAX_RATIO}
+        scrollable
+        onVisibleHeightChange={setSheetHeight}
+        header={
+          <View>
+            <View className="flex-row items-baseline justify-between">
+              <Text className="text-body-sm font-sans-semibold text-text-secondary">{periodName(period, Date.now())}</Text>
+              <Text className="text-body-sm text-text-secondary">
+                {stats.data?.totalTravelCount ?? 0}회 탑승 · 환승 {stats.data?.transferCount ?? 0}회
+              </Text>
+            </View>
+            <View className="mt-0.5 flex-row items-baseline">
+              <Text
+                className="text-hero font-sans-bold"
+                style={{ letterSpacing: -1.5 }}
+              >
+                {distance.number}
+              </Text>
+              <Text className="ml-1 text-subtitle font-sans-semibold text-text-secondary">{distance.unit}</Text>
+            </View>
+          </View>
+        }
       >
-        <View className="mb-4 h-1 w-9 self-center rounded-pill bg-border" />
-        <View className="flex-row items-baseline justify-between">
-          <Text className="text-body-sm font-sans-semibold text-text-secondary">{periodName(period, Date.now())}</Text>
-          <Text className="text-body-sm text-text-secondary">
-            {stats.data?.totalTravelCount ?? 0}회 탑승 · 환승 {stats.data?.transferCount ?? 0}회
-          </Text>
-        </View>
-        <View className="mt-0.5 flex-row items-baseline">
-          <Text
-            className="text-hero font-sans-bold"
-            style={{ letterSpacing: -1.5 }}
-          >
-            {distance.number}
-          </Text>
-          <Text className="ml-1 text-subtitle font-sans-semibold text-text-secondary">{distance.unit}</Text>
-        </View>
-
         <View className="mt-3.5 flex-row flex-wrap gap-2">
           <Pressable
             accessibilityRole="button"
@@ -105,11 +112,10 @@ export function MoveMapScreen({ navigation, route }: NativeStackScreenProps<Root
             </Pressable>
           ))}
         </View>
-
         {logs.length > 0 ? (
           <>
           <Text className="mt-4.5 text-body-sm font-sans-semibold text-text-secondary">최근 이동</Text>
-          <ScrollView className="mt-1" style={{ maxHeight: height * SHEET_MAX_RATIO - 250 }} showsVerticalScrollIndicator={false}>
+          <View className="mt-1">
             {logs.map((log, index) => (
               <View key={log.id} style={{ opacity: logMatchesLine(log, focus) ? 1 : 0.25 }}>
                 <ActivityRow
@@ -123,12 +129,13 @@ export function MoveMapScreen({ navigation, route }: NativeStackScreenProps<Root
                 />
               </View>
             ))}
-          </ScrollView>
+          </View>
           </>
         ) : (
           <Text className="mt-4 text-body-sm text-text-secondary">이 기간에는 이동 기록이 없어요</Text>
         )}
-      </View>
+        <View style={{ height: bottomPadding }} />
+      </DraggableSheet>
     </View>
   );
 }
