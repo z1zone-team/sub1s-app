@@ -23,6 +23,7 @@ import { useActiveGuideStore } from "@/features/guide/active-guide-store";
 import { useGuide } from "@/features/guide/useGuide";
 import { VWorldMap } from "@/features/map/VWorldMap";
 import { RideBadge } from "@/features/routing/components/RideBadge";
+import { endpointCoords, type RouteEndpoint } from "@/features/routing/endpoint";
 import { describeDoor } from "@/features/routing/routeView";
 import type { RootStackParamList } from "@/navigation/navigation-types";
 import { getLineInfo } from "@/theme";
@@ -31,7 +32,7 @@ import { cn } from "@/lib/cn";
 type Props = NativeStackScreenProps<RootStackParamList, "LiveNav">;
 
 export function LiveNavScreen({ navigation, route }: Props) {
-  const { sessionId, option, startedAtMs } = route.params;
+  const { sessionId, option, startedAtMs, origin, destination } = route.params;
 
   if (!option || !startedAtMs) {
     return (
@@ -43,7 +44,14 @@ export function LiveNavScreen({ navigation, route }: Props) {
   }
 
   return (
-    <Guide navigation={navigation} sessionId={sessionId} option={option} startedAtMs={startedAtMs} />
+    <Guide
+      navigation={navigation}
+      sessionId={sessionId}
+      option={option}
+      startedAtMs={startedAtMs}
+      origin={origin}
+      destination={destination}
+    />
   );
 }
 
@@ -52,10 +60,12 @@ interface GuideProps {
   sessionId: string;
   option: SubwayRouteOptionDto;
   startedAtMs: number;
+  origin?: RouteEndpoint;
+  destination?: RouteEndpoint;
 }
 
 /** 프로토타입 Guide.dc.html의 안내 중 화면. 전체 화면 지도 위에 다음 역 배너, 하차 알림, 아래 진행 시트가 올라온다 */
-function Guide({ navigation, sessionId, option, startedAtMs }: GuideProps) {
+function Guide({ navigation, sessionId, option, startedAtMs, origin, destination: destinationEndpoint }: GuideProps) {
   const insets = useSafeAreaInsets();
   const guide = useGuide({ option, sessionId, startedAtMs });
   const createLog = useCreateTravelLogMutation();
@@ -64,8 +74,8 @@ function Guide({ navigation, sessionId, option, startedAtMs }: GuideProps) {
 
   // 홈으로 나가도 안내가 이어지도록 진행 중인 안내를 기억한다
   useEffect(() => {
-    useActiveGuideStore.getState().begin({ sessionId, option, startedAtMs });
-  }, [sessionId, option, startedAtMs]);
+    useActiveGuideStore.getState().begin({ sessionId, option, startedAtMs, origin, destination: destinationEndpoint });
+  }, [sessionId, option, startedAtMs, origin, destinationEndpoint]);
 
   useEffect(() => {
     useActiveGuideStore.getState().setRemaining(guide.progress.remainingSec);
@@ -102,9 +112,10 @@ function Guide({ navigation, sessionId, option, startedAtMs }: GuideProps) {
       guideMapData(
         option,
         info,
-        coords ? { lat: coords.latitude, lng: coords.longitude } : undefined
+        coords ? { lat: coords.latitude, lng: coords.longitude } : undefined,
+        { origin: endpointCoords(origin), destination: endpointCoords(destinationEndpoint) }
       ),
-    [option, info, coords]
+    [option, info, coords, origin, destinationEndpoint]
   );
 
   // 진행 막대: 역이 많아도 6개만 보여 준다
