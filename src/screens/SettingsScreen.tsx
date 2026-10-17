@@ -10,6 +10,9 @@ import { Icon } from "@/common/components/Icon";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { unregisterCurrentPushToken } from "@/common/notifications/pushRegistration";
+import { useAppearanceStore } from "@/common/settings/appearance-store";
+import { MAP_STYLE_OPTIONS } from "@/features/map/mapStyle";
+import { THEME_CHOICE_OPTIONS } from "@/theme/themeChoice";
 import { VISIBILITY_OPTIONS, visibilityDescription } from "@/features/profile/profileView";
 import type { RootStackParamList } from "@/navigation/navigation-types";
 import { cn } from "@/lib/cn";
@@ -27,6 +30,51 @@ function Row({ label, onPress }: { label: string; onPress: () => void }) {
   );
 }
 
+interface ChipOption<T extends string> {
+  value: T;
+  label: string;
+  description: string;
+}
+
+function ChipGroup<T extends string>({
+  title,
+  options,
+  value,
+  onSelect,
+}: {
+  title: string;
+  options: ReadonlyArray<ChipOption<T>>;
+  value: T;
+  onSelect: (value: T) => void;
+}) {
+  const description = options.find((option) => option.value === value)?.description;
+  return (
+    <View className="gap-2">
+      <Text className="text-subtitle font-sans-bold">{title}</Text>
+      <View className="flex-row gap-2">
+        {options.map((option) => {
+          const selected = option.value === value;
+          return (
+            <Pressable
+              key={option.value}
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+              onPress={() => onSelect(option.value)}
+              className={cn(
+                "h-control flex-1 items-center justify-center rounded-pill border",
+                selected ? "border-primary bg-primary-tint" : "border-border bg-bg"
+              )}
+            >
+              <Text className={cn("text-body font-sans-bold", selected ? "text-primary" : "text-text")}>{option.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      {description ? <Text className="text-small text-text-secondary">{description}</Text> : null}
+    </View>
+  );
+}
+
 /** MY 프로토타입에 없는 설정을 모은 화면: 프로필 수정, 관심 설문, 공개 범위(익명 포함), 로그아웃 */
 export function SettingsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -34,6 +82,10 @@ export function SettingsScreen() {
   const me = useGetMe();
   const updateProfile = useUpdateProfileMutation();
   const visibility = me.data?.rankingVisibility ?? "PUBLIC";
+  const theme = useAppearanceStore((state) => state.theme);
+  const setTheme = useAppearanceStore((state) => state.setTheme);
+  const mapStyle = useAppearanceStore((state) => state.mapStyle);
+  const setMapStyle = useAppearanceStore((state) => state.setMapStyle);
 
   return (
     <Screen edges={[]} scroll contentClassName="gap-6 px-5 pt-4">
@@ -41,6 +93,9 @@ export function SettingsScreen() {
         <Row label="프로필 수정" onPress={() => navigation.navigate("ProfileEdit")} />
         <Row label="관심 설문 다시 고치기" onPress={() => navigation.navigate("Onboarding", { editing: true })} />
       </View>
+
+      <ChipGroup title="화면 테마" options={THEME_CHOICE_OPTIONS} value={theme} onSelect={(value) => void setTheme(value)} />
+      <ChipGroup title="지도 스타일" options={MAP_STYLE_OPTIONS} value={mapStyle} onSelect={(value) => void setMapStyle(value)} />
 
       <View className="gap-2">
         <Text className="text-subtitle font-sans-bold">이동 기록 공개 범위</Text>
