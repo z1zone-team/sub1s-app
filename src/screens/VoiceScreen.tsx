@@ -311,7 +311,7 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
             </View>
           </RiseIn>
           <View className="mt-16">
-            <WaveBars active={false} />
+            <WaveBars level={0} />
           </View>
         </View>
         <View style={{ paddingBottom: bottomPadding }} className="gap-2 px-5">
@@ -354,8 +354,8 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
         <Text className="mt-3 text-center text-display-sm font-sans-bold leading-snug">어디로 갈까요?</Text>
         <Text className="mt-2.5 text-center text-body text-text-secondary">예) “{VOICE_EXAMPLES[0]}”</Text>
         <View className="mt-16">
-          {/* 듣는 중이라도 말소리가 들어올 때만 움직인다. 조용하거나 분석 중이면 멈춘 회색 막대 */}
-          <WaveBars active={!processing && recorder.isSpeaking} />
+          {/* 물결의 크기가 목소리 크기를 따른다. 조용하거나 분석 중이면 선으로 보인다 */}
+          <WaveBars level={processing ? 0 : recorder.level} />
         </View>
       </View>
       <View style={{ paddingBottom: bottomPadding }} className="items-center gap-3.5 px-5">
