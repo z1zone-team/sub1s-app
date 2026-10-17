@@ -1,6 +1,17 @@
 import { create } from "zustand";
 import type { SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
 import type { RouteEndpoint } from "@/features/routing/endpoint";
+import { INITIAL_PHASE_STATE, type PhaseState } from "./guidePhase";
+import type { Anchor } from "./progress";
+
+/** 안내 화면이 기억하는 진행. 홈에 다녀와서 안내 화면을 다시 열어도 이어진다 */
+export interface GuideProgressMemory {
+  /** 사용자가 알려 주거나 위치로 확인한 역과 그 시각 */
+  anchor?: Anchor;
+  phase: PhaseState;
+}
+
+export const INITIAL_PROGRESS_MEMORY: GuideProgressMemory = { phase: INITIAL_PHASE_STATE };
 
 export interface ActiveGuide {
   sessionId: string;
@@ -11,12 +22,14 @@ export interface ActiveGuide {
   destination?: RouteEndpoint;
   /** 안내 화면이 계산한 남은 시간(초). 홈의 복귀 버튼이 보여 준다 */
   remainingSec: number;
+  progress: GuideProgressMemory;
 }
 
 interface ActiveGuideState {
   guide: ActiveGuide | null;
-  begin: (guide: Omit<ActiveGuide, "remainingSec">) => void;
+  begin: (guide: Omit<ActiveGuide, "remainingSec" | "progress">) => void;
   setRemaining: (remainingSec: number) => void;
+  setProgress: (progress: GuideProgressMemory) => void;
   end: () => void;
 }
 
@@ -25,18 +38,22 @@ export const useActiveGuideStore = create<ActiveGuideState>((set) => ({
   guide: null,
 
   begin: (guide) =>
-    set((state) => ({
-      guide: {
-        ...guide,
-        remainingSec:
-          state.guide?.sessionId === guide.sessionId
-            ? state.guide.remainingSec
-            : guide.option.totalDurationSec,
-      },
-    })),
+    set((state) => {
+      const same = state.guide?.sessionId === guide.sessionId ? state.guide : undefined;
+      return {
+        guide: {
+          ...guide,
+          remainingSec: same ? same.remainingSec : guide.option.totalDurationSec,
+          progress: same ? same.progress : INITIAL_PROGRESS_MEMORY,
+        },
+      };
+    }),
 
   setRemaining: (remainingSec) =>
     set((state) => (state.guide ? { guide: { ...state.guide, remainingSec } } : state)),
+
+  setProgress: (progress) =>
+    set((state) => (state.guide ? { guide: { ...state.guide, progress } } : state)),
 
   end: () => set({ guide: null }),
 }));

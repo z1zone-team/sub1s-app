@@ -1,4 +1,5 @@
-import { formatClockKst, formatDurationSec } from "@/common/utils/format";
+import { formatClockKst, formatDistanceKm, formatDurationSec } from "@/common/utils/format";
+import type { GuidePhase } from "./guidePhase";
 import type { UpcomingAction } from "./progress";
 
 /** 다음 환승이나 하차를 안내하는 한 줄. 가까워질수록 구체적으로 말한다 */
@@ -40,4 +41,28 @@ export function arrivalDeltaText(deltaSec: number | undefined): string {
   if (Math.abs(deltaSec) < 30) return "예정대로 도착";
   const minutes = Math.max(1, Math.round(Math.abs(deltaSec) / 60));
   return deltaSec < 0 ? `${minutes}분 일찍 도착` : `${minutes}분 늦게 도착`;
+}
+
+/** 배너 맨 위 작은 글자. 걷는 중과 기다리는 중에는 "다음 역"이 아니라 탈 역을 가리킨다 */
+export function phaseBannerLabel(phase: GuidePhase): string {
+  if (phase === "WALK_TO_STATION") return "걸어갈 역";
+  if (phase === "WAITING") return "탈 역";
+  return "다음 역";
+}
+
+/** 걷는 중과 기다리는 중의 안내 제목. 열차를 타는 중에는 쓰지 않는다 */
+export function phaseTitle(phase: GuidePhase, stationName: string): string {
+  const name = stationName || "탑승역";
+  return phase === "WALK_TO_STATION" ? `${name}까지 걸어가요` : `${name} 승강장에서 기다려요`;
+}
+
+/** 첫 탑승역까지 남은 거리. 모르면 빈 문자열 */
+export function walkDetail(distanceM: number | undefined): string {
+  if (distanceM === undefined || !Number.isFinite(distanceM)) return "";
+  return `약 ${formatDistanceKm(Math.max(0, distanceM) / 1000)} 남았어요`;
+}
+
+/** 승강장에서 탈 열차 설명: "2호선 · 건대입구역까지" */
+export function rideDetail(lineName: string, toStationName: string): string {
+  return [lineName, toStationName ? `${toStationName}까지` : ""].filter(Boolean).join(" · ");
 }

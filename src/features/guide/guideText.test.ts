@@ -1,4 +1,14 @@
-import { arrivalDeltaText, minutesLabel, remainingParts, remainingText, upcomingMessage } from "./guideText";
+import {
+  arrivalDeltaText,
+  minutesLabel,
+  phaseBannerLabel,
+  phaseTitle,
+  remainingParts,
+  remainingText,
+  rideDetail,
+  upcomingMessage,
+  walkDetail,
+} from "./guideText";
 
 describe("upcomingMessage", () => {
   it("바로 다음 역에서 내리면 내릴 준비를 안내한다", () => {
@@ -71,5 +81,37 @@ describe("minutesLabel", () => {
     expect(minutesLabel(31 * 60)).toBe("31분");
     expect(minutesLabel(20)).toBe("1분");
     expect(minutesLabel(0)).toBe("1분");
+  });
+});
+
+describe("단계 문구", () => {
+  it("배너 라벨은 걷는 중과 기다리는 중에 탈 역을 가리킨다", () => {
+    expect(phaseBannerLabel("WALK_TO_STATION")).toBe("걸어갈 역");
+    expect(phaseBannerLabel("WAITING")).toBe("탈 역");
+    expect(phaseBannerLabel("RIDING")).toBe("다음 역");
+  });
+
+  it("제목은 걷는 중과 기다리는 중이 다르다", () => {
+    expect(phaseTitle("WALK_TO_STATION", "건대입구")).toBe("건대입구까지 걸어가요");
+    expect(phaseTitle("WAITING", "건대입구")).toBe("건대입구 승강장에서 기다려요");
+  });
+
+  it("역 이름을 아직 모르면 탑승역이라고 부른다", () => {
+    expect(phaseTitle("WAITING", "")).toBe("탑승역 승강장에서 기다려요");
+  });
+
+  it("남은 거리는 1km 아래는 m로, 그 위는 km로 보여 준다", () => {
+    expect(walkDetail(320)).toBe("약 320m 남았어요");
+    expect(walkDetail(1250)).toBe("약 1.3km 남았어요");
+  });
+
+  it("거리를 모르면 문구가 없다", () => {
+    expect(walkDetail(undefined)).toBe("");
+    expect(walkDetail(Number.NaN)).toBe("");
+  });
+
+  it("탈 열차 설명은 호선과 내릴 역을 잇는다", () => {
+    expect(rideDetail("2호선", "을지로입구")).toBe("2호선 · 을지로입구까지");
+    expect(rideDetail("2호선", "")).toBe("2호선");
   });
 });

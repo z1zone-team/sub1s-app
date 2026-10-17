@@ -13,9 +13,17 @@ import { Text } from "@/common/components/Text";
 import { formatDurationSec } from "@/common/utils/format";
 import { ArrivalPopup } from "@/features/guide/components/ArrivalPopup";
 import { GuideBanner } from "@/features/guide/components/GuideBanner";
+import { PhaseCard } from "@/features/guide/components/PhaseCard";
 import { ProgressTrack } from "@/features/guide/components/ProgressTrack";
 import { guideMapData } from "@/features/guide/guideMap";
-import { remainingParts, upcomingMessage } from "@/features/guide/guideText";
+import {
+  phaseBannerLabel,
+  phaseTitle,
+  remainingParts,
+  rideDetail,
+  upcomingMessage,
+  walkDetail,
+} from "@/features/guide/guideText";
 import { isOffRouteAlert } from "@/features/guide/offRoute";
 import { visibleStopIndexes } from "@/features/guide/progress";
 import { pickTrackStops, trackFill } from "@/features/guide/progressTrack";
@@ -67,7 +75,7 @@ interface GuideProps {
 /** 프로토타입 Guide.dc.html의 안내 중 화면. 전체 화면 지도 위에 다음 역 배너, 하차 알림, 아래 진행 시트가 올라온다 */
 function Guide({ navigation, sessionId, option, startedAtMs, origin, destination: destinationEndpoint }: GuideProps) {
   const insets = useSafeAreaInsets();
-  const guide = useGuide({ option, sessionId, startedAtMs });
+  const guide = useGuide({ option, sessionId, startedAtMs, originCoords: endpointCoords(origin) });
   const createLog = useCreateTravelLogMutation();
   const deviate = useDeviateCheckMutation();
   const [picking, setPicking] = useState(false);
@@ -90,7 +98,7 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
     guide.clearAlert();
   }, [guide.alert]);
 
-  const { stops, info, progress, nowMs, segment, upcoming, coords } = guide;
+  const { stops, info, progress, nowMs, segment, upcoming, coords, phase, boardingIndex } = guide;
   const nameAt = (index: number) => info.get(stops[index]?.stationId ?? "")?.name ?? "";
   const names = stops.map((_, index) => nameAt(index));
   const destination = nameAt(stops.length - 1);
@@ -125,8 +133,10 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
   const fill = trackFill(trackIndexes, stripCurrent);
 
   // 하차 1개 역 전 알림: 빠른 하차(엘리베이터 인접 문) 또는 빠른 환승 문
-  const showAlight = upcoming?.kind === "ALIGHT" && upcomingAway === 1;
-  const showTransfer = upcoming?.kind === "TRANSFER" && upcomingAway === 1;
+  // 열차를 타기 전(걷는 중, 승강장 대기)에는 하차나 환승 알림을 띄우지 않는다
+  const riding = phase === "RIDING";
+  const showAlight = riding && upcoming?.kind === "ALIGHT" && upcomingAway === 1;
+  const showTransfer = riding && upcoming?.kind === "TRANSFER" && upcomingAway === 1;
   const arrivedAtEnd = stopsLeft <= 0;
   const alightStationId = showAlight ? stops[upcoming.index]?.stationId : undefined;
   const facilities = useStationFacilitiesQuery(alightStationId);
@@ -182,7 +192,8 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
 
       <View style={{ top: insets.top + 8 }} className="absolute inset-x-3">
         <GuideBanner
-          nextStationName={nameAt(nextVisible)}
+          label={phaseBannerLabel(phase)}
+          nextStationName={riding || boardingIndex === undefined ? nameAt(nextVisible) : nameAt(boardingIndex)}
           destinationName={destination}
           stopsLeft={stopsLeft}
           remainingLabel={progress.remainingSec > 0 ? `약 ${formatDurationSec(progress.remainingSec)}` : ""}
@@ -232,6 +243,24 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
 
           <ProgressTrack names={trackNames} reachedIndex={trackReached} fill={fill} color={lineColor} />
 
+          {phase === "WALK_TO_STATION" && boardingIndex !== undefined ? (
+            <PhaseCard
+              title={phaseTitle(phase, nameAt(boardingIndex))}
+              detail={walkDetail(guide.walkDistanceM)}
+              actionLabel="역에 도착했어요"
+              onAction={guide.reachStation}
+              hint={guide.locationGranted ? "역 근처에 오면 자동으로 알려 줘요" : undefined}
+            />
+          ) : null}
+          {phase === "WAITING" && boardingIndex !== undefined ? (
+            <PhaseCard
+              title={phaseTitle(phase, nameAt(boardingIndex))}
+              detail={segment ? rideDetail(getLineInfo(segment.lineId).name, segment.toStationName) : undefined}
+              actionLabel="열차에 탔어요"
+              onAction={guide.board}
+            />
+          ) : null}
+
           {!guide.locationGranted ? (
             <Text className="mt-2 text-small text-text-secondary">
               위치 권한이 없어 시간표로 위치를 추정하고 있어요.
@@ -247,16 +276,18 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
             </Text>
           </Pressable>
 
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ busy: deviate.isPending }}
-            disabled={deviate.isPending}
-            onPress={reportWrongDirection}
-            className={cn("mt-1.5 h-11 flex-row items-center justify-center gap-1.5 rounded-md bg-surface", deviate.isPending ? "opacity-50" : "")}
-          >
-            <DesignIcon name="undo" size={16} />
-            <Text className="text-body font-sans-bold">반대 방향 열차를 탔어요</Text>
-          </Pressable>
+          {riding ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ busy: deviate.isPending }}
+              disabled={deviate.isPending}
+              onPress={reportWrongDirection}
+              className={cn("mt-1.5 h-11 flex-row items-center justify-center gap-1.5 rounded-md bg-surface", deviate.isPending ? "opacity-50" : "")}
+            >
+              <DesignIcon name="undo" size={16} />
+              <Text className="text-body font-sans-bold">반대 방향 열차를 탔어요</Text>
+            </Pressable>
+          ) : null}
           {deviate.error ? (
             <Text className="mt-1.5 text-center text-body-sm text-error">경로를 다시 찾지 못했어요. 잠시 후 다시 시도해 주세요.</Text>
           ) : null}

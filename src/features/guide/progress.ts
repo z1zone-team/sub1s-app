@@ -111,11 +111,16 @@ function effectiveElapsedSec(stops: Stop[], startedAtMs: number, nowMs: number, 
   return Math.max(0, nowMs - startedAtMs) / 1000;
 }
 
+/**
+ * 지금까지의 진행. gate는 아직 타지 않은 다음 열차를 타는 역의 순번이다. 타기 전에는 그 역에서 더 가지 않고,
+ * 거기 닿으면 기다리는 동안 남은 시간이 줄지 않는다.
+ */
 export function guideProgress(
   stops: Stop[],
   startedAtMs: number,
   nowMs: number,
-  anchor?: Anchor
+  anchor?: Anchor,
+  gate?: number
 ): GuideProgress {
   const finalIndex = stops.length - 1;
   if (finalIndex <= 0) {
@@ -130,15 +135,19 @@ export function guideProgress(
 
   const floor = anchor && stops[anchor.index] ? anchor.index : 0;
   const atFinalStop = anchor?.index === finalIndex;
-  const currentIndex = atFinalStop ? finalIndex : Math.min(Math.max(estimated, floor), finalIndex - 1);
+  const unclamped = atFinalStop ? finalIndex : Math.min(Math.max(estimated, floor), finalIndex - 1);
+  const waiting = gate !== undefined && stops[gate] !== undefined && unclamped >= gate;
+  const currentIndex = waiting ? (gate as number) : unclamped;
   const nextIndex = Math.min(currentIndex + 1, finalIndex);
 
   return {
     currentIndex,
     nextIndex,
     stopsLeft: finalIndex - currentIndex,
-    remainingSec: Math.max(0, Math.round(stops[finalIndex].atSec - elapsed)),
-    atFinalStop,
+    remainingSec: waiting
+      ? Math.max(0, Math.round(stops[finalIndex].atSec - stops[gate as number].atSec))
+      : Math.max(0, Math.round(stops[finalIndex].atSec - elapsed)),
+    atFinalStop: waiting ? false : atFinalStop,
   };
 }
 
