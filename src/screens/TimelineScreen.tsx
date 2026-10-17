@@ -94,7 +94,7 @@ export function TimelineScreen() {
 
   if (empty) {
     return (
-      <Screen>
+      <Screen edges={["top", "bottom"]}>
         {back}
         {title}
         {tabs}
@@ -133,7 +133,7 @@ export function TimelineScreen() {
 
   const logs = timeline.data?.logs ?? [];
   return (
-    <Screen>
+    <Screen edges={["top", "bottom"]}>
       {back}
       <ScrollView className="flex-1" contentContainerClassName="pb-12" showsVerticalScrollIndicator={false}>
         {title}
