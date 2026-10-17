@@ -93,20 +93,32 @@ export function mapStationIds(option: SubwayRouteOptionDto, max: number = MAX_LO
 
 export type StationCoords = ReadonlyMap<string, { lat: number; lng: number }>;
 
+/** 서버가 좌표로 요청한 출발지와 도착지를 걷기 구간에서 부르는 가짜 역 ID */
+const ORIGIN_COORDINATE_ID = "ORIGIN_COORDINATE";
+const DESTINATION_COORDINATE_ID = "DEST_COORDINATE";
+
+export interface RouteEndpointCoords {
+  origin?: { lat: number; lng: number };
+  destination?: { lat: number; lng: number };
+}
+
 const WALK_COLOR = "#B0B8C1";
 const ENDPOINT_COLOR = "#191F28";
 
 /**
  * 경로 상세 위쪽 지도 데이터. 탑승 구간은 호선 색 선으로, 도보는 회색 점선으로 잇고,
- * 승하차역에는 호선 색 점을, 처음과 끝에는 진한 점을 찍는다. 좌표를 모르는 역은 건너뛴다
+ * 승하차역에는 호선 색 점을, 처음과 끝에는 진한 점을 찍는다. 좌표를 모르는 역은 건너뛴다.
+ * 좌표로 정한 출발지와 도착지(걷기 구간의 ORIGIN_COORDINATE, DEST_COORDINATE)는 endpoints로 좌표를 풀어 준다
  */
-export function routeMapData(option: SubwayRouteOptionDto, coords: StationCoords): MapData {
+export function routeMapData(option: SubwayRouteOptionDto, coords: StationCoords, endpoints: RouteEndpointCoords = {}): MapData {
   const ids = option.stationIds ?? [];
   const lines: MapLine[] = [];
   const markers: MapMarker[] = [];
 
   const point = (id: string): [number, number] | undefined => {
-    const found = coords.get(id);
+    const endpoint =
+      id === ORIGIN_COORDINATE_ID ? endpoints.origin : id === DESTINATION_COORDINATE_ID ? endpoints.destination : undefined;
+    const found = endpoint ?? coords.get(id);
     return found ? [found.lat, found.lng] : undefined;
   };
 

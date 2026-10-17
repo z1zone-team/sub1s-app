@@ -25,12 +25,19 @@ export function endpointFromStation(item: StationSearchItem): RouteEndpoint {
 }
 
 /** 장소는 좌표와 이름을 경로 검색에 넘기고, 가까운 역과 도보 구간은 서버가 붙인다 */
-export function endpointFromPlace(item: PlaceSearchItem): RouteEndpoint {
+export function endpointFromPlace(item: Pick<PlaceSearchItem, "name" | "lat" | "lng">): RouteEndpoint {
   return { name: item.name, lat: item.lat, lng: item.lng };
 }
 
 export function endpointFromCoords(lat: number, lng: number): RouteEndpoint {
   return { name: CURRENT_LOCATION_NAME, lat, lng };
+}
+
+/** 좌표로 정한 출발지나 도착지의 좌표. 역으로 정했으면 없다 */
+export function endpointCoords(endpoint: RouteEndpoint | undefined): { lat: number; lng: number } | undefined {
+  return endpoint && isCoordinate(endpoint.lat) && isCoordinate(endpoint.lng)
+    ? { lat: endpoint.lat, lng: endpoint.lng }
+    : undefined;
 }
 
 export function isValidEndpoint(endpoint: RouteEndpoint | undefined): endpoint is RouteEndpoint {

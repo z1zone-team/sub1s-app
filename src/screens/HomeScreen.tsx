@@ -37,7 +37,7 @@ import { VWorldMap } from "@/features/map/VWorldMap";
 import { PickStatusCard } from "@/features/map/components/PickStatusCard";
 import { pickErrorMessage } from "@/features/map/pickMessage";
 import { useReversePlaceMutation } from "@/apis/queries/places/useReversePlaceMutation";
-import { toSearchRows } from "@/features/routing/searchRows";
+import { toPlaceRow } from "@/features/routing/searchRows";
 import { useHomeMapData } from "@/features/map/useHomeMapData";
 import { useOnboardingPrompt } from "@/features/onboarding/useOnboardingPrompt";
 import type { BottomTabParamList, RootStackParamList } from "@/navigation/navigation-types";
@@ -111,8 +111,7 @@ export function HomeScreen() {
     setPick(point);
     reverse.mutate(point, {
       onSuccess: (item) => {
-        const [row] = toSearchRows([item]);
-        selectPlace(row);
+        selectPlace(toPlaceRow(item));
         setPick(null);
       },
     });
