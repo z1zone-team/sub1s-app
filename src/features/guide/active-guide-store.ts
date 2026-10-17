@@ -1,10 +1,14 @@
 import { create } from "zustand";
 import type { SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
+import type { RouteEndpoint } from "@/features/routing/endpoint";
 
 export interface ActiveGuide {
   sessionId: string;
   option: SubwayRouteOptionDto;
   startedAtMs: number;
+  /** 지도에 걷는 구간을 그리려고 기억해 두는 출발지와 도착지. 홈에서 안내로 돌아갈 때 다시 넘긴다 */
+  origin?: RouteEndpoint;
+  destination?: RouteEndpoint;
   /** 안내 화면이 계산한 남은 시간(초). 홈의 복귀 버튼이 보여 준다 */
   remainingSec: number;
 }

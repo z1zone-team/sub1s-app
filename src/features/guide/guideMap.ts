@@ -1,6 +1,6 @@
 import type { SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
 import type { MapData } from "@/features/map/mapHtml";
-import { routeMapData } from "@/features/routing/routeTimeline";
+import { type RouteEndpointCoords, routeMapData } from "@/features/routing/routeTimeline";
 
 const ME_COLOR = "#002968";
 const GUIDE_ZOOM = 15;
@@ -12,9 +12,10 @@ const GUIDE_ZOOM = 15;
 export function guideMapData(
   option: SubwayRouteOptionDto,
   stations: ReadonlyMap<string, { lat: number; lng: number }>,
-  me?: { lat: number; lng: number }
+  me?: { lat: number; lng: number },
+  endpoints?: RouteEndpointCoords
 ): MapData {
-  const route = routeMapData(option, stations);
+  const route = routeMapData(option, stations, endpoints);
   if (!me) return route;
 
   return {

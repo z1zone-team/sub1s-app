@@ -59,3 +59,33 @@ describe("guideMapData", () => {
     expect(data.markers).toHaveLength(1);
   });
 });
+
+describe("guideMapData 걷는 구간", () => {
+  const walkFirst: SubwayRouteOptionDto = {
+    ...option,
+    segments: [
+      { ...segment, lineId: "WALK", direction: "NONE", fromStationId: "ORIGIN_COORDINATE", toStationId: "a", recommendedCarNo: 0 },
+      segment,
+      { ...segment, lineId: "WALK", direction: "NONE", fromStationId: "c", toStationId: "DEST_COORDINATE", recommendedCarNo: 0 },
+    ],
+  };
+
+  it("출발지와 도착지 좌표를 주면 역까지 걷는 구간을 점선으로 이어 그린다", () => {
+    const data = guideMapData(walkFirst, stations, undefined, {
+      origin: { lat: 37.49, lng: 126.79 },
+      destination: { lat: 37.49, lng: 127.01 },
+    });
+
+    const dashed = data.lines.filter((line) => line.dashed);
+    expect(dashed).toHaveLength(2);
+    expect(dashed[0].points).toEqual([[37.49, 126.79], [37.5, 126.8]]);
+    expect(dashed[1].points).toEqual([[37.5, 127.0], [37.49, 127.01]]);
+  });
+
+  it("좌표를 모르면 걷는 구간은 그리지 않는다", () => {
+    const data = guideMapData(walkFirst, stations);
+
+    expect(data.lines.filter((line) => line.dashed)).toHaveLength(0);
+  });
+});
+

@@ -54,6 +54,9 @@ export type RootStackParamList = {
     /** 딥링크로만 들어오면 없어서 진행 중인 안내를 찾지 못했다고 보여 준다 */
     option?: SubwayRouteOptionDto;
     startedAtMs?: number;
+    /** 걷는 구간을 지도에 그리려면 좌표로 정한 출발지와 도착지의 좌표가 필요하다 */
+    origin?: RouteEndpoint;
+    destination?: RouteEndpoint;
   };
   OffRoute: {
     alert: OffRouteAlert;

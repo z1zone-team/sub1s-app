@@ -58,6 +58,8 @@ export function RouteDetailScreen({
             sessionId: session.sessionId,
             option,
             startedAtMs: Date.now(),
+            origin,
+            destination,
           }),
       }
     );

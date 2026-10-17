@@ -298,6 +298,8 @@ export function HomeScreen() {
                 sessionId: activeGuide.sessionId,
                 option: activeGuide.option,
                 startedAtMs: activeGuide.startedAtMs,
+                origin: activeGuide.origin,
+                destination: activeGuide.destination,
               })
             }
             onEnd={() => useActiveGuideStore.getState().end()}
