@@ -9,6 +9,7 @@ import { MapPickScreen } from "@/screens/MapPickScreen";
 import { MapSearchScreen } from "@/screens/MapSearchScreen";
 import { SearchScreen } from "@/screens/SearchScreen";
 import { resolveStartRoute } from "@/common/auth/startRoute";
+import { useAppearanceStore } from "@/common/settings/appearance-store";
 import { useGuestStore } from "@/common/auth/guest-store";
 import { useAuthSync } from "@/common/auth/useAuthSync";
 import { usePushNavigation, usePushRegistration } from "@/common/notifications/pushRegistration";
@@ -56,9 +57,11 @@ export function RootNavigator() {
   }, []);
   usePushNavigation(openTarget);
 
+  const hydrateAppearance = useAppearanceStore((state) => state.hydrate);
   useEffect(() => {
     void hydrateGuest();
-  }, [hydrateGuest]);
+    void hydrateAppearance();
+  }, [hydrateGuest, hydrateAppearance]);
 
   // 로그인 서비스가 응답하지 않아도 앱이 멈춘 것처럼 보이지 않게 일정 시간 뒤에는 로그인하지 않은 상태로 시작한다
   const [authTimedOut, setAuthTimedOut] = useState(false);

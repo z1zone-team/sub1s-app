@@ -1,3 +1,5 @@
+import { LABEL_OVERLAY_LAYER, type TileLayerName } from "./mapStyle";
+
 /** Leaflet 1.9.4를 cdnjs에서 불러온다. 정확한 버전을 고정한다 */
 const LEAFLET_CSS = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css";
 const LEAFLET_JS = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js";
@@ -54,7 +56,7 @@ export function parseMapLongPress(raw: string): MapLongPress | null {
 }
 
 export const LONG_PRESS_MS = 600;
-const LONG_PRESS_SLOP_PX = 10;
+export const LONG_PRESS_SLOP_PX = 10;
 
 export const DEFAULT_CENTER: [number, number] = [37.5665, 126.978];
 export const DEFAULT_ZOOM = 12;
@@ -63,8 +65,9 @@ export const DEFAULT_ZOOM = 12;
  * V-World 타일(WMTS)을 Leaflet으로 그리는 페이지. 앱이 window.updateMap(데이터)을 불러 마커와 선을 바꾼다.
  * 키는 주소에 들어가므로 URL 인코딩한다.
  */
-export function buildMapHtml(vworldKey: string): string {
+export function buildMapHtml(vworldKey: string, layer: TileLayerName = { name: "Base", extension: "png" }, labelOverlay = false): string {
   const key = encodeURIComponent(vworldKey);
+  const tileUrl = (target: TileLayerName) => `https://api.vworld.kr/req/wmts/1.0.0/${key}/${target.name}/{z}/{y}/{x}.${target.extension}`;
   return `<!doctype html>
 <html>
 <head>
@@ -95,10 +98,8 @@ export function buildMapHtml(vworldKey: string): string {
     document.getElementById("error").style.display = "block";
   } else {
     var map = L.map("map", { zoomControl: false, attributionControl: false }).setView([${DEFAULT_CENTER[0]}, ${DEFAULT_CENTER[1]}], ${DEFAULT_ZOOM});
-    L.tileLayer("https://api.vworld.kr/req/wmts/1.0.0/${key}/Base/{z}/{y}/{x}.png", {
-      maxZoom: 19,
-      detectRetina: true
-    }).addTo(map);
+    L.tileLayer("${tileUrl(layer)}", { maxZoom: 19, detectRetina: true }).addTo(map);
+    ${labelOverlay ? `L.tileLayer("${tileUrl(LABEL_OVERLAY_LAYER)}", { maxZoom: 19, detectRetina: true }).addTo(map);` : ""}
     var layer = L.layerGroup().addTo(map);
     var ME_ICON = L.divIcon({
       className: "",
