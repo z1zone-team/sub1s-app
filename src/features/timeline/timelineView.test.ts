@@ -8,6 +8,7 @@ import {
   kstYearMonth,
   lineRows,
   logDateLabel,
+  logIsHighlighted,
   logMatchesLine,
   logsForPeriod,
   logSummary,
@@ -146,5 +147,34 @@ describe("logsForPeriod", () => {
     expect(logMatchesLine(transfer, "03")).toBe(true);
     expect(logMatchesLine(transfer, "02")).toBe(false);
     expect(logMatchesLine(transfer, undefined)).toBe(true);
+  });
+});
+
+describe("logIsHighlighted", () => {
+  const log = (id: string, lineIds: string[]): TravelLogItemDto => ({
+    id,
+    originStationName: "가양",
+    destStationName: "신논현",
+    distanceKm: 1,
+    traveledAt: "2026-10-06T08:00:00+09:00",
+    lineIds,
+    isExpress: false,
+    durationSec: 60,
+  });
+
+  it("이동을 골랐으면 그 이동만 또렷하다", () => {
+    expect(logIsHighlighted(log("a", ["09"]), "a", undefined)).toBe(true);
+    expect(logIsHighlighted(log("b", ["09"]), "a", undefined)).toBe(false);
+  });
+
+  it("이동을 골랐으면 호선 필터보다 우선한다", () => {
+    expect(logIsHighlighted(log("a", ["03"]), "a", "09")).toBe(true);
+    expect(logIsHighlighted(log("b", ["09"]), "a", "09")).toBe(false);
+  });
+
+  it("이동을 고르지 않았으면 호선 필터를 따른다", () => {
+    expect(logIsHighlighted(log("a", ["09"]), undefined, "09")).toBe(true);
+    expect(logIsHighlighted(log("a", ["03"]), undefined, "09")).toBe(false);
+    expect(logIsHighlighted(log("a", ["03"]), undefined, undefined)).toBe(true);
   });
 });

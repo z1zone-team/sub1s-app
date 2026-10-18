@@ -22,6 +22,8 @@ export interface MapLine {
   opacity?: number;
   /** 점선. 도보 구간처럼 열차가 아닌 이동을 나타낸다 */
   dashed?: boolean;
+  /** 지도를 맞출 때 이 선은 빼고 계산한다. 배경으로만 흐리게 깔 때 쓴다 */
+  noFit?: boolean;
 }
 
 export interface MapData {
@@ -155,7 +157,7 @@ export function buildMapHtml(vworldKey: string, layer: TileLayerName = { name: "
       (data.lines || []).forEach(function (line) {
         if (line.points.length < 2) return;
         L.polyline(line.points, { color: line.color, weight: line.weight || 5, opacity: line.opacity == null ? 1 : line.opacity, lineCap: "round", lineJoin: "round", dashArray: line.dashed ? "2 10" : null }).addTo(layer);
-        line.points.forEach(function (p) { bounds.push(p); });
+        if (!line.noFit) line.points.forEach(function (p) { bounds.push(p); });
       });
       (data.markers || []).forEach(function (m) {
         if (m.kind === "pin") {
@@ -173,7 +175,7 @@ export function buildMapHtml(vworldKey: string, layer: TileLayerName = { name: "
         bounds.push([m.lat, m.lng]);
       });
       if (data.fit && bounds.length > 0) {
-        map.fitBounds(bounds, { paddingTopLeft: [32, 32], paddingBottomRight: [32, 32 + (data.bottomInset || 0)], maxZoom: 15 });
+        map.fitBounds(bounds, { paddingTopLeft: [32, 32 + (data.topInset || 0)], paddingBottomRight: [32, 32 + (data.bottomInset || 0)], maxZoom: 15 });
       } else if (data.center) {
         map.setView(data.center, data.zoom || ${DEFAULT_ZOOM});
         // 위의 배너와 아래의 시트가 덮은 만큼을 빼고 보이는 영역의 가운데에 중심점이 오도록 지도를 옮긴다

@@ -17,7 +17,7 @@ import {
   kstYearMonth,
   lineRows,
   logDateLabel,
-  logMatchesLine,
+  logIsHighlighted,
   logsForPeriod,
   logSummary,
   periodName,
@@ -27,6 +27,8 @@ import { cn } from "@/lib/cn";
 import { getLineInfo, lineTextColor, useTheme } from "@/theme";
 
 const SHEET_MAX_RATIO = 0.7;
+/** 지도 위쪽 뒤로 가기 버튼과 제목 칩이 덮는 높이(상태 표시줄 아래). 지도를 맞출 때 이만큼 비운다 */
+const HEADER_OVERLAY_HEIGHT = 64;
 
 /** 프로토타입 MoveMap.dc.html: 전체 화면 지도 위에 둥근 뒤로 버튼과 제목, 아래에 이동 요약 시트 */
 export function MoveMapScreen({ navigation, route }: NativeStackScreenProps<RootStackParamList, "MoveMap">) {
@@ -35,18 +37,20 @@ export function MoveMapScreen({ navigation, route }: NativeStackScreenProps<Root
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const [focus, setFocus] = useState<string | undefined>();
+  const [selectedLogId, setSelectedLogId] = useState<string | undefined>();
   const [sheetHeight, setSheetHeight] = useState(0);
   const lineMap = useLineMapQuery(period);
   const stats = useTravelStatsQuery(period);
   const timeline = useTimelineQuery(kstYearMonth(Date.now()));
 
-  const data = useMemo(
-    () => ({ ...visitedMapData(lineMap.data, focus), bottomInset: sheetHeight }),
-    [lineMap.data, focus, sheetHeight]
-  );
-  const bottomPadding = Math.max(insets.bottom, 12) + 10;
   const rows = lineRows(stats.data?.lineBreakdown);
   const logs = logsForPeriod(timeline.data?.logs ?? [], period, stats.data?.buckets);
+  const selectedLog = logs.find((log) => log.id === selectedLogId);
+  const data = useMemo(
+    () => ({ ...visitedMapData(lineMap.data, focus, selectedLog?.stationIds), bottomInset: sheetHeight, topInset: insets.top + HEADER_OVERLAY_HEIGHT }),
+    [lineMap.data, focus, selectedLog, sheetHeight, insets.top]
+  );
+  const bottomPadding = Math.max(insets.bottom, 12) + 10;
   const [distance] = valueParts(formatDistanceKm(stats.data?.totalDistanceKm ?? 0));
 
   return (
@@ -92,7 +96,10 @@ export function MoveMapScreen({ navigation, route }: NativeStackScreenProps<Root
           <Pressable
             accessibilityRole="button"
             accessibilityState={{ selected: !focus }}
-            onPress={() => setFocus(undefined)}
+            onPress={() => {
+              setFocus(undefined);
+              setSelectedLogId(undefined);
+            }}
             className={cn("h-11 justify-center rounded-pill border px-3.5", !focus ? "border-primary bg-primary" : "border-border bg-bg")}
           >
             <Text className={cn("text-body-sm font-sans-bold", !focus ? "text-on-primary" : "text-text")}>전체</Text>
@@ -102,7 +109,10 @@ export function MoveMapScreen({ navigation, route }: NativeStackScreenProps<Root
               key={row.lineId}
               accessibilityRole="button"
               accessibilityState={{ selected: focus === row.lineId }}
-              onPress={() => setFocus(row.lineId)}
+              onPress={() => {
+                setFocus(row.lineId);
+                setSelectedLogId(undefined);
+              }}
               className="h-11 justify-center rounded-pill border px-3.5"
               style={{ backgroundColor: row.color, borderColor: focus === row.lineId ? colors.text : "transparent" }}
             >
@@ -117,7 +127,13 @@ export function MoveMapScreen({ navigation, route }: NativeStackScreenProps<Root
           <Text className="mt-4.5 text-body-sm font-sans-semibold text-text-secondary">최근 이동</Text>
           <View className="mt-1">
             {logs.map((log, index) => (
-              <View key={log.id} style={{ opacity: logMatchesLine(log, focus) ? 1 : 0.25 }}>
+              <Pressable
+                key={log.id}
+                accessibilityRole="button"
+                accessibilityState={{ selected: selectedLogId === log.id }}
+                onPress={() => setSelectedLogId((current) => (current === log.id ? undefined : log.id))}
+                style={{ opacity: logIsHighlighted(log, selectedLogId, focus) ? 1 : 0.25 }}
+              >
                 <ActivityRow
                   compact
                   color={getLineInfo(log.lineIds[0] ?? "").color}
@@ -127,7 +143,7 @@ export function MoveMapScreen({ navigation, route }: NativeStackScreenProps<Root
                   distanceKm={log.distanceKm}
                   last={index === logs.length - 1}
                 />
-              </View>
+              </Pressable>
             ))}
           </View>
           </>

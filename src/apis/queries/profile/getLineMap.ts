@@ -10,11 +10,19 @@ export interface LineMapStationDto {
   visited: boolean;
 }
 
+/** 이어서 지난 같은 호선의 두 역. 지선이 있는 호선도 실제 지난 순서로 잇는 데 쓴다 */
+export interface LineMapLinkDto {
+  fromStationId: string;
+  toStationId: string;
+}
+
 export interface LineMapLineDto {
   lineId: string;
   lineName: string;
   colorHex: string;
   stations: LineMapStationDto[];
+  /** 서버가 아직 안 주는 버전이면 없다. 없으면 호선 번호 순서로 잇는다 */
+  links?: LineMapLinkDto[];
 }
 
 export interface LineMapResponseDto {
