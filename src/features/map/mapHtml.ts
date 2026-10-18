@@ -37,6 +37,11 @@ export interface MapData {
   topInset?: number;
   center?: [number, number];
   zoom?: number;
+  /**
+   * 있으면 이 좌표들이 한눈에 보이게 확대한다(구간이나 역을 눌렀을 때). 좌표가 하나면 그 점을 가운데에 두고 크게 보여 준다.
+   * fit과 center보다 우선한다
+   */
+  focus?: Array<[number, number]>;
 }
 
 /** 지도를 길게 눌렀을 때 WebView가 앱에 보내는 메시지 */
@@ -64,6 +69,8 @@ export const LONG_PRESS_SLOP_PX = 10;
 
 export const DEFAULT_CENTER: [number, number] = [37.5665, 126.978];
 export const DEFAULT_ZOOM = 12;
+/** 구간이나 역을 눌렀을 때 확대하는 최대 수준 */
+export const FOCUS_ZOOM = 17;
 
 /**
  * V-World 타일(WMTS)을 Leaflet으로 그리는 페이지. 앱이 window.updateMap(데이터)을 불러 마커와 선을 바꾼다.
@@ -174,7 +181,15 @@ export function buildMapHtml(vworldKey: string, layer: TileLayerName = { name: "
         if (m.label) circle.bindTooltip(m.label, { permanent: true, direction: "top", offset: [0, -6], className: "label" });
         bounds.push([m.lat, m.lng]);
       });
-      if (data.fit && bounds.length > 0) {
+      if (data.focus && data.focus.length > 0) {
+        if (data.focus.length === 1) {
+          map.setView(data.focus[0], ${FOCUS_ZOOM});
+          var focusShift = ((data.bottomInset || 0) - (data.topInset || 0)) / 2;
+          if (focusShift) map.panBy([0, focusShift], { animate: false });
+        } else {
+          map.fitBounds(data.focus, { paddingTopLeft: [32, 32 + (data.topInset || 0)], paddingBottomRight: [32, 32 + (data.bottomInset || 0)], maxZoom: ${FOCUS_ZOOM} });
+        }
+      } else if (data.fit && bounds.length > 0) {
         map.fitBounds(bounds, { paddingTopLeft: [32, 32 + (data.topInset || 0)], paddingBottomRight: [32, 32 + (data.bottomInset || 0)], maxZoom: 15 });
       } else if (data.center) {
         map.setView(data.center, data.zoom || ${DEFAULT_ZOOM});

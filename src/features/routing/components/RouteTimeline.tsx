@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 import Svg, { Line } from "react-native-svg";
 import type { PathSegmentDto, SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
 import { useNextTrainsQuery } from "@/apis/queries/stations/useNextTrainsQuery";
@@ -9,7 +9,7 @@ import { Text } from "@/common/components/Text";
 import { formatClock24Kst, formatDistanceKm, formatDurationSec } from "@/common/utils/format";
 import { CONGESTION_BG, CONGESTION_TEXT, getLineInfo, useTheme } from "@/theme";
 import { cn } from "@/lib/cn";
-import { buildTimeline, timeLabel, type TimelineRow } from "../routeTimeline";
+import { buildTimeline, timeLabel, type TimelineRow, type TimelineTarget } from "../routeTimeline";
 import { congestionText, describeDoor, formatWaiting, hasRecommendedCar, isEstimatedCongestion, operationLabel, pickNextTrain } from "../routeView";
 import { CarCongestionCard } from "./CarCongestionCard";
 import { RideBadge } from "./RideBadge";
@@ -18,6 +18,8 @@ interface RouteTimelineProps {
   option: SubwayRouteOptionDto;
   /** "강남역 도착"처럼 마지막 행에 쓰는 도착지 이름 */
   destinationName: string;
+  /** 칸을 눌렀을 때. 없으면 칸을 누를 수 없다 */
+  onSelect?: (target: TimelineTarget) => void;
 }
 
 const NODE_SIZE = "h-3.5 w-3.5";
@@ -54,12 +56,32 @@ export function DottedBar() {
   );
 }
 
-function Row({ time, rail, children }: { time?: string; rail: React.ReactNode; children: React.ReactNode }) {
+function Row({
+  time,
+  rail,
+  children,
+  onPress,
+}: {
+  time?: string;
+  rail: React.ReactNode;
+  children: React.ReactNode;
+  /** 있으면 이 칸을 눌러 지도를 이 위치로 확대할 수 있다 */
+  onPress?: () => void;
+}) {
+  const content = <View className="pb-5">{children}</View>;
   return (
     <View className="flex-row gap-3">
       <Text className="w-11 pt-0.5 text-small font-sans-bold text-text-secondary">{time ?? ""}</Text>
       <View className="w-4 items-stretch self-stretch">{rail}</View>
-      <View className="flex-1 pb-5">{children}</View>
+      <View className="flex-1">
+        {onPress ? (
+          <Pressable accessibilityRole="button" accessibilityHint="지도에서 이 위치를 크게 봐요" onPress={onPress}>
+            {content}
+          </Pressable>
+        ) : (
+          content
+        )}
+      </View>
     </View>
   );
 }
@@ -193,7 +215,7 @@ function WalkLine({ segment }: { segment: PathSegmentDto }) {
 }
 
 /** 프로토타입 경로 상세의 타임라인. 왼쪽에 시각, 가운데에 점과 호선 색 막대, 오른쪽에 승차, 하차, 도보, 도착 안내가 이어진다 */
-export function RouteTimeline({ option, destinationName }: RouteTimelineProps) {
+export function RouteTimeline({ option, destinationName, onSelect }: RouteTimelineProps) {
   const rows = useMemo(() => buildTimeline(option), [option]);
   const lineColor = (segment: PathSegmentDto) => getLineInfo(segment.lineId).color;
 
@@ -204,19 +226,29 @@ export function RouteTimeline({ option, destinationName }: RouteTimelineProps) {
 
     if (row.kind === "depart") {
       elements.push(
-        <Row key={row.key} time={timeLabel(row.timeMs)} rail={<><RingNode /><DottedBar /></>}>
+        <Row
+          key={row.key}
+          time={timeLabel(row.timeMs)}
+          rail={<><RingNode /><DottedBar /></>}
+          onPress={onSelect && (() => onSelect({ kind: "depart" }))}
+        >
           <Text className="text-base font-sans-bold">출발</Text>
         </Row>
       );
     } else if (row.kind === "walk") {
       elements.push(
-        <Row key={row.key} rail={<DottedBar />}>
+        <Row key={row.key} rail={<DottedBar />} onPress={onSelect && (() => onSelect({ kind: "segment", segment: row.segment }))}>
           <WalkLine segment={row.segment} />
         </Row>
       );
     } else if (row.kind === "board") {
       elements.push(
-        <Row key={row.key} time={timeLabel(row.timeMs)} rail={<><RingNode color={lineColor(row.segment)} /><SolidBar color={lineColor(row.segment)} /></>}>
+        <Row
+          key={row.key}
+          time={timeLabel(row.timeMs)}
+          rail={<><RingNode color={lineColor(row.segment)} /><SolidBar color={lineColor(row.segment)} /></>}
+          onPress={onSelect && (() => onSelect({ kind: "segment", segment: row.segment }))}
+        >
           <BoardContent row={row} />
         </Row>
       );
@@ -224,13 +256,18 @@ export function RouteTimeline({ option, destinationName }: RouteTimelineProps) {
       const walk = next && next.kind === "walk" ? next.segment : undefined;
       if (walk) i += 1;
       elements.push(
-        <Row key={row.key} time={timeLabel(row.timeMs)} rail={<><RingNode color={lineColor(row.segment)} /><DottedBar /></>}>
+        <Row
+          key={row.key}
+          time={timeLabel(row.timeMs)}
+          rail={<><RingNode color={lineColor(row.segment)} /><DottedBar /></>}
+          onPress={onSelect && (() => onSelect({ kind: "station", stationId: row.segment.toStationId }))}
+        >
           <AlightContent segment={row.segment} transfer={row.transfer} walk={walk} />
         </Row>
       );
     } else {
       elements.push(
-        <Row key={row.key} time={timeLabel(row.timeMs)} rail={<FilledNode />}>
+        <Row key={row.key} time={timeLabel(row.timeMs)} rail={<FilledNode />} onPress={onSelect && (() => onSelect({ kind: "arrive" }))}>
           <Text className="text-base font-sans-bold">{destinationName} 도착</Text>
         </Row>
       );

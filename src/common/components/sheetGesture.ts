@@ -1,7 +1,11 @@
-/** 시트의 세 위치. 위는 펼침, 중간은 제목 줄만 보이는 접힘, 아래는 손잡이만 남아 지도만 보이는 상태다 */
-export type SheetPosition = "TOP" | "MIDDLE" | "BOTTOM";
+/**
+ * 시트의 네 위치. 전체는 지도를 덮을 만큼 올라온 상태, 위는 기본으로 펼친 상태(디폴트),
+ * 중간은 제목 줄만 보이는 접힘, 아래는 손잡이만 남아 지도만 보이는 상태다.
+ * 전체가 필요 없는 시트는 전체와 위가 같은 높이라 위 하나로 합쳐진다
+ */
+export type SheetPosition = "FULL" | "TOP" | "MIDDLE" | "BOTTOM";
 
-export const SHEET_POSITIONS: readonly SheetPosition[] = ["TOP", "MIDDLE", "BOTTOM"];
+export const SHEET_POSITIONS: readonly SheetPosition[] = ["FULL", "TOP", "MIDDLE", "BOTTOM"];
 
 /** 위치마다 열린 위치(0)에서 얼마나 아래로 내려가 있는지(px). 값이 클수록 아래다 */
 export type SheetOffsets = Record<SheetPosition, number>;
@@ -16,23 +20,33 @@ export const INTENT_DISTANCE = 48;
 const clamp = (value: number, min: number, max: number): number => Math.max(min, Math.min(max, value));
 
 /**
- * 세 위치의 내려간 정도. 시트 전체 높이에서 중간, 아래 위치에서 화면에 보이는 높이를 뺀 값이다.
+ * 위치마다 내려간 정도. 시트 전체 높이에서 각 위치에 화면에 보이는 높이를 뺀 값이다.
+ * 전체는 항상 0이고, 위(디폴트)에 보이는 높이를 주지 않으면 시트 전체가 보이는 것으로 보아 전체와 같다.
  * 시트가 작아 겹치는 위치는 같은 값이 된다
  */
-export function sheetOffsets(sheetHeight: number, middleVisible: number, bottomVisible: number): SheetOffsets {
+export function sheetOffsets(
+  sheetHeight: number,
+  middleVisible: number,
+  bottomVisible: number,
+  topVisible: number = sheetHeight
+): SheetOffsets {
   const height = Math.max(0, sheetHeight);
   const bottom = clamp(height - bottomVisible, 0, height);
-  const middle = clamp(height - middleVisible, 0, bottom);
-  return { TOP: 0, MIDDLE: middle, BOTTOM: bottom };
+  const top = clamp(height - topVisible, 0, bottom);
+  const middle = clamp(height - middleVisible, top, bottom);
+  return { FULL: 0, TOP: top, MIDDLE: middle, BOTTOM: bottom };
 }
 
-/** 지금 위치(offset)에서 가장 가까운 시트 위치. 같은 거리면 더 위쪽이다 */
+/**
+ * 지금 위치(offset)에서 가장 가까운 시트 위치. 같은 거리면 더 위쪽이다.
+ * 다만 전체와 위가 같은 높이로 합쳐진 시트는 위로 돌려준다
+ */
 export function nearestPosition(offset: number, offsets: SheetOffsets): SheetPosition {
-  let best: SheetPosition = "TOP";
+  let best: SheetPosition = "FULL";
   for (const position of SHEET_POSITIONS) {
     if (Math.abs(offsets[position] - offset) < Math.abs(offsets[best] - offset)) best = position;
   }
-  return best;
+  return best === "FULL" && offsets.FULL === offsets.TOP ? "TOP" : best;
 }
 
 /**
@@ -44,7 +58,10 @@ export function stepPosition(from: SheetPosition, direction: "UP" | "DOWN", offs
   let index = SHEET_POSITIONS.indexOf(from) + step;
   while (index >= 0 && index < SHEET_POSITIONS.length) {
     if (offsets[SHEET_POSITIONS[index]] !== offsets[from]) {
-      while (step < 0 && index > 0 && offsets[SHEET_POSITIONS[index - 1]] === offsets[SHEET_POSITIONS[index]]) index -= 1;
+      // 전체가 위와 합쳐진 시트는 위에서 멈춘다(전체가 따로 없는 시트다)
+      const topmost = offsets.FULL === offsets.TOP ? 1 : 0;
+      while (step < 0 && index > topmost && offsets[SHEET_POSITIONS[index - 1]] === offsets[SHEET_POSITIONS[index]])
+        index -= 1;
       return SHEET_POSITIONS[index];
     }
     index += step;
@@ -59,16 +76,32 @@ interface CaptureInput {
   offsets: SheetOffsets;
   /** 시트 안 목록이 맨 위인지. 스크롤이 없는 시트는 항상 true */
   scrollAtTop: boolean;
+  /** true면 펼친(전체, 위) 시트에서 내용을 위로 끄는 것은 스크롤이다. 시트를 올리려면 손잡이를 끌어야 한다 */
+  contentFirst?: boolean;
+  /** 끌기가 손잡이에서 시작했는지. 손잡이는 내용 스크롤과 상관없이 시트를 움직인다 */
+  fromHandle?: boolean;
 }
 
 /**
  * 시트가 끌기를 가져가야 하는지. 세로로 충분히 움직였을 때만이고, 위로 끌 때는 더 올라갈 곳이 있을 때,
  * 아래로 끌 때는 더 내려갈 곳이 있고 펼친 시트라면 목록이 맨 위일 때만 가져간다. 목록이 스크롤 중이면 스크롤이 우선이다
  */
-export function shouldCaptureDrag({ dx, dy, position, offsets, scrollAtTop }: CaptureInput): boolean {
+export function shouldCaptureDrag({
+  dx,
+  dy,
+  position,
+  offsets,
+  scrollAtTop,
+  contentFirst = false,
+  fromHandle = false,
+}: CaptureInput): boolean {
   if (Math.abs(dy) <= DRAG_START_DISTANCE || Math.abs(dy) <= Math.abs(dx)) return false;
-  if (dy < 0) return stepPosition(position, "UP", offsets) !== position;
-  if (position === "TOP" && !scrollAtTop) return false;
+  const expanded = position === "FULL" || position === "TOP";
+  if (dy < 0) {
+    if (contentFirst && !fromHandle && expanded) return false;
+    return stepPosition(position, "UP", offsets) !== position;
+  }
+  if (!fromHandle && expanded && !scrollAtTop) return false;
   return stepPosition(position, "DOWN", offsets) !== position;
 }
 
@@ -103,7 +136,15 @@ export function positionAfterRelease({ from, dy, vy, offsets }: ReleaseInput): S
       : nearest;
 }
 
-/** 손잡이를 눌렀을 때: 펼친 시트는 한 칸 접고, 접힌 시트는 한 칸 펼친다 */
+/**
+ * 손잡이를 눌렀을 때: 접힌 시트는 한 칸 펼치고, 디폴트(위)에서는 전체가 있으면 전체로, 없으면 한 칸 접는다.
+ * 전체에서는 디폴트로 돌아간다
+ */
 export function positionAfterTap(from: SheetPosition, offsets: SheetOffsets): SheetPosition {
-  return stepPosition(from, from === "TOP" ? "DOWN" : "UP", offsets);
+  if (from === "FULL") return stepPosition(from, "DOWN", offsets);
+  if (from === "TOP") {
+    const up = stepPosition(from, "UP", offsets);
+    return up !== from ? up : stepPosition(from, "DOWN", offsets);
+  }
+  return stepPosition(from, "UP", offsets);
 }

@@ -11,14 +11,22 @@ interface PickConfirmCardProps {
   confirmLabel: string;
   onConfirm: () => void;
   onClose: () => void;
+  /** 전체로 올렸을 때 시트 위에 겹쳐 보이는 것(뒤로가기 등)이 내용을 가리지 않게 비울 높이(px) */
+  fullTopInset?: number;
 }
 
-/** 지도에서 고른 곳의 주소와 가까운 역을 보여 주고 확정 버튼 하나를 두는 하단 카드 */
-export function PickConfirmCard({ place, confirmLabel, onConfirm, onClose }: PickConfirmCardProps) {
+/**
+ * 지도에서 고른 곳의 주소와 가까운 역을 보여 주고 확정 버튼 하나를 두는 하단 카드.
+ * 단계는 전체(지도를 덮음), 디폴트, 닫기이고 이름만 보이는 축소 단계는 없다
+ */
+export function PickConfirmCard({ place, confirmLabel, onConfirm, onClose, fullTopInset = 0 }: PickConfirmCardProps) {
   return (
     <DraggableSheet
       label={place.title}
       className="px-5"
+      expandable
+      skipMiddle
+      fullTopInset={fullTopInset}
       header={
           <View className="flex-row items-center justify-between gap-2">
             <Text numberOfLines={1} className="shrink text-title font-sans-bold">

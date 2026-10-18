@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { Pressable, View } from "react-native";
 import { useAuth } from "@clerk/expo";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -7,14 +7,21 @@ import { useStartTrackingMutation } from "@/apis/mutations/tracking/useStartTrac
 import { useStationsQuery } from "@/apis/queries/stations/useStationsQuery";
 import { BackButton } from "@/common/components/BackButton";
 import { DesignIcon } from "@/common/components/DesignIcon";
-import { DraggableSheet } from "@/common/components/DraggableSheet";
+import { DraggableSheet, type DraggableSheetHandle } from "@/common/components/DraggableSheet";
 import { Text } from "@/common/components/Text";
 import { formatClockKst, formatDurationSec, formatFare } from "@/common/utils/format";
 import { VWorldMap } from "@/features/map/VWorldMap";
 import { RouteTimeline } from "@/features/routing/components/RouteTimeline";
 import { splitDuration } from "@/features/routing/routeCardView";
 import { endpointCoords } from "@/features/routing/endpoint";
-import { clockRangeShort, mapStationIds, routeMapData } from "@/features/routing/routeTimeline";
+import {
+  clockRangeShort,
+  mapStationIds,
+  routeMapData,
+  sameTarget,
+  targetFocusPoints,
+  type TimelineTarget,
+} from "@/features/routing/routeTimeline";
 import type { RootStackParamList } from "@/navigation/navigation-types";
 import { WALK_LINE_ID } from "@/theme";
 
@@ -30,6 +37,12 @@ export function RouteDetailScreen({
   const [areaHeight, setAreaHeight] = useState(0);
   const [footerHeight, setFooterHeight] = useState(0);
   const [sheetVisible, setSheetVisible] = useState(0);
+  // 타임라인에서 누른 칸. 있으면 지도가 그 위치로 확대된다
+  const [selected, setSelected] = useState<TimelineTarget | null>(null);
+  const sheetControl = useRef<DraggableSheetHandle | null>(null);
+
+  // 디폴트에서 시트가 지도 위로 올라온 높이. 전체로 올려 지도를 가려도 지도는 이 높이를 기준으로 맞춘다
+  const defaultVisible = Math.max(areaHeight - SHEET_TOP, 0);
 
   const lastRide = [...option.segments].reverse().find((segment) => segment.lineId !== WALK_LINE_ID);
   const firstRideIndex = option.segments.findIndex((segment) => segment.lineId !== WALK_LINE_ID);
@@ -42,17 +55,25 @@ export function RouteDetailScreen({
   // 지도: 경로가 지나는 역의 좌표를 받아 호선 색 선으로 잇는다
   const stationIds = useMemo(() => mapStationIds(option), [option]);
   const stations = useStationsQuery(stationIds);
+  const coords = useMemo(
+    () => new Map((stations.data?.items ?? []).map((item) => [item.stationId, { lat: item.lat, lng: item.lng }])),
+    [stations.data]
+  );
   const mapData = useMemo(() => {
-    const coords = new Map((stations.data?.items ?? []).map((item) => [item.stationId, { lat: item.lat, lng: item.lng }]));
+    const endpoints = { origin: endpointCoords(origin), destination: endpointCoords(destination) };
     return {
-      ...routeMapData(option, coords, {
-        origin: endpointCoords(origin),
-        destination: endpointCoords(destination),
-      }),
+      ...routeMapData(option, coords, endpoints),
       // 시트가 덮은 아래를 빼고 남은 지도에 경로가 보이게 맞춘다
       bottomInset: sheetVisible,
+      focus: selected ? targetFocusPoints(option, coords, endpoints, selected) : undefined,
     };
-  }, [option, stations.data, origin, destination, sheetVisible]);
+  }, [option, coords, origin, destination, sheetVisible, selected]);
+
+  // 칸을 누르면 지도가 보이도록 시트를 디폴트로 내리고 그 위치를 확대한다. 같은 칸을 다시 누르면 전체 경로로 돌아간다
+  const selectTarget = (target: TimelineTarget) => {
+    setSelected((current) => (sameTarget(current, target) ? null : target));
+    sheetControl.current?.snapTo("TOP");
+  };
 
   const startGuide = () => {
     if (startTracking.isPending) return;
@@ -81,14 +102,16 @@ export function RouteDetailScreen({
     <View className="flex-1 bg-surface" onLayout={(event) => setAreaHeight(Math.round(event.nativeEvent.layout.height))}>
       <VWorldMap data={mapData} className="absolute inset-0" />
 
-      <BackButton onPress={() => navigation.goBack()} variant="floating" iconSize={22} style={{ top: insets.top + 10 }} className="absolute left-4" />
-
       <DraggableSheet
         label="경로 상세"
+        controlRef={sheetControl}
         className="px-5"
-        height={Math.max(areaHeight - SHEET_TOP, 0)}
+        height={defaultVisible}
         bottomInset={footerHeight}
         scrollable
+        expandable
+        contentFirst
+        fullTopInset={insets.top + 2 + 44 + 4}
         onVisibleHeightChange={setSheetVisible}
         header={
           <View className="pt-3.5">
@@ -124,7 +147,11 @@ export function RouteDetailScreen({
           </View>
         }
       >
-      <RouteTimeline option={option} destinationName={destination.name || lastRide?.toStationName || "도착지"} />
+      <RouteTimeline
+        option={option}
+        destinationName={destination.name || lastRide?.toStationName || "도착지"}
+        onSelect={selectTarget}
+      />
         <View style={{ height: footerHeight + 16 }} />
       </DraggableSheet>
 
@@ -164,6 +191,9 @@ export function RouteDetailScreen({
           안내를 시작하지 못했어요. 다시 시도해 주세요.
         </Text>
       ) : null}
+
+      {/* 시트를 전체로 올려도 뒤로가기가 시트 위에 보이도록 시트보다 나중에 그린다 */}
+      <BackButton onPress={() => navigation.goBack()} variant="floating" iconSize={22} style={{ top: insets.top + 2 }} className="absolute left-4" />
     </View>
   );
 }
