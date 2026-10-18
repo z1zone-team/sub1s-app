@@ -23,6 +23,8 @@ export * from "./queries/stations/getNextTrains";
 export * from "./queries/stations/useNextTrainsQuery";
 export * from "./queries/stations/getStationFacilities";
 export * from "./queries/stations/useStationFacilitiesQuery";
+export * from "./queries/trains/getTrainPositions";
+export * from "./queries/trains/useTrainPositionsQuery";
 
 // Congestion Queries
 export * from "./queries/congestion/getTrainCongestion";

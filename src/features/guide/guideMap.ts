@@ -1,5 +1,5 @@
 import type { SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
-import type { MapData } from "@/features/map/mapHtml";
+import type { MapData, MapMarker } from "@/features/map/mapHtml";
 import { type RouteEndpointCoords, routeMapData } from "@/features/routing/routeTimeline";
 
 const ME_COLOR = "#002968";
@@ -15,9 +15,12 @@ export function guideMapData(
   me?: { lat: number; lng: number },
   endpoints?: RouteEndpointCoords,
   /** 위의 배너와 아래의 시트가 지도를 덮은 높이(px). 내 위치가 그 사이 보이는 영역의 가운데에 오게 한다 */
-  insets?: { top?: number; bottom?: number }
+  insets?: { top?: number; bottom?: number },
+  /** 서버가 알려 준 열차 위치 점. 내 위치 캐릭터보다 아래에 그린다 */
+  trains: MapMarker[] = []
 ): MapData {
-  const route = routeMapData(option, stations, endpoints);
+  const base = routeMapData(option, stations, endpoints);
+  const route = trains.length > 0 ? { ...base, markers: [...base.markers, ...trains] } : base;
   if (!me) return route;
 
   return {

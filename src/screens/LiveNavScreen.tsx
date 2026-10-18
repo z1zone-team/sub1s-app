@@ -6,6 +6,7 @@ import type { SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
 import { useCreateTravelLogMutation } from "@/apis/mutations/travel/useCreateTravelLogMutation";
 import { useDeviateCheckMutation } from "@/apis/mutations/tracking/useDeviateCheckMutation";
 import { useStationFacilitiesQuery } from "@/apis/queries/stations/useStationFacilitiesQuery";
+import { useTrainPositionsQuery } from "@/apis/queries/trains/useTrainPositionsQuery";
 import { Button } from "@/common/components/Button";
 import { DesignIcon } from "@/common/components/DesignIcon";
 import { DraggableSheet } from "@/common/components/DraggableSheet";
@@ -31,6 +32,7 @@ import { visibleStopIndexes } from "@/features/guide/progress";
 import { pickTrackStops, trackFill } from "@/features/guide/progressTrack";
 import { useActiveGuideStore } from "@/features/guide/active-guide-store";
 import { smartAlertBody, smartAlertTitle } from "@/features/guide/smartAlert";
+import { isFreshPositions, positionAgeLabel, trainMarkers } from "@/features/guide/trainMarkers";
 import { useGuide } from "@/features/guide/useGuide";
 import { useSmartAlert } from "@/features/guide/useSmartAlert";
 import { VWorldMap } from "@/features/map/VWorldMap";
@@ -126,6 +128,24 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
   const nearEnd = stopsLeft <= 1;
   const lineColor = getLineInfo(segment?.lineId ?? option.segments.find((s) => s.lineId !== "WALK")?.lineId ?? "").color;
 
+  // 타는 호선의 열차 위치(서버가 모아 둔 값)를 지도에 점으로 보여 준다. 서버가 모으지 않는 호선이면 아무것도 안 보인다
+  const trainLineId = segment && segment.lineId !== "WALK" ? segment.lineId : undefined;
+  const trainPositions = useTrainPositionsQuery(trainLineId).data;
+  const freshTrains = isFreshPositions(trainPositions) ? trainPositions : undefined;
+  const trainPoints = useMemo(
+    () =>
+      freshTrains && trainLineId && segment && segment.direction !== "NONE"
+        ? trainMarkers(freshTrains.trains, {
+            lineId: trainLineId,
+            direction: segment.direction,
+            stops,
+            stations: info,
+            color: lineColor,
+          })
+        : [],
+    [freshTrains, trainLineId, segment, stops, info, lineColor]
+  );
+
   // 지도: 경로 선과 내 위치 (역 좌표는 안내 로직이 이미 조회해 둔 값)
   const mapData = useMemo(
     () =>
@@ -134,9 +154,10 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
         info,
         coords ? { lat: coords.latitude, lng: coords.longitude } : undefined,
         { origin: endpointCoords(origin), destination: endpointCoords(destinationEndpoint) },
-        { top: insets.top + BANNER_TOP_OFFSET + bannerHeight, bottom: sheetVisible + popupHeight }
+        { top: insets.top + BANNER_TOP_OFFSET + bannerHeight, bottom: sheetVisible + popupHeight },
+        trainPoints
       ),
-    [option, info, coords, origin, destinationEndpoint, sheetVisible, popupHeight, bannerHeight, insets.top]
+    [option, info, coords, origin, destinationEndpoint, sheetVisible, popupHeight, bannerHeight, insets.top, trainPoints]
   );
 
   // 진행 막대: 역이 많아도 6개만 보여 준다
@@ -224,6 +245,11 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
           weakAcCars={weakAcCars}
           onBack={() => navigation.navigate("MainTabs", { screen: "HomeTab", params: { recenterRequest: Date.now() } })}
         />
+        {trainPoints.length > 0 && freshTrains ? (
+          <Text className="mt-2 self-start rounded-pill bg-bg px-3 py-1.5 text-small font-sans-semibold text-text-secondary">
+            {`열차 위치 · ${freshTrains.source === "MOCK" ? "시연용" : positionAgeLabel(freshTrains.ageSec ?? 0)} 기준`}
+          </Text>
+        ) : null}
         {smartAlert.alert ? (
           <SmartAlertBanner
             title={smartAlertTitle(smartAlert.alert.type)}
