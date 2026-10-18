@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Animated, Pressable, ScrollView, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
@@ -9,11 +9,12 @@ import { useStationFacilitiesQuery } from "@/apis/queries/stations/useStationFac
 import { useTrainPositionsQuery } from "@/apis/queries/trains/useTrainPositionsQuery";
 import { Button } from "@/common/components/Button";
 import { DesignIcon } from "@/common/components/DesignIcon";
-import { DraggableSheet } from "@/common/components/DraggableSheet";
+import { DraggableSheet, type DraggableSheetHandle } from "@/common/components/DraggableSheet";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { formatDurationSec } from "@/common/utils/format";
 import { ArrivalPopup } from "@/features/guide/components/ArrivalPopup";
+import { GuideBannerCompact, GUIDE_BANNER_COMPACT_HEIGHT } from "@/features/guide/components/GuideBannerCompact";
 import { GuideBanner } from "@/features/guide/components/GuideBanner";
 import { SmartAlertBanner } from "@/features/guide/components/SmartAlertBanner";
 import { PhaseCard } from "@/features/guide/components/PhaseCard";
@@ -46,7 +47,7 @@ import { cn } from "@/lib/cn";
 type Props = NativeStackScreenProps<RootStackParamList, "LiveNav">;
 
 /** 안내 배너가 상태 표시줄 아래에서 떨어진 거리 */
-const BANNER_TOP_OFFSET = 8;
+const BANNER_TOP_OFFSET = 4;
 
 export function LiveNavScreen({ navigation, route }: Props) {
   const { sessionId, option, startedAtMs, origin, destination } = route.params;
@@ -91,6 +92,15 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
   const [sheetVisible, setSheetVisible] = useState(0);
   const [popupHeight, setPopupHeight] = useState(0);
   const [bannerHeight, setBannerHeight] = useState(0);
+  // 시트를 전체로 올리면 큰 배너 대신 한 줄 배너를 보여 준다
+  const [sheetFull, setSheetFull] = useState(false);
+  // 진행 표시에서 누른 역(경로의 순번). 있으면 지도가 그 역으로 확대된다
+  const [focusedStop, setFocusedStop] = useState<number | null>(null);
+  const sheetControl = useRef<DraggableSheetHandle | null>(null);
+  // 시트가 올라온 정도(0 디폴트, 1 전체). 끄는 동안 계속 바뀌어 배너가 시트와 같은 속도로 바뀐다
+  const [fullAnim, setFullAnim] = useState<Animated.Value | Animated.AnimatedInterpolation<number>>(
+    () => new Animated.Value(0)
+  );
 
   // 홈으로 나가도 안내가 이어지도록 진행 중인 안내를 기억한다
   useEffect(() => {
@@ -147,18 +157,30 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
   );
 
   // 지도: 경로 선과 내 위치 (역 좌표는 안내 로직이 이미 조회해 둔 값)
-  const mapData = useMemo(
-    () =>
-      guideMapData(
-        option,
-        info,
-        coords ? { lat: coords.latitude, lng: coords.longitude } : undefined,
-        { origin: endpointCoords(origin), destination: endpointCoords(destinationEndpoint) },
-        { top: insets.top + BANNER_TOP_OFFSET + bannerHeight, bottom: sheetVisible + popupHeight },
-        trainPoints
-      ),
-    [option, info, coords, origin, destinationEndpoint, sheetVisible, popupHeight, bannerHeight, insets.top, trainPoints]
-  );
+  const focusedPoint = focusedStop !== null ? info.get(stops[focusedStop]?.stationId ?? "") : undefined;
+  const mapData = useMemo(() => {
+    const data = guideMapData(
+      option,
+      info,
+      coords ? { lat: coords.latitude, lng: coords.longitude } : undefined,
+      { origin: endpointCoords(origin), destination: endpointCoords(destinationEndpoint) },
+      { top: insets.top + BANNER_TOP_OFFSET + bannerHeight, bottom: sheetVisible + popupHeight },
+      trainPoints
+    );
+    return focusedPoint ? { ...data, focus: [[focusedPoint.lat, focusedPoint.lng] as [number, number]] } : data;
+  }, [
+    option,
+    info,
+    coords,
+    origin,
+    destinationEndpoint,
+    sheetVisible,
+    popupHeight,
+    bannerHeight,
+    insets.top,
+    trainPoints,
+    focusedPoint,
+  ]);
 
   // 진행 막대: 역이 많아도 6개만 보여 준다
   const trackIndexes = pickTrackStops(visible.length, stripCurrent);
@@ -231,37 +253,90 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
     <View className="flex-1 bg-surface">
       <VWorldMap data={mapData} className="absolute inset-0" />
 
-      <View
-        style={{ top: insets.top + BANNER_TOP_OFFSET }}
-        className="absolute inset-x-3"
-        onLayout={(event) => setBannerHeight(Math.round(event.nativeEvent.layout.height))}
-      >
-        <GuideBanner
-          label={phaseBannerLabel(phase)}
-          nextStationName={riding || boardingIndex === undefined ? nameAt(nextVisible) : nameAt(boardingIndex)}
-          destinationName={destination}
-          stopsLeft={stopsLeft}
-          remainingLabel={progress.remainingSec > 0 ? `약 ${formatDurationSec(progress.remainingSec)}` : ""}
-          weakAcCars={weakAcCars}
-          onBack={() => navigation.navigate("MainTabs", { screen: "HomeTab", params: { recenterRequest: Date.now() } })}
-        />
-        {trainPoints.length > 0 && freshTrains ? (
-          <Text className="mt-2 self-start rounded-pill bg-bg px-3 py-1.5 text-small font-sans-semibold text-text-secondary">
-            {`열차 위치 · ${freshTrains.source === "MOCK" ? "시연용" : positionAgeLabel(freshTrains.ageSec ?? 0)} 기준`}
-          </Text>
-        ) : null}
-        {smartAlert.alert ? (
-          <SmartAlertBanner
-            title={smartAlertTitle(smartAlert.alert.type)}
-            body={smartAlertBody(smartAlert.alert)}
-            onDismiss={smartAlert.dismiss}
-          />
-        ) : null}
-      </View>
-
       <DraggableSheet
         label="안내"
+        controlRef={sheetControl}
         className="px-5"
+        scrollable
+        expandable
+        contentFirst
+        // 전체로 올리면 위에는 한 줄 배너만 남으므로 그 아래부터 내용이 시작한다
+        fullTopInset={insets.top + BANNER_TOP_OFFSET + GUIDE_BANNER_COMPACT_HEIGHT + 4}
+        onPositionChange={(position) => setSheetFull(position === "FULL")}
+        onFullProgress={setFullAnim}
+        bottomDock={
+          <View>
+            {phase === "WALK_TO_STATION" && boardingIndex !== undefined ? (
+              <PhaseCard
+                title={phaseTitle(phase, nameAt(boardingIndex))}
+                detail={walkDetail(guide.walkDistanceM)}
+                actionLabel="역에 도착했어요"
+                onAction={guide.reachStation}
+                hint={guide.locationGranted ? "역 근처에 오면 자동으로 알려 줘요" : undefined}
+              />
+            ) : null}
+            {phase === "WAITING" && boardingIndex !== undefined ? (
+              <PhaseCard
+                title={phaseTitle(phase, nameAt(boardingIndex))}
+                detail={segment ? rideDetail(getLineInfo(segment.lineId).name, segment.toStationName) : undefined}
+                actionLabel="열차에 탔어요"
+                onAction={guide.board}
+              />
+            ) : null}
+
+            {!guide.locationGranted ? (
+              <Text className="mt-2 text-small text-text-secondary">
+                위치 권한이 없어 시간표로 위치를 추정하고 있어요.
+              </Text>
+            ) : null}
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setPicking((value) => !value)}
+              className="mt-1 items-center py-1.5"
+            >
+              <Text className="text-body-sm text-text-secondary">
+                {picking ? "역 목록 닫기" : "지금 있는 역을 직접 알려주기"}
+              </Text>
+            </Pressable>
+
+            {riding ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ busy: deviate.isPending }}
+                disabled={deviate.isPending}
+                onPress={reportWrongDirection}
+                className={cn("mt-1.5 h-11 flex-row items-center justify-center gap-1.5 rounded-md bg-surface", deviate.isPending ? "opacity-50" : "")}
+              >
+                <DesignIcon name="undo" size={16} />
+                <Text className="text-body font-sans-bold">반대 방향 열차를 탔어요</Text>
+              </Pressable>
+            ) : null}
+            {deviate.error ? (
+              <Text className="mt-1.5 text-center text-body-sm text-error">경로를 다시 찾지 못했어요. 잠시 후 다시 시도해 주세요.</Text>
+            ) : null}
+
+            <View className="mt-2 flex-row gap-2">
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => navigation.navigate("MainTabs", { screen: "HomeTab", params: { recenterRequest: Date.now() } })}
+                className="h-14 flex-1 items-center justify-center rounded-lg bg-surface"
+              >
+                <Text className="text-base font-sans-semibold">홈 보기</Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => {
+                  useActiveGuideStore.getState().end();
+                  navigation.navigate("MainTabs", { screen: "HomeTab", params: { recenterRequest: Date.now() } });
+                }}
+                className="h-14 flex-1 items-center justify-center rounded-lg bg-surface"
+              >
+                <Text className="text-base font-sans-semibold text-error">안내 끝내기</Text>
+              </Pressable>
+            </View>
+        
+          </View>
+        }
         bottomInset={bottomPadding}
         coverBottom
         onVisibleHeightChange={setSheetVisible}
@@ -301,79 +376,81 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
               </View>
         }
       >
-        <View style={{ paddingBottom: bottomPadding }}>
-          <ProgressTrack names={trackNames} reachedIndex={trackReached} fill={fill} color={lineColor} />
-
-          {phase === "WALK_TO_STATION" && boardingIndex !== undefined ? (
-            <PhaseCard
-              title={phaseTitle(phase, nameAt(boardingIndex))}
-              detail={walkDetail(guide.walkDistanceM)}
-              actionLabel="역에 도착했어요"
-              onAction={guide.reachStation}
-              hint={guide.locationGranted ? "역 근처에 오면 자동으로 알려 줘요" : undefined}
-            />
-          ) : null}
-          {phase === "WAITING" && boardingIndex !== undefined ? (
-            <PhaseCard
-              title={phaseTitle(phase, nameAt(boardingIndex))}
-              detail={segment ? rideDetail(getLineInfo(segment.lineId).name, segment.toStationName) : undefined}
-              actionLabel="열차에 탔어요"
-              onAction={guide.board}
-            />
-          ) : null}
-
-          {!guide.locationGranted ? (
-            <Text className="mt-2 text-small text-text-secondary">
-              위치 권한이 없어 시간표로 위치를 추정하고 있어요.
-            </Text>
-          ) : null}
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => setPicking((value) => !value)}
-            className="mt-1 items-center py-1.5"
-          >
-            <Text className="text-body-sm text-text-secondary">
-              {picking ? "역 목록 닫기" : "지금 있는 역을 직접 알려주기"}
-            </Text>
-          </Pressable>
-
-          {riding ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ busy: deviate.isPending }}
-              disabled={deviate.isPending}
-              onPress={reportWrongDirection}
-              className={cn("mt-1.5 h-11 flex-row items-center justify-center gap-1.5 rounded-md bg-surface", deviate.isPending ? "opacity-50" : "")}
-            >
-              <DesignIcon name="undo" size={16} />
-              <Text className="text-body font-sans-bold">반대 방향 열차를 탔어요</Text>
-            </Pressable>
-          ) : null}
-          {deviate.error ? (
-            <Text className="mt-1.5 text-center text-body-sm text-error">경로를 다시 찾지 못했어요. 잠시 후 다시 시도해 주세요.</Text>
-          ) : null}
-
-          <View className="mt-2 flex-row gap-2">
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => navigation.navigate("MainTabs", { screen: "HomeTab", params: { recenterRequest: Date.now() } })}
-              className="h-14 flex-1 items-center justify-center rounded-lg bg-surface"
-            >
-              <Text className="text-base font-sans-semibold">홈 보기</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => {
-                useActiveGuideStore.getState().end();
-                navigation.navigate("MainTabs", { screen: "HomeTab", params: { recenterRequest: Date.now() } });
-              }}
-              className="h-14 flex-1 items-center justify-center rounded-lg bg-surface"
-            >
-              <Text className="text-base font-sans-semibold text-error">안내 끝내기</Text>
-            </Pressable>
-          </View>
-        </View>
+        <ProgressTrack
+          names={trackNames}
+          reachedIndex={trackReached}
+          fill={fill}
+          color={lineColor}
+          onSelect={(trackIndex) => {
+            // 누른 역으로 지도를 확대한다. 같은 역을 다시 누르면 내 위치를 따라가는 지도로 돌아간다
+            const stop = visible[trackIndexes[trackIndex]];
+            setFocusedStop((current) => (current === stop ? null : stop));
+            sheetControl.current?.snapTo("TOP");
+          }}
+        />
       </DraggableSheet>
+
+      {/* 시트를 전체로 올려도 안내 배너가 시트 위에 보이도록 시트보다 나중에 그린다 */}
+      <View
+        style={{ top: insets.top + BANNER_TOP_OFFSET }}
+        className="absolute inset-x-3"
+        onLayout={(event) => setBannerHeight(Math.round(event.nativeEvent.layout.height))}
+      >
+        {/* 전체로 올리면 큰 배너는 위로 사라지고 한 줄 배너가 아래에서 올라오며 바뀐다 */}
+        <Animated.View
+          pointerEvents={sheetFull ? "none" : "auto"}
+          style={{
+            // 시트가 절반쯤 올라올 때까지 큰 배너가 위로 사라지고, 그 뒤에 한 줄 배너가 나타나 두 배너가 겹쳐 보이지 않는다
+            opacity: fullAnim.interpolate({ inputRange: [0, 0.5], outputRange: [1, 0], extrapolate: "clamp" }),
+            transform: [{ translateY: fullAnim.interpolate({ inputRange: [0, 0.5], outputRange: [0, -12], extrapolate: "clamp" }) }],
+          }}
+        >
+          <GuideBanner
+            label={phaseBannerLabel(phase)}
+            nextStationName={riding || boardingIndex === undefined ? nameAt(nextVisible) : nameAt(boardingIndex)}
+            destinationName={destination}
+            stopsLeft={stopsLeft}
+            remainingLabel={progress.remainingSec > 0 ? `약 ${formatDurationSec(progress.remainingSec)}` : ""}
+            weakAcCars={weakAcCars}
+            onBack={() => navigation.navigate("MainTabs", { screen: "HomeTab", params: { recenterRequest: Date.now() } })}
+          />
+        </Animated.View>
+        <Animated.View
+          pointerEvents={sheetFull ? "auto" : "none"}
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            top: 0,
+            opacity: fullAnim.interpolate({ inputRange: [0.5, 1], outputRange: [0, 1], extrapolate: "clamp" }),
+            transform: [{ translateY: fullAnim.interpolate({ inputRange: [0.5, 1], outputRange: [12, 0], extrapolate: "clamp" }) }],
+          }}
+        >
+          <GuideBannerCompact
+            nextStationName={riding || boardingIndex === undefined ? nameAt(nextVisible) : nameAt(boardingIndex)}
+            stopsLeft={stopsLeft}
+            remainingLabel={progress.remainingSec > 0 ? `약 ${formatDurationSec(progress.remainingSec)}` : ""}
+            onBack={() => navigation.navigate("MainTabs", { screen: "HomeTab", params: { recenterRequest: Date.now() } })}
+          />
+        </Animated.View>
+        {trainPoints.length > 0 && freshTrains ? (
+          <Animated.View
+            pointerEvents="none"
+            style={{ opacity: fullAnim.interpolate({ inputRange: [0, 0.5], outputRange: [1, 0], extrapolate: "clamp" }) }}
+          >
+            <Text className="mt-2 self-start rounded-pill bg-bg px-3 py-1.5 text-small font-sans-semibold text-text-secondary">
+              {`열차 위치 · ${freshTrains.source === "MOCK" ? "시연용" : positionAgeLabel(freshTrains.ageSec ?? 0)} 기준`}
+            </Text>
+          </Animated.View>
+        ) : null}
+        {smartAlert.alert ? (
+          <SmartAlertBanner
+            title={smartAlertTitle(smartAlert.alert.type)}
+            body={smartAlertBody(smartAlert.alert)}
+            onDismiss={smartAlert.dismiss}
+          />
+        ) : null}
+      </View>
 
       {picking ? (
         <View style={{ top: insets.top + 130 }} className="absolute inset-x-3 max-h-80 rounded-lg border border-border bg-bg">

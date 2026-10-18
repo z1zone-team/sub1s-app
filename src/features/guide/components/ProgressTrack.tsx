@@ -1,5 +1,5 @@
 import React from "react";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 import { Text } from "@/common/components/Text";
 import { cn } from "@/lib/cn";
 
@@ -12,6 +12,8 @@ interface ProgressTrackProps {
   fill: number;
   /** 호선 색 (진행 부분과 지나온 점) */
   color: string;
+  /** 역 이름을 눌렀을 때. 누른 이름의 순번을 준다. 없으면 누를 수 없다 */
+  onSelect?: (index: number) => void;
 }
 
 /**
@@ -19,7 +21,7 @@ interface ProgressTrackProps {
  * 지나온 점은 호선 색으로 채우고, 다음 역은 호선 색 테두리, 아직 먼 역은 회색 테두리, 도착역은 검은 점이다.
  * 색과 채움 폭은 값마다 달라 style로 준다
  */
-export function ProgressTrack({ names, reachedIndex, fill, color }: ProgressTrackProps) {
+export function ProgressTrack({ names, reachedIndex, fill, color, onSelect }: ProgressTrackProps) {
   const last = names.length - 1;
   const nextIndex = Math.min(reachedIndex + 1, last);
 
@@ -59,9 +61,8 @@ export function ProgressTrack({ names, reachedIndex, fill, color }: ProgressTrac
       <View className="absolute -inset-x-3 top-5.5 flex-row justify-between">
         {names.map((name, index) => {
           const emphasized = index === nextIndex || index === last;
-          return (
+          const label = (
             <Text
-              key={`${index}-${name}`}
               numberOfLines={1}
               className={cn(
                 "w-9 text-center text-tiny",
@@ -70,6 +71,19 @@ export function ProgressTrack({ names, reachedIndex, fill, color }: ProgressTrac
             >
               {name}
             </Text>
+          );
+          return onSelect ? (
+            <Pressable
+              key={`${index}-${name}`}
+              accessibilityRole="button"
+              accessibilityLabel={`${name}역 지도에서 보기`}
+              hitSlop={{ top: 14, bottom: 14, left: 4, right: 4 }}
+              onPress={() => onSelect(index)}
+            >
+              {label}
+            </Pressable>
+          ) : (
+            <View key={`${index}-${name}`}>{label}</View>
           );
         })}
       </View>

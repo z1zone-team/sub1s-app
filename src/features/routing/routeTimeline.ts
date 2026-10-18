@@ -6,6 +6,15 @@ import { decodePolyline } from "./polyline";
 
 const isRide = (segment: PathSegmentDto): boolean => segment.lineId !== WALK_LINE_ID;
 
+/** 타임라인에서 누른 칸. 지도를 이 위치로 확대하는 데 쓴다 */
+export type TimelineTarget =
+  /** 탑승이나 도보 구간 */
+  | { kind: "segment"; segment: PathSegmentDto }
+  /** 하차나 환승 역 */
+  | { kind: "station"; stationId: string }
+  | { kind: "depart" }
+  | { kind: "arrive" };
+
 export type TimelineRow =
   /** 걷기로 시작하는 경로의 출발점 */
   | { kind: "depart"; key: string; timeMs?: number }
@@ -106,22 +115,28 @@ export interface RouteEndpointCoords {
 const WALK_COLOR = "#B0B8C1";
 const ENDPOINT_COLOR = "#191F28";
 
-/**
- * 경로 상세 위쪽 지도 데이터. 탑승 구간은 호선 색 선으로, 도보는 회색 점선으로 잇고,
- * 승하차역에는 호선 색 점을, 처음과 끝에는 진한 점을 찍는다. 좌표를 모르는 역은 건너뛴다.
- * 좌표로 정한 출발지와 도착지(걷기 구간의 ORIGIN_COORDINATE, DEST_COORDINATE)는 endpoints로 좌표를 풀어 준다
- */
-export function routeMapData(option: SubwayRouteOptionDto, coords: StationCoords, endpoints: RouteEndpointCoords = {}): MapData {
-  const ids = option.stationIds ?? [];
-  const lines: MapLine[] = [];
-  const markers: MapMarker[] = [];
-
-  const point = (id: string): [number, number] | undefined => {
+/** 역 ID를 지도 좌표로 바꾼다. 좌표로 정한 출발지와 도착지는 endpoints로 푼다. 모르면 undefined */
+export function pointLookup(coords: StationCoords, endpoints: RouteEndpointCoords = {}) {
+  return (id: string): [number, number] | undefined => {
     const endpoint =
       id === ORIGIN_COORDINATE_ID ? endpoints.origin : id === DESTINATION_COORDINATE_ID ? endpoints.destination : undefined;
     const found = endpoint ?? coords.get(id);
     return found ? [found.lat, found.lng] : undefined;
   };
+}
+
+/**
+ * 구간마다 지도에서 지나는 좌표. 탑승은 지나는 역을 잇고, 도보는 실제 보행 경로(있으면)를 잇고,
+ * 모르면 처음과 끝 좌표다. 좌표를 모르는 곳은 빠지므로 비어 있을 수 있다
+ */
+export function routeSegmentPoints(
+  option: SubwayRouteOptionDto,
+  coords: StationCoords,
+  endpoints: RouteEndpointCoords = {}
+): Array<Array<[number, number]>> {
+  const ids = option.stationIds ?? [];
+  const point = pointLookup(coords, endpoints);
+  const result: Array<Array<[number, number]>> = [];
 
   let searchFrom = 0;
   for (const segment of option.segments) {
@@ -146,7 +161,25 @@ export function routeMapData(option: SubwayRouteOptionDto, coords: StationCoords
     if (points.length < 2) {
       points = [point(segment.fromStationId), point(segment.toStationId)].filter((p): p is [number, number] => Boolean(p));
     }
+    result.push(points);
+  }
+  return result;
+}
 
+/**
+ * 경로 상세 위쪽 지도 데이터. 탑승 구간은 호선 색 선으로, 도보는 회색 점선으로 잇고,
+ * 승하차역에는 호선 색 점을, 처음과 끝에는 진한 점을 찍는다. 좌표를 모르는 역은 건너뛴다.
+ * 좌표로 정한 출발지와 도착지(걷기 구간의 ORIGIN_COORDINATE, DEST_COORDINATE)는 endpoints로 좌표를 풀어 준다
+ */
+export function routeMapData(option: SubwayRouteOptionDto, coords: StationCoords, endpoints: RouteEndpointCoords = {}): MapData {
+  const lines: MapLine[] = [];
+  const markers: MapMarker[] = [];
+  const point = pointLookup(coords, endpoints);
+  const segmentPoints = routeSegmentPoints(option, coords, endpoints);
+
+  option.segments.forEach((segment, index) => {
+    const ride = isRide(segment);
+    const points = segmentPoints[index];
     const color = ride ? getLineInfo(segment.lineId).color : WALK_COLOR;
     if (points.length >= 2) lines.push({ color, points, weight: ride ? 6 : 4, dashed: !ride });
 
@@ -156,7 +189,7 @@ export function routeMapData(option: SubwayRouteOptionDto, coords: StationCoords
         if (p) markers.push({ lat: p[0], lng: p[1], color, radius: 5 });
       }
     }
-  }
+  });
 
   const first = option.segments[0];
   const last = option.segments[option.segments.length - 1];
@@ -166,4 +199,47 @@ export function routeMapData(option: SubwayRouteOptionDto, coords: StationCoords
   if (endPoint) markers.push({ lat: endPoint[0], lng: endPoint[1], color: ENDPOINT_COLOR, radius: 7 });
 
   return { lines, markers, fit: lines.length > 0 || markers.length > 0 };
+}
+
+/**
+ * 누른 칸을 지도에서 보여 줄 좌표. 구간은 그 구간이 지나는 좌표 전체(한눈에 보이게 확대),
+ * 역과 출발, 도착은 한 점이다. 좌표를 모르면 undefined
+ */
+export function targetFocusPoints(
+  option: SubwayRouteOptionDto,
+  coords: StationCoords,
+  endpoints: RouteEndpointCoords,
+  target: TimelineTarget
+): Array<[number, number]> | undefined {
+  const point = pointLookup(coords, endpoints);
+  const single = (id: string | undefined) => {
+    const found = id ? point(id) : undefined;
+    return found ? [found] : undefined;
+  };
+
+  if (target.kind === "station") return single(target.stationId);
+  if (target.kind === "depart") return single(option.segments[0]?.fromStationId);
+  if (target.kind === "arrive") return single(option.segments[option.segments.length - 1]?.toStationId);
+
+  let index = option.segments.indexOf(target.segment);
+  if (index < 0) {
+    index = option.segments.findIndex(
+      (segment) =>
+        segment.fromStationId === target.segment.fromStationId &&
+        segment.toStationId === target.segment.toStationId &&
+        segment.lineId === target.segment.lineId
+    );
+  }
+  const points = index >= 0 ? routeSegmentPoints(option, coords, endpoints)[index] : undefined;
+  return points && points.length > 0 ? points : undefined;
+}
+
+/** 두 칸이 같은 칸인지. 같은 칸을 다시 누르면 확대를 풀어 전체 경로로 돌아가는 데 쓴다 */
+export function sameTarget(a: TimelineTarget | null, b: TimelineTarget): boolean {
+  if (!a || a.kind !== b.kind) return false;
+  if (a.kind === "station" && b.kind === "station") return a.stationId === b.stationId;
+  if (a.kind === "segment" && b.kind === "segment") {
+    return a.segment.fromStationId === b.segment.fromStationId && a.segment.toStationId === b.segment.toStationId && a.segment.lineId === b.segment.lineId;
+  }
+  return true;
 }

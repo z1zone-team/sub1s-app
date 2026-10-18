@@ -38,11 +38,9 @@ export function MapPickScreen({ navigation }: NativeStackScreenProps<RootStackPa
       <View className="flex-1 bg-surface">
         <VWorldMap data={mapData} className="flex-1" onLongPress={onLongPress} />
 
-        <BackButton onPress={() => navigation.goBack()} variant="floating" style={{ top: insets.top + 10 }} className="absolute left-4" />
-
         {pick ? null : (
           <View
-            style={{ top: insets.top + 10 }}
+            style={{ top: insets.top + 2 }}
             className="absolute left-20 right-4 h-control justify-center rounded-pill border border-border bg-bg px-4"
           >
             <Text className="text-body font-sans-semibold">지도를 길게 눌러 출발지를 골라 주세요</Text>
@@ -55,10 +53,14 @@ export function MapPickScreen({ navigation }: NativeStackScreenProps<RootStackPa
             confirmLabel="여기서 출발"
             onConfirm={() => navigation.popTo("Search", { origin: place.endpoint }, { merge: true })}
             onClose={close}
+            fullTopInset={insets.top + 2 + 44 + 4}
           />
         ) : pick ? (
           <PickStatusCard errorMessage={reverse.isError ? pickErrorMessage(reverse.error) : undefined} onClose={close} />
         ) : null}
+
+        {/* 시트를 전체로 올려도 뒤로가기가 시트 위에 보이도록 시트보다 나중에 그린다 */}
+        <BackButton onPress={() => navigation.goBack()} variant="floating" style={{ top: insets.top + 2 }} className="absolute left-4" />
       </View>
     </Screen>
   );

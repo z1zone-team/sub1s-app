@@ -1,6 +1,15 @@
 import type { PathSegmentDto, SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
 import { formatClockKst } from "@/common/utils/format";
-import { buildTimeline, clockRangeShort, mapStationIds, routeMapData, timeLabel } from "./routeTimeline";
+import {
+  buildTimeline,
+  clockRangeShort,
+  mapStationIds,
+  routeMapData,
+  routeSegmentPoints,
+  sameTarget,
+  targetFocusPoints,
+  timeLabel,
+} from "./routeTimeline";
 
 const segment = (over: Partial<PathSegmentDto>): PathSegmentDto => ({
   lineId: "09",
@@ -206,5 +215,74 @@ describe("routeMapData", () => {
       const data = routeMapData(option([ride], ["a", "b", "c"]), coords);
       expect(data.lines[0].points).toEqual([[37.5, 126.8], [37.52, 126.9], [37.5, 127.0]]);
     });
+  });
+});
+
+describe("칸을 눌렀을 때 지도에 보여 줄 좌표", () => {
+  const coords = new Map([
+    ["09_907", { lat: 37.5, lng: 126.8 }],
+    ["09_908", { lat: 37.51, lng: 126.85 }],
+    ["09_925", { lat: 37.5, lng: 127.0 }],
+    ["02_222", { lat: 37.49, lng: 127.02 }],
+  ]);
+  const ride = segment({});
+  const walking = walk(480, "09_925", "02_222");
+  const route = option([ride, walking], ["09_907", "09_908", "09_925", "02_222"]);
+
+  it("구간마다 지도에서 지나는 좌표를 돌려준다: 탑승은 지나는 역을, 도보는 처음과 끝을", () => {
+    expect(routeSegmentPoints(route, coords)).toEqual([
+      [
+        [37.5, 126.8],
+        [37.51, 126.85],
+        [37.5, 127.0],
+      ],
+      [
+        [37.5, 127.0],
+        [37.49, 127.02],
+      ],
+    ]);
+  });
+
+  it("지도에 그리는 선과 같은 좌표다", () => {
+    const lines = routeMapData(route, coords).lines.map((line) => line.points);
+    expect(lines).toEqual(routeSegmentPoints(route, coords));
+  });
+
+  it("구간을 누르면 그 구간 전체 좌표를 돌려준다", () => {
+    expect(targetFocusPoints(route, coords, {}, { kind: "segment", segment: walking })).toEqual([
+      [37.5, 127.0],
+      [37.49, 127.02],
+    ]);
+    expect(targetFocusPoints(route, coords, {}, { kind: "segment", segment: ride })).toHaveLength(3);
+  });
+
+  it("같은 구간이면 객체가 달라도 찾는다", () => {
+    expect(targetFocusPoints(route, coords, {}, { kind: "segment", segment: { ...walking } })).toHaveLength(2);
+  });
+
+  it("역, 출발, 도착은 한 점이다", () => {
+    expect(targetFocusPoints(route, coords, {}, { kind: "station", stationId: "09_925" })).toEqual([[37.5, 127.0]]);
+    expect(targetFocusPoints(route, coords, {}, { kind: "depart" })).toEqual([[37.5, 126.8]]);
+    expect(targetFocusPoints(route, coords, {}, { kind: "arrive" })).toEqual([[37.49, 127.02]]);
+  });
+
+  it("좌표를 모르면 아무것도 보여 주지 않는다", () => {
+    expect(targetFocusPoints(route, coords, {}, { kind: "station", stationId: "99_999" })).toBeUndefined();
+    expect(targetFocusPoints(route, new Map(), {}, { kind: "segment", segment: ride })).toBeUndefined();
+  });
+
+  it("좌표로 정한 출발지와 도착지는 endpoints로 푼다", () => {
+    const fromPlace = option([walk(300, "ORIGIN_COORDINATE", "09_907"), ride]);
+    expect(targetFocusPoints(fromPlace, coords, { origin: { lat: 37.4, lng: 126.7 } }, { kind: "depart" })).toEqual([[37.4, 126.7]]);
+  });
+
+  it("같은 칸을 다시 눌렀는지 알아본다", () => {
+    expect(sameTarget(null, { kind: "depart" })).toBe(false);
+    expect(sameTarget({ kind: "depart" }, { kind: "depart" })).toBe(true);
+    expect(sameTarget({ kind: "depart" }, { kind: "arrive" })).toBe(false);
+    expect(sameTarget({ kind: "station", stationId: "a" }, { kind: "station", stationId: "a" })).toBe(true);
+    expect(sameTarget({ kind: "station", stationId: "a" }, { kind: "station", stationId: "b" })).toBe(false);
+    expect(sameTarget({ kind: "segment", segment: ride }, { kind: "segment", segment: { ...ride } })).toBe(true);
+    expect(sameTarget({ kind: "segment", segment: ride }, { kind: "segment", segment: walking })).toBe(false);
   });
 });
