@@ -14,6 +14,7 @@ import { Text } from "@/common/components/Text";
 import { formatDurationSec } from "@/common/utils/format";
 import { ArrivalPopup } from "@/features/guide/components/ArrivalPopup";
 import { GuideBanner } from "@/features/guide/components/GuideBanner";
+import { SmartAlertBanner } from "@/features/guide/components/SmartAlertBanner";
 import { PhaseCard } from "@/features/guide/components/PhaseCard";
 import { ProgressTrack } from "@/features/guide/components/ProgressTrack";
 import { guideMapData } from "@/features/guide/guideMap";
@@ -29,7 +30,9 @@ import { isOffRouteAlert } from "@/features/guide/offRoute";
 import { visibleStopIndexes } from "@/features/guide/progress";
 import { pickTrackStops, trackFill } from "@/features/guide/progressTrack";
 import { useActiveGuideStore } from "@/features/guide/active-guide-store";
+import { smartAlertBody, smartAlertTitle } from "@/features/guide/smartAlert";
 import { useGuide } from "@/features/guide/useGuide";
+import { useSmartAlert } from "@/features/guide/useSmartAlert";
 import { VWorldMap } from "@/features/map/VWorldMap";
 import { RideBadge } from "@/features/routing/components/RideBadge";
 import { endpointCoords, type RouteEndpoint } from "@/features/routing/endpoint";
@@ -104,6 +107,8 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
     });
     guide.clearAlert();
   }, [guide.alert]);
+
+  const smartAlert = useSmartAlert();
 
   const { stops, info, progress, nowMs, segment, upcoming, coords, phase, boardingIndex } = guide;
   const nameAt = (index: number) => info.get(stops[index]?.stationId ?? "")?.name ?? "";
@@ -219,6 +224,13 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
           weakAcCars={weakAcCars}
           onBack={() => navigation.navigate("MainTabs", { screen: "HomeTab", params: { recenterRequest: Date.now() } })}
         />
+        {smartAlert.alert ? (
+          <SmartAlertBanner
+            title={smartAlertTitle(smartAlert.alert.type)}
+            body={smartAlertBody(smartAlert.alert)}
+            onDismiss={smartAlert.dismiss}
+          />
+        ) : null}
       </View>
 
       <DraggableSheet
