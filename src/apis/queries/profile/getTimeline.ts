@@ -13,6 +13,8 @@ export interface TravelLogItemDto {
   isExpress: boolean;
   /** 탑승 시간(초). 경로 기록을 읽지 못하면 거리 기반 추정이다 */
   durationSec: number;
+  /** 이 이동이 지난 역 ID를 순서대로. 급행은 정차역만 있다. 서버가 아직 안 주는 버전이면 없다 */
+  stationIds?: string[];
 }
 
 export interface TimelineResponseDto {

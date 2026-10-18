@@ -142,6 +142,17 @@ export function logsForPeriod(
   });
 }
 
+/**
+ * 이동 지도 시트의 한 행이 또렷해야 하는지. 이동을 골랐으면 그 이동만, 아니면 호선 필터를 따른다
+ */
+export function logIsHighlighted(
+  log: TravelLogItemDto,
+  selectedLogId: string | undefined,
+  focusLineId: string | undefined
+): boolean {
+  return selectedLogId ? log.id === selectedLogId : logMatchesLine(log, focusLineId);
+}
+
 /** 호선을 골랐을 때 그 호선을 탄 기록만 또렷하게 보인다. 고르지 않았으면 모두 또렷하다 */
 export function logMatchesLine(log: TravelLogItemDto, focusLineId: string | undefined): boolean {
   return !focusLineId || log.lineIds.includes(focusLineId);
