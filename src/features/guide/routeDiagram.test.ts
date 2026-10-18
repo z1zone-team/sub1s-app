@@ -4,6 +4,7 @@ import type { Stop } from "./progress";
 import {
   buildRouteDiagram,
   diagramLabel,
+  diagramStopIndexes,
   DIAGRAM_BEND,
   DIAGRAM_DOT_BAND,
   DIAGRAM_LABEL_STEP,
@@ -108,10 +109,11 @@ describe("buildRouteDiagram", () => {
       expect(model.rows[1].y).toBe(model.rows[0].y + DIAGRAM_DOT_BAND + model.rows[0].labelHeight + DIAGRAM_TRANSFER_BAND);
     });
 
-    it("줄이 넘어가는 곳은 바깥으로 불룩한 곡선이고 새 열차의 색이다", () => {
+    it("호선이 바뀌는 곳은 바깥으로 불룩한 점선이다(환승)", () => {
       const turn = model.links.find((link) => link.turn);
       expect(turn?.turn?.side).toBe(1);
-      expect(turn?.color).toBe(getLineInfo("09").color);
+      expect(turn?.dashed).toBe(true);
+      expect(turn?.color).toBe(DIAGRAM_WALK_COLOR);
       expect(linkPath(turn!)).toContain(" C ");
       // 불룩한 쪽의 제어점이 점보다 바깥(오른쪽)에 있다
       expect(linkPath(turn!)).toContain(`${RIGHT + DIAGRAM_BEND * 2} `);
@@ -248,6 +250,63 @@ describe("역이 많아 한 줄에 다 못 담을 때", () => {
     expect(model.nodes).toHaveLength(count);
     const perRow = model.rows.map((row) => model.nodes.filter((node) => node.row === row.index).length);
     expect(Math.max(...perRow) - Math.min(...perRow)).toBeLessThanOrEqual(1);
+  });
+});
+
+describe("diagramStopIndexes", () => {
+  it("환승역은 두 노선의 역을 모두 남긴다(에버라인 기흥과 수인분당선 기흥)", () => {
+    // 에버라인 기흥(s2)에는 구간 번호가 없고(내리는 역), 수인분당선 기흥(s3)은 두 번째 구간의 첫 역이다
+    const stops = [stop("s0", 0), stop("s1", 0), stop("s2"), stop("s3", 1), stop("s4", 1), stop("s5")];
+    const names = ["명지대", "초당", "기흥", "기흥", "신갈", "구성"];
+
+    expect(diagramStopIndexes(stops, names)).toEqual([0, 1, 2, 3, 4, 5]);
+  });
+
+  it("같은 열차 안에서 이름이 겹치는 역은 하나만 남긴다", () => {
+    const stops = [stop("a", 0), stop("b", 0), stop("c", 0), stop("d")];
+
+    expect(diagramStopIndexes(stops, ["가", "나", "나", "다"])).toEqual([0, 1, 3]);
+  });
+
+  it("역이 없으면 비어 있다", () => {
+    expect(diagramStopIndexes([], [])).toEqual([]);
+  });
+
+  it("두 노선의 환승역을 모두 그리면 점선이 그 둘을 잇고 환승 표시도 붙는다", () => {
+    const route = option([segment({ lineId: "EV" }), segment({ lineId: "SD" })]);
+    const stops = [stop("s0", 0), stop("s1", 0), stop("s2"), stop("s3", 1), stop("s4")];
+    const names = ["명지대", "초당", "기흥", "기흥", "신갈"];
+    const visible = diagramStopIndexes(stops, names);
+    const model = buildRouteDiagram({ option: route, stops, names, visible, currentPosition: 0, width: WIDTH });
+
+    expect(model.nodes.map((node) => node.name)).toEqual(["명지대", "초당", "기흥", "기흥", "신갈"]);
+    expect(model.nodes[2].row).toBe(0);
+    expect(model.nodes[3].row).toBe(1);
+    expect(model.nodes[2].x).toBe(model.nodes[3].x);
+    const transfer = model.links.find((link) => link.turn);
+    expect(transfer?.dashed).toBe(true);
+    expect(model.transfers).toHaveLength(1);
+  });
+});
+
+describe("역이 많아 줄이 이어질 때의 선", () => {
+  it("같은 열차가 다음 줄로 넘어가는 곳은 점선이 아니라 호선 색 실선이다", () => {
+    const count = 40;
+    const single = option([segment({})]);
+    const stops = Array.from({ length: count }, (_, k) => stop(`s${k}`, k === count - 1 ? undefined : 0));
+    const names = Array.from({ length: count }, (_, k) => `역${k}`);
+    const model = buildRouteDiagram({
+      option: single,
+      stops,
+      names,
+      visible: Array.from({ length: count }, (_, k) => k),
+      currentPosition: 0,
+      width: WIDTH,
+    });
+
+    const turns = model.links.filter((link) => link.turn);
+    expect(turns.length).toBeGreaterThan(0);
+    expect(turns.every((link) => !link.dashed && link.color === getLineInfo("02").color)).toBe(true);
   });
 });
 

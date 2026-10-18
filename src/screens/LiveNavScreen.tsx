@@ -16,7 +16,7 @@ import { formatDurationSec } from "@/common/utils/format";
 import { ArrivalPopup } from "@/features/guide/components/ArrivalPopup";
 import { GuideBannerCompact, GUIDE_BANNER_COMPACT_HEIGHT } from "@/features/guide/components/GuideBannerCompact";
 import { RouteDiagram } from "@/features/guide/components/RouteDiagram";
-import { buildRouteDiagram } from "@/features/guide/routeDiagram";
+import { buildRouteDiagram, diagramStopIndexes } from "@/features/guide/routeDiagram";
 import { GuideBanner } from "@/features/guide/components/GuideBanner";
 import { SmartAlertBanner } from "@/features/guide/components/SmartAlertBanner";
 import { PhaseCard } from "@/features/guide/components/PhaseCard";
@@ -194,14 +194,22 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
   ]);
 
   // 전체 단계의 노선도. 환승이 없으면 일직선, 있으면 S자
+  // 노선도는 환승역을 두 노선의 역으로 모두 보여 주므로 진행 막대와 다른 역 목록을 쓴다
+  const diagramStops = useMemo(() => diagramStopIndexes(stops, names), [stops, names]);
+  const diagramCurrent = Math.max(diagramStops.filter((index) => index <= progress.currentIndex).length - 1, 0);
   const diagram = useMemo(
     () =>
       diagramWidth > 0
-        ? buildRouteDiagram({ option, stops, names, visible, currentPosition: stripCurrent, width: diagramWidth })
+        ? buildRouteDiagram({
+            option,
+            stops,
+            names,
+            visible: diagramStops,
+            currentPosition: diagramCurrent,
+            width: diagramWidth,
+          })
         : undefined,
-    // names, visible은 stops와 info에서 나오는 값이라 이 둘이 바뀔 때 다시 만든다
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [option, stops, info, stripCurrent, diagramWidth]
+    [option, stops, names, diagramStops, diagramCurrent, diagramWidth]
   );
   const diagramTop = insets.top + BANNER_TOP_OFFSET + GUIDE_BANNER_COMPACT_HEIGHT + 4 + SHEET_FULL_HANDLE_HEIGHT + sheetHeaderHeight;
 

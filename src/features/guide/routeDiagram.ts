@@ -61,7 +61,7 @@ export interface DiagramLink {
   color: string;
   /** 줄이 끝나 아래 줄로 꺾여 넘어가는 구간. 바깥쪽(side)으로 불룩하게 이어진다 */
   turn?: { side: 1 | -1 };
-  /** 도보 구간 */
+  /** 도보나 호선이 바뀌는 환승 구간. 점선으로 그린다 */
   dashed: boolean;
   /** 이미 지나온 구간 */
   passed: boolean;
@@ -109,6 +109,27 @@ const lineColor = (option: SubwayRouteOptionDto, segmentIndex: number): string =
 export function diagramLabel(name: string): string {
   const chars = [...name];
   return chars.length > DIAGRAM_MAX_LABEL ? `${chars.slice(0, DIAGRAM_MAX_LABEL - 1).join("")}…` : name;
+}
+
+/**
+ * 노선도에 그릴 역의 순번. 같은 열차 안에서 이름이 이어서 같은 역(중복)은 하나만 두되,
+ * 열차가 바뀌는 환승역은 두 노선의 역을 모두 남긴다(예: 에버라인 기흥과 수인분당선 기흥).
+ * 호선이 바뀌는 곳을 점선으로 이어 환승으로 보이게 하려는 것이다
+ */
+export function diagramStopIndexes(stops: Stop[], names: string[]): number[] {
+  const kept: number[] = [];
+  let previousSegment = 0;
+  let keptSegment = -1;
+  stops.forEach((stop, index) => {
+    const segmentIndex = stop.segmentIndex ?? previousSegment;
+    previousSegment = segmentIndex;
+    const last = kept[kept.length - 1];
+    const sameStop = last !== undefined && names[index] === names[last] && segmentIndex === keptSegment;
+    if (sameStop) return;
+    kept.push(index);
+    keptSegment = segmentIndex;
+  });
+  return kept;
 }
 
 /**
@@ -208,13 +229,15 @@ export function buildRouteDiagram({ option, stops, names, visible, currentPositi
     const to = nodes[position + 1];
     const isTurn = to.row !== from.row;
     const nextItem = placed[position + 1];
-    const dashed = nextItem.isWalk || placed[position].isWalk;
+    // 호선이 바뀌는 곳(환승)과 도보는 점선이다. 같은 열차가 역이 많아 다음 줄로 넘어가는 곳은 호선 색 실선을 유지한다
+    const lineChange = isTurn && rows[to.row].run !== rows[from.row].run;
+    const dashed = lineChange || nextItem.isWalk || placed[position].isWalk;
     links.push({
       key: `${from.key}>${to.key}`,
       from: { x: from.x, y: from.y },
       to: { x: to.x, y: to.y },
       // 줄이 넘어가는 곳은 새로 타는 열차의 색이다
-      color: dashed ? DIAGRAM_WALK_COLOR : isTurn && rows[to.row].run !== rows[from.row].run ? rows[to.row].color : rows[from.row].color,
+      color: dashed ? DIAGRAM_WALK_COLOR : rows[from.row].color,
       turn: isTurn ? { side: rows[from.row].direction === "right" ? 1 : -1 } : undefined,
       dashed,
       passed: position + 1 <= currentPosition,
