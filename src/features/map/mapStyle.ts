@@ -56,3 +56,8 @@ export const LABEL_OVERLAY_LAYER: TileLayerName = { name: "Hybrid", extension: "
 export function isWebGlMode(mode: MapMode): boolean {
   return mode === "3D";
 }
+
+/** 위성 사진과 라이트(white) 타일에는 지명이 없어 이름 레이어를 겹친다 */
+export function needsLabelOverlay(mode: MapMode, style: MapStyle): boolean {
+  return mode === "SATELLITE" || style === "LIGHT";
+}

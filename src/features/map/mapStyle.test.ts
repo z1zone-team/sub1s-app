@@ -1,4 +1,5 @@
 import {
+  needsLabelOverlay,
   DEFAULT_MAP_STYLE,
   isMapStyle,
   isWebGlMode,
@@ -70,5 +71,14 @@ describe("tileLayerOf", () => {
 
   it("위성 위의 지명 레이어는 Hybrid png다", () => {
     expect(LABEL_OVERLAY_LAYER).toEqual({ name: "Hybrid", extension: "png" });
+  });
+});
+
+describe("needsLabelOverlay", () => {
+  it("위성과 라이트 지도에만 이름 레이어를 겹친다", () => {
+    expect(needsLabelOverlay("SATELLITE", "BASIC")).toBe(true);
+    expect(needsLabelOverlay("2D", "LIGHT")).toBe(true);
+    expect(needsLabelOverlay("2D", "BASIC")).toBe(false);
+    expect(needsLabelOverlay("2D", "DARK")).toBe(false);
   });
 });
