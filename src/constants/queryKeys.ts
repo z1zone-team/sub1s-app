@@ -12,6 +12,10 @@ export const queryKeys = {
     search: (q: string, lat?: number, lng?: number) =>
       [...queryKeys.places.all, "search", q, lat ?? null, lng ?? null] as const,
   },
+  trains: {
+    all: ["trains"] as const,
+    positions: (lineId: string) => [...queryKeys.trains.all, "positions", lineId] as const,
+  },
   stations: {
     all: ["stations"] as const,
     lookup: (ids: string[]) =>
