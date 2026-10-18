@@ -8,7 +8,7 @@ import { ENV } from "@/constants/env";
 import { useTheme } from "@/theme/useTheme";
 import { buildMapHtml, parseMapLongPress, type MapData, type MapLongPress } from "./mapHtml";
 import { build3dMapHtml, isMapReadyMessage } from "./map3dHtml";
-import { isWebGlMode, LABEL_OVERLAY_LAYER, tileLayerOf, type MapMode } from "./mapStyle";
+import { isWebGlMode, LABEL_OVERLAY_LAYER, needsLabelOverlay, tileLayerOf, type MapMode } from "./mapStyle";
 
 // WebView도 className으로 스타일을 줄 수 있게 한다
 cssInterop(WebView, { className: "style" });
@@ -41,7 +41,7 @@ export function VWorldMap({ data, className = "", mode = "2D", onLongPress }: VW
   const html = useMemo(() => {
     const layer = tileLayerOf(mode, mapStyle);
     if (webGl) return build3dMapHtml(ENV.VWORLD_KEY, refererHost(ENV.VWORLD_REFERER), layer);
-    return buildMapHtml(ENV.VWORLD_KEY, layer, mode === "SATELLITE");
+    return buildMapHtml(ENV.VWORLD_KEY, layer, needsLabelOverlay(mode, mapStyle));
   }, [mode, mapStyle, webGl]);
   const [webGlReady, setWebGlReady] = useState(false);
 
