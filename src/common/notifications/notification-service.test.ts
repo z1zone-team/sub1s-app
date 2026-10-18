@@ -2,6 +2,7 @@ import * as Notifications from "expo-notifications";
 import * as Haptics from "expo-haptics";
 import {
   scheduleStationAlert,
+  showSmartAlertNotification,
   triggerOffRouteAlert,
   getExpoPushTokenAsync,
 } from "./notification-service";
@@ -74,5 +75,26 @@ describe("Notification Service", () => {
     const token = await getExpoPushTokenAsync();
     expect(token).toBe("ExponentPushToken[mock-token-123]");
     expect(Notifications.getPermissionsAsync).toHaveBeenCalled();
+  });
+
+  it("서버 환승 알림은 환승 채널로 즉시 띄운다", async () => {
+    await showSmartAlertNotification({ kind: "TRANSFER", title: "곧 환승해요", body: "다음 역 강남역에서 환승이에요" });
+
+    expect(Notifications.scheduleNotificationAsync).toHaveBeenCalledWith({
+      content: {
+        title: "곧 환승해요",
+        body: "다음 역 강남역에서 환승이에요",
+        data: { type: "TRANSFER" },
+      },
+      trigger: { channelId: NOTIFICATION_CHANNELS.TRANSFER.id },
+    });
+  });
+
+  it("서버 하차 알림은 하차 채널로 띄운다", async () => {
+    await showSmartAlertNotification({ kind: "ALIGHT", title: "곧 내려요", body: "다음 역 선릉역에서 내려요" });
+
+    expect(Notifications.scheduleNotificationAsync).toHaveBeenCalledWith(
+      expect.objectContaining({ trigger: { channelId: NOTIFICATION_CHANNELS.ALIGHT.id } })
+    );
   });
 });

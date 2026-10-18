@@ -58,6 +58,34 @@ export async function scheduleStationAlert(
   return notificationId;
 }
 
+export interface SmartAlertNotificationParams {
+  kind: "TRANSFER" | "ALIGHT";
+  title: string;
+  body: string;
+}
+
+/**
+ * 서버가 보낸 환승, 하차 알림을 앱이 백그라운드일 때 즉시 로컬 알림으로 띄운다.
+ * 진동은 채널 설정이 맡는다
+ */
+export async function showSmartAlertNotification(
+  params: SmartAlertNotificationParams
+): Promise<string> {
+  const channel =
+    params.kind === "TRANSFER"
+      ? NOTIFICATION_CHANNELS.TRANSFER
+      : NOTIFICATION_CHANNELS.ALIGHT;
+
+  return Notifications.scheduleNotificationAsync({
+    content: {
+      title: params.title,
+      body: params.body,
+      data: { type: params.kind },
+    },
+    trigger: { channelId: channel.id },
+  });
+}
+
 /**
  * 오탑승/경로 이탈 즉시 긴급 알림 및 강한 진동 트리거
  */
