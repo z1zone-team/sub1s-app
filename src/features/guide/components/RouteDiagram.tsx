@@ -19,8 +19,8 @@ interface RouteDiagramProps {
   onSelect?: (stopIndex: number) => void;
 }
 
-/** 이름을 눕혔을 때 글자 한 줄의 두께(px) */
-const LABEL_THICKNESS = 16;
+/** 세로로 쓴 이름의 글자 폭(px) */
+const LABEL_WIDTH = 16;
 /** 누르는 영역의 가로 폭(px). 점 사이가 좁아도 이웃 역과 겹치지 않게 한다 */
 const MIN_HIT_WIDTH = 20;
 
@@ -54,7 +54,7 @@ function NodeDot({ node, background }: { node: DiagramNode; background: string }
 
 /**
  * 안내 중 노선도. 열차 구간마다 가로 한 줄이고, 줄 끝에서 꺾여 반대 방향으로 이어 가는 S자(뱀) 모양이다.
- * 열차를 하나만 타면 한 줄 직선이다. 이름은 세로로 눕혀 모든 역을 보여 주고, 꺾이는 환승역에는 큰 점과
+ * 열차를 하나만 타면 한 줄 직선이다. 이름은 세로쓰기로 모든 역을 보여 주고, 꺾이는 환승역에는 큰 점과
  * 갈아탈 호선 이름을 붙인다. 선과 점은 SVG로, 이름은 글자 폰트를 쓰려고 겹쳐 놓은 Text로 그린다
  */
 export function RouteDiagram({ model, width, onSelect }: RouteDiagramProps) {
@@ -100,18 +100,16 @@ export function RouteDiagram({ model, width, onSelect }: RouteDiagramProps) {
               height: DIAGRAM_DOT_BAND + length + 6,
             }}
           >
-            {/* 이름을 시계 방향으로 눕혀 점 아래로 늘어뜨린다. 회전의 기준을 왼쪽 위로 잡아 점 바로 아래에서 시작한다 */}
+            {/* 이름은 세로쓰기다. 글자를 한 글자씩 위에서 아래로 쌓아 점 바로 아래에서 시작한다 */}
             <Text
-              numberOfLines={1}
               style={{
                 position: "absolute",
-                left: MIN_HIT_WIDTH / 2 + LABEL_THICKNESS / 2,
-                top: DIAGRAM_DOT_BAND - 4,
-                width: length + 4,
-                height: LABEL_THICKNESS,
-                lineHeight: LABEL_THICKNESS,
-                transform: [{ rotate: "90deg" }],
-                transformOrigin: "0% 0%",
+                left: (MIN_HIT_WIDTH - LABEL_WIDTH) / 2,
+                top: DIAGRAM_DOT_BAND - 6,
+                width: LABEL_WIDTH,
+                height: length,
+                lineHeight: DIAGRAM_LABEL_STEP,
+                textAlign: "center",
               }}
               className={cn(
                 "text-small",
@@ -120,7 +118,7 @@ export function RouteDiagram({ model, width, onSelect }: RouteDiagramProps) {
                 !emphasized && node.state === "upcoming" ? "text-text" : ""
               )}
             >
-              {node.label}
+              {[...node.label].join("\n")}
             </Text>
           </Pressable>
         );

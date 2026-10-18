@@ -8,6 +8,7 @@ import {
   DIAGRAM_DOT_BAND,
   DIAGRAM_LABEL_STEP,
   DIAGRAM_MAX_LABEL,
+  DIAGRAM_MIN_SPACING,
   DIAGRAM_PADDING,
   DIAGRAM_SIDE,
   DIAGRAM_TRANSFER_BAND,
@@ -210,6 +211,43 @@ describe("buildRouteDiagram", () => {
 
     expect(model.rows).toHaveLength(2);
     expect(model.nodes[2].x).toBe(RIGHT);
+  });
+});
+
+describe("역이 많아 한 줄에 다 못 담을 때", () => {
+  const count = 40;
+  const single = option([segment({})]);
+  const stops = Array.from({ length: count }, (_, k) => stop(`s${k}`, k === count - 1 ? undefined : 0));
+  const names = Array.from({ length: count }, (_, k) => `역${k}`);
+  const model = buildRouteDiagram({
+    option: single,
+    stops,
+    names,
+    visible: Array.from({ length: count }, (_, k) => k),
+    currentPosition: 0,
+    width: WIDTH,
+  });
+
+  it("같은 열차가 다음 줄로 꺾여 이어지고, 어느 줄에서도 역 사이가 최소 간격 이상이다", () => {
+    expect(model.rows.length).toBeGreaterThan(1);
+    expect(model.rows.map((row) => row.direction).slice(0, 3)).toEqual(["right", "left", "right"]);
+    for (const row of model.rows) {
+      const xs = model.nodes.filter((node) => node.row === row.index).map((node) => node.x).sort((a, b) => a - b);
+      for (let k = 1; k < xs.length; k += 1) expect(xs[k] - xs[k - 1]).toBeGreaterThanOrEqual(DIAGRAM_MIN_SPACING - 0.001);
+    }
+  });
+
+  it("호선이 바뀐 게 아니므로 환승 표시가 없고 줄 색은 그대로다", () => {
+    expect(model.transfers).toEqual([]);
+    expect(new Set(model.rows.map((row) => row.color)).size).toBe(1);
+    expect(model.nodes.filter((node) => node.kind === "transfer")).toEqual([]);
+    expect(model.links.filter((link) => link.turn).length).toBe(model.rows.length - 1);
+  });
+
+  it("모든 역을 한 번씩 놓고 줄마다 역 수가 비슷하다", () => {
+    expect(model.nodes).toHaveLength(count);
+    const perRow = model.rows.map((row) => model.nodes.filter((node) => node.row === row.index).length);
+    expect(Math.max(...perRow) - Math.min(...perRow)).toBeLessThanOrEqual(1);
   });
 });
 
