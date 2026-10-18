@@ -40,3 +40,5 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+# 운영용 빌드로 바꿔 둘 때 옮겨 두는 폴더(android-local, android-prod)
+/android-*
