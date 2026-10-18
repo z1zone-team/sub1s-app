@@ -38,7 +38,7 @@ export const useRouteSearchQuery = (
     `${params.destinationLat ?? 0},${params.destinationLng ?? 0}`;
 
   return useQuery({
-    queryKey: queryKeys.routes.optimal(originKey, destKey, params.routeMode),
+    queryKey: queryKeys.routes.optimal(originKey, destKey, params.routeMode, params.departureAt),
     queryFn: ({ signal }) => searchRoutes(params, { signal }),
     enabled: isEnabled,
     staleTime: options?.staleTime ?? 60_000,

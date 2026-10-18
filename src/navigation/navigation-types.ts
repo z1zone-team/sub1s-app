@@ -35,6 +35,8 @@ export type RootStackParamList = {
     destination?: RouteEndpoint;
     /** 집이나 학교로 저장할 장소를 고르는 모드. 고르면 저장하고 돌아간다 */
     pickPlace?: PlaceKind;
+    /** 경로 결과 화면에서 출발이나 도착을 눌러 고치러 올 때 그 칸. 두 칸이 이미 채워져 있어도 새로 고를 때까지 결과로 넘어가지 않는다 */
+    edit?: "origin" | "destination";
   } | undefined;
   RouteResult: {
     origin: RouteEndpoint;

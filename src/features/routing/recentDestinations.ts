@@ -20,6 +20,8 @@ export function toRecentDestinations(
   const byKey = new Map<string, RecentDestination>();
 
   for (const route of sorted) {
+    // 이름이 비어 있는 기록(딥링크로 이름 없이 들어와 저장된 것)은 목록에서 알아볼 수 없어 보이지 않는다
+    if (!route.destination.trim()) continue;
     const endpoint: RouteEndpoint = {
       name: route.destination,
       stationId: route.destStationId,

@@ -27,8 +27,8 @@ export const queryKeys = {
   },
   routes: {
     all: ["routes"] as const,
-    optimal: (origin: string, destination: string, mode?: string) =>
-      [...queryKeys.routes.all, "optimal", origin, destination, mode] as const,
+    optimal: (origin: string, destination: string, mode?: string, departureAt?: string) =>
+      [...queryKeys.routes.all, "optimal", origin, destination, mode, departureAt] as const,
     recent: () => [...queryKeys.routes.all, "recent"] as const,
   },
   congestion: {
