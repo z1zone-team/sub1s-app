@@ -9,12 +9,14 @@ import { useStationFacilitiesQuery } from "@/apis/queries/stations/useStationFac
 import { useTrainPositionsQuery } from "@/apis/queries/trains/useTrainPositionsQuery";
 import { Button } from "@/common/components/Button";
 import { DesignIcon } from "@/common/components/DesignIcon";
-import { DraggableSheet, type DraggableSheetHandle } from "@/common/components/DraggableSheet";
+import { DraggableSheet, SHEET_FULL_HANDLE_HEIGHT, type DraggableSheetHandle } from "@/common/components/DraggableSheet";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { formatDurationSec } from "@/common/utils/format";
 import { ArrivalPopup } from "@/features/guide/components/ArrivalPopup";
 import { GuideBannerCompact, GUIDE_BANNER_COMPACT_HEIGHT } from "@/features/guide/components/GuideBannerCompact";
+import { RouteDiagram } from "@/features/guide/components/RouteDiagram";
+import { buildRouteDiagram } from "@/features/guide/routeDiagram";
 import { GuideBanner } from "@/features/guide/components/GuideBanner";
 import { SmartAlertBanner } from "@/features/guide/components/SmartAlertBanner";
 import { PhaseCard } from "@/features/guide/components/PhaseCard";
@@ -97,6 +99,10 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
   // 진행 표시에서 누른 역(경로의 순번). 있으면 지도가 그 역으로 확대된다
   const [focusedStop, setFocusedStop] = useState<number | null>(null);
   const sheetControl = useRef<DraggableSheetHandle | null>(null);
+  // 전체 단계의 노선도가 놓일 자리: 시트 제목 줄 아래부터 아래 고정 영역 위까지
+  const [sheetHeaderHeight, setSheetHeaderHeight] = useState(0);
+  const [dockHeight, setDockHeight] = useState(0);
+  const [diagramWidth, setDiagramWidth] = useState(0);
   // 시트가 올라온 정도(0 디폴트, 1 전체). 끄는 동안 계속 바뀌어 배너가 시트와 같은 속도로 바뀐다
   const [fullAnim, setFullAnim] = useState<Animated.Value | Animated.AnimatedInterpolation<number>>(
     () => new Animated.Value(0)
@@ -157,6 +163,11 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
   );
 
   // 지도: 경로 선과 내 위치 (역 좌표는 안내 로직이 이미 조회해 둔 값)
+  // 누른 역으로 지도를 확대한다. 같은 역을 다시 누르면 내 위치를 따라가는 지도로 돌아간다
+  const focusStop = (stop: number) => {
+    setFocusedStop((current) => (current === stop ? null : stop));
+    sheetControl.current?.snapTo("TOP");
+  };
   const focusedPoint = focusedStop !== null ? info.get(stops[focusedStop]?.stationId ?? "") : undefined;
   const mapData = useMemo(() => {
     const data = guideMapData(
@@ -181,6 +192,18 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
     trainPoints,
     focusedPoint,
   ]);
+
+  // 전체 단계의 노선도. 환승이 없으면 일직선, 있으면 S자
+  const diagram = useMemo(
+    () =>
+      diagramWidth > 0
+        ? buildRouteDiagram({ option, stops, names, visible, currentPosition: stripCurrent, width: diagramWidth })
+        : undefined,
+    // names, visible은 stops와 info에서 나오는 값이라 이 둘이 바뀔 때 다시 만든다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [option, stops, info, stripCurrent, diagramWidth]
+  );
+  const diagramTop = insets.top + BANNER_TOP_OFFSET + GUIDE_BANNER_COMPACT_HEIGHT + 4 + SHEET_FULL_HANDLE_HEIGHT + sheetHeaderHeight;
 
   // 진행 막대: 역이 많아도 6개만 보여 준다
   const trackIndexes = pickTrackStops(visible.length, stripCurrent);
@@ -265,7 +288,7 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
         onPositionChange={(position) => setSheetFull(position === "FULL")}
         onFullProgress={setFullAnim}
         bottomDock={
-          <View>
+          <View onLayout={(event) => setDockHeight(Math.round(event.nativeEvent.layout.height))}>
             {phase === "WALK_TO_STATION" && boardingIndex !== undefined ? (
               <PhaseCard
                 title={phaseTitle(phase, nameAt(boardingIndex))}
@@ -360,7 +383,10 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
           ) : null
         }
         header={
-              <View className="flex-row items-baseline justify-between">
+              <View
+                onLayout={(event) => setSheetHeaderHeight(Math.round(event.nativeEvent.layout.height))}
+                className="flex-row items-baseline justify-between"
+              >
                 <View className="flex-row items-baseline">
                   <Text className="text-headline font-sans-bold">{parts.amount}</Text>
                   <Text className="ml-1.5 text-body-sm text-text-secondary">{parts.rest}</Text>
@@ -381,14 +407,28 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
           reachedIndex={trackReached}
           fill={fill}
           color={lineColor}
-          onSelect={(trackIndex) => {
-            // 누른 역으로 지도를 확대한다. 같은 역을 다시 누르면 내 위치를 따라가는 지도로 돌아간다
-            const stop = visible[trackIndexes[trackIndex]];
-            setFocusedStop((current) => (current === stop ? null : stop));
-            sheetControl.current?.snapTo("TOP");
-          }}
+          onSelect={(trackIndex) => focusStop(visible[trackIndexes[trackIndex]])}
         />
       </DraggableSheet>
+
+      {/* 전체 단계에서만 위쪽 진행 표시 자리를 덮는 노선도. 시트와 함께 올라오는 동안 서서히 나타난다 */}
+      <Animated.View
+        pointerEvents={sheetFull ? "auto" : "none"}
+        onLayout={(event) => setDiagramWidth(Math.round(event.nativeEvent.layout.width))}
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          top: diagramTop,
+          bottom: dockHeight + bottomPadding,
+          opacity: fullAnim.interpolate({ inputRange: [0.6, 1], outputRange: [0, 1], extrapolate: "clamp" }),
+        }}
+        className="bg-bg"
+      >
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {diagram ? <RouteDiagram model={diagram} width={diagramWidth} onSelect={focusStop} /> : null}
+        </ScrollView>
+      </Animated.View>
 
       {/* 시트를 전체로 올려도 안내 배너가 시트 위에 보이도록 시트보다 나중에 그린다 */}
       <View

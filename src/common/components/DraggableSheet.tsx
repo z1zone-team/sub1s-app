@@ -32,6 +32,8 @@ const HANDLE_VISIBLE_HEIGHT = HANDLE_TOUCH_HEIGHT - HANDLE_OVERLAP;
 /** 전체 단계에서는 내용이 위까지 올라오도록 손잡이 영역을 낮춘다 */
 const HANDLE_TOUCH_HEIGHT_FULL = 36;
 const HANDLE_OVERLAP_FULL = 12;
+/** 전체 단계에서 손잡이 영역이 차지하는 높이(px). 그 아래에서 내용이 시작한다 */
+export const SHEET_FULL_HANDLE_HEIGHT = HANDLE_TOUCH_HEIGHT_FULL - HANDLE_OVERLAP_FULL;
 
 interface DraggableSheetProps {
   /** 중간 위치에서도 보이는 윗부분(제목 줄 등). 손잡이 아래에 놓인다 */
