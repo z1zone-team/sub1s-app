@@ -154,6 +154,29 @@ cd android && ./gradlew app:assembleDebug -PreactNativeArchitectures=arm64-v8a  
 
 - `expo prebuild`나 `expo run:android`가 `package.json`의 `android`, `ios` 스크립트와 `tsconfig.json`을 바꾸는 경우가 있으니 커밋 전에 `git diff`로 의도하지 않은 변경을 되돌립니다.
 
+#### 운영용 앱을 같은 폰에 설치하기 (.env.prod)
+
+`APP_ENV=production`이면 패키지 이름이 `com.z1zone.sub1s`(앱 이름 `Sub1S`)라서 dev 앱(`com.z1zone.sub1s.local`)과 **같은 폰에 함께 설치**됩니다. 운영 서버와 Clerk 운영 키(`pk_live_`)는 `.env.prod`에 있고, `.env.local`은 dev용입니다. Expo는 `.env.prod`를 자동으로 읽지 않으므로 셸 환경으로 올려서 빌드합니다. 값은 출력하지 마세요.
+
+```bash
+cd sub1s-app
+export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr"   # JDK 21
+set -a; . ./.env.prod; set +a                                    # 프로세스 환경이 .env.local보다 우선한다
+export APP_ENV=production NODE_ENV=production
+
+mv android android-local                                         # dev용 네이티브 폴더를 옮겨 둔다(/android-* 는 git 무시)
+npx expo prebuild --platform android --no-install                # applicationId가 com.z1zone.sub1s 인지 확인
+cd android && ./gradlew app:assembleRelease -PreactNativeArchitectures=arm64-v8a
+adb -s <시리얼> install -r app/build/outputs/apk/release/app-release.apk
+
+cd .. && mv android android-prod && mv android-local android     # dev 빌드 환경으로 되돌린다
+```
+
+- 릴리스 빌드는 Metro 없이 단독으로 실행되고, `EXPO_PUBLIC_*` 값이 빌드할 때 번들에 들어갑니다. 값을 바꾸면 다시 빌드합니다.
+- 서명은 디버그 키스토어를 씁니다(개인 설치용). 스토어 배포용이 아닙니다.
+- 같은 스킴(`sub1s://`)과 초대 링크 주소를 두 앱이 함께 가져서, 링크를 열 때 어느 앱으로 열지 묻는 창이 뜰 수 있습니다.
+- 빌드 약 5분(arm64, 이 PC 기준).
+
 ### 4. 실기기 연결과 adb 기본
 
 ```bash
