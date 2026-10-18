@@ -1,4 +1,4 @@
-import { ROUTE_PREFS } from "@/features/onboarding/options";
+import { unsupportedPreferenceNotice } from "@/features/onboarding/options";
 import React, { useMemo, useRef } from "react";
 import { ActivityIndicator, Alert, FlatList, Pressable, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -169,9 +169,9 @@ export function RouteResultScreen({
           data={groups}
           ListHeaderComponent={
             <View className="px-5 pt-3">
-              {(search.data?.recommendation?.unsupportedPreferences?.length ?? 0) > 0 ? (
+              {unsupportedPreferenceNotice(search.data?.recommendation?.unsupportedPreferences) ? (
                 <Text className="text-small text-text-secondary">
-                  {`아직 반영하지 못한 선호: ${search.data?.recommendation?.unsupportedPreferences?.map((code) => ROUTE_PREFS.find((item) => item.code === code)?.label).filter(Boolean).join(" · ")}`}
+                  {unsupportedPreferenceNotice(search.data?.recommendation?.unsupportedPreferences)}
                 </Text>
               ) : null}
               {search.data?.options.some((option) => option.walkDistanceSource === "ESTIMATED") ? (

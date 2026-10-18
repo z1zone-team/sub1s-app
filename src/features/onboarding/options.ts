@@ -29,6 +29,12 @@ export const ROUTE_PREFS: Option[] = [
   { code: "FAMILIAR_ROUTE", label: "익숙한 경로" },
 ];
 
+/** 서버가 반영하지 못했다고 알린 선호 코드를 안내 문구로 만든다. 이름을 아는 코드가 없으면 null */
+export function unsupportedPreferenceNotice(codes: string[] | undefined): string | null {
+  const labels = (codes ?? []).flatMap((code) => ROUTE_PREFS.find((item) => item.code === code)?.label ?? []);
+  return labels.length > 0 ? `아직 반영하지 못한 선호: ${labels.join(" · ")}` : null;
+}
+
 /** 이미 골랐으면 빼고 아니면 더한다. 고른 순서를 유지한다 */
 export function toggleSelection(selected: string[], code: string): string[] {
   return selected.includes(code) ? selected.filter((item) => item !== code) : [...selected, code];
