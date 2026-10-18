@@ -1,5 +1,5 @@
 import { unsupportedPreferenceNotice } from "@/features/onboarding/options";
-import React, { useMemo, useRef } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, Pressable, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { ApiError } from "@/apis/client";
@@ -21,7 +21,9 @@ import { Text } from "@/common/components/Text";
 import { toRouteSearchRequest, type RouteEndpoint } from "@/features/routing/endpoint";
 import { canFavorite, findFavorite, toSaveBody } from "@/features/routing/favoriteRoutes";
 import { RouteResultCard } from "@/features/routing/components/RouteResultCard";
-import { departureLabel, endpointLabel, waitingText } from "@/features/routing/routeCardView";
+import { endpointLabel, waitingText } from "@/features/routing/routeCardView";
+import { departureText } from "@/features/routing/departureTime";
+import { DepartureTimeSheet } from "@/features/routing/components/DepartureTimeSheet";
 import { groupRouteOptions, pickNextTrain } from "@/features/routing/routeView";
 import type { RootStackParamList } from "@/navigation/navigation-types";
 import { useTheme, WALK_LINE_ID } from "@/theme";
@@ -57,7 +59,11 @@ export function RouteResultScreen({
   const { origin, destination, mode } = route.params;
   const openedAt = useRef(Date.now()).current;
 
-  const search = useRouteSearchQuery(toRouteSearchRequest(origin, destination, mode));
+  // 고른 출발 시각(ms). 없으면 지금 출발이다
+  const [departureMs, setDepartureMs] = useState<number | null>(null);
+  const [timeSheetOpen, setTimeSheetOpen] = useState(false);
+
+  const search = useRouteSearchQuery(toRouteSearchRequest(origin, destination, mode, departureMs ?? undefined));
   const { originName, destinationName } = useEndpointNames(origin, destination);
   const { isSignedIn } = useAuth();
   const routePrefs = usePreferencesQuery(!!isSignedIn).data?.routePrefs;
@@ -65,6 +71,14 @@ export function RouteResultScreen({
     () => groupRouteOptions(search.data?.options ?? [], routePrefs, search.data?.recommendation),
     [search.data, routePrefs]
   );
+
+  // 검색 화면에서 그 칸을 고친다. 딥링크로 들어와 이름이 비어 있던 값은 역 조회로 채운 이름을 함께 넘긴다
+  const editEndpoint = (edit: "origin" | "destination") =>
+    navigation.navigate("Search", {
+      origin: { ...origin, name: originName || origin.name },
+      destination: { ...destination, name: destinationName || destination.name },
+      edit,
+    });
 
   const favoriteRoutes = useFavoriteRoutesQuery();
   const saveFavorite = useSaveFavoriteRouteMutation();
@@ -116,15 +130,30 @@ export function RouteResultScreen({
     <Screen>
       <View className="px-4 pt-2.5">
         <View className="h-13 flex-row items-center gap-2 rounded-lg border border-border pl-4 pr-1.5">
-          <View className="h-2.5 w-2.5 rounded-pill border-2.5 border-text" />
-          <Text numberOfLines={1} className="shrink text-subtitle font-sans-bold">
-            {endpointLabel({ ...origin, name: originName || "출발지" })}
-          </Text>
+          {/* 출발이나 도착을 누르면 검색 화면에서 그 칸을 고친다 */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="출발지 수정"
+            onPress={() => editEndpoint("origin")}
+            className="shrink flex-row items-center gap-2 py-2"
+          >
+            <View className="h-2.5 w-2.5 rounded-pill border-2.5 border-text" />
+            <Text numberOfLines={1} className="shrink text-subtitle font-sans-bold">
+              {endpointLabel({ ...origin, name: originName || "출발지" })}
+            </Text>
+          </Pressable>
           <DesignIcon name="arrow" size={16} tone="secondary" />
-          <View className="h-2.5 w-2.5 rounded-pill bg-text" />
-          <Text numberOfLines={1} className="flex-1 text-subtitle font-sans-bold">
-            {endpointLabel({ ...destination, name: destinationName || "도착지" })}
-          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="도착지 수정"
+            onPress={() => editEndpoint("destination")}
+            className="flex-1 flex-row items-center gap-2 py-2"
+          >
+            <View className="h-2.5 w-2.5 rounded-pill bg-text" />
+            <Text numberOfLines={1} className="flex-1 text-subtitle font-sans-bold">
+              {endpointLabel({ ...destination, name: destinationName || "도착지" })}
+            </Text>
+          </Pressable>
           {canFavorite(origin, destination) || !isSignedIn ? (
             <Pressable
               accessibilityRole="button"
@@ -148,9 +177,28 @@ export function RouteResultScreen({
         </View>
       </View>
       <View className="mt-2.5 h-11.5 flex-row items-center justify-between border-b border-border px-5">
-        <Text className="text-body font-sans-bold text-accent">{departureLabel(openedAt)}</Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="출발 시각 고르기"
+          onPress={() => setTimeSheetOpen(true)}
+          className="h-11.5 flex-row items-center gap-1"
+        >
+          <DesignIcon name="clock" size={15} tone="primary" />
+          <Text className="text-body font-sans-bold text-accent">{departureText(departureMs ?? openedAt, openedAt)}</Text>
+          <Text className="text-body font-sans-bold text-accent"> ▾</Text>
+        </Pressable>
         <Text className="text-small font-sans-semibold text-text-secondary">요금은 교통카드 기준</Text>
       </View>
+      <DepartureTimeSheet
+        visible={timeSheetOpen}
+        nowMs={openedAt}
+        value={departureMs}
+        onClose={() => setTimeSheetOpen(false)}
+        onSelect={(selected) => {
+          setDepartureMs(selected);
+          setTimeSheetOpen(false);
+        }}
+      />
 
       {search.isLoading ? (
         <View className="flex-1 items-center justify-center gap-3 bg-surface">

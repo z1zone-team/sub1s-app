@@ -70,7 +70,9 @@ export function endpointKey(endpoint: RouteEndpoint): string {
 export function toRouteSearchRequest(
   origin: RouteEndpoint,
   destination: RouteEndpoint,
-  routeMode?: RouteMode
+  routeMode?: RouteMode,
+  /** 출발 시각(ms). 없으면 지금 출발이라 서버가 현재 시각을 쓴다 */
+  departureMs?: number
 ): RouteSearchRequest {
   const request: RouteSearchRequest = {};
 
@@ -91,6 +93,7 @@ export function toRouteSearchRequest(
   }
 
   if (routeMode) request.routeMode = routeMode;
+  if (departureMs !== undefined) request.departureAt = new Date(departureMs).toISOString();
   return request;
 }
 

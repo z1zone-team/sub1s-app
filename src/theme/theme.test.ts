@@ -1,4 +1,4 @@
-import { LINES, getLineInfo, lineTextColor } from "./lines";
+import { LINES, compactLineLabel, getLineInfo, lineTextColor } from "./lines";
 import { congestionColor, levelOfRate } from "./congestion";
 import { palettes } from "./palette";
 import { resolveScheme } from "./useTheme";
@@ -30,6 +30,14 @@ describe("theme", () => {
   });
 
   describe("lines", () => {
+    it("목록용 한 글자 배지는 숫자 호선은 그대로, 나머지는 이름의 첫 글자다", () => {
+      expect(compactLineLabel("02")).toBe("2");
+      expect(compactLineLabel("GA")).toBe("G");
+      expect(compactLineLabel("GJ")).toBe("경");
+      expect(compactLineLabel("AR")).toBe("공");
+      expect(compactLineLabel("")).toBe("");
+    });
+
     it("covers the 24 line ids the server returns", () => {
       const serverLineIds = [
         "01", "02", "03", "04", "05", "06", "07", "08", "09",

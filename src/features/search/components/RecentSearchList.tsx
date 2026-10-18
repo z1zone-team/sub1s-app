@@ -8,6 +8,9 @@ import { cn } from "@/lib/cn";
 import type { RouteEndpoint } from "@/features/routing/endpoint";
 import type { useRecentDestinations } from "@/features/routing/useRecentDestinations";
 
+/** 한 항목에 보여 줄 노선 배지 수. 넘으면 +N으로 줄인다 */
+const MAX_BADGES = 2;
+
 interface RecentSearchListProps {
   recent: ReturnType<typeof useRecentDestinations>;
   onSelect: (endpoint: RouteEndpoint) => void;
@@ -31,12 +34,15 @@ export function RecentSearchList({ recent, onSelect }: RecentSearchListProps) {
         <View className="px-5">
           {recent.destinations.map((destination, index) => {
             const lineIds = destination.endpoint.stationId
-              ? recent.linesOfStation.get(destination.endpoint.stationId) ?? []
+              ? (recent.linesOfStation.get(destination.endpoint.stationId) ?? [])
               : [];
             return (
               <View
                 key={destination.routeIds[0]}
-                className={cn("h-14 flex-row items-center gap-3", index === recent.destinations.length - 1 ? "" : "border-b border-border")}
+                className={cn(
+                  "h-14 flex-row items-center gap-3",
+                  index === recent.destinations.length - 1 ? "" : "border-b border-border"
+                )}
               >
                 <Pressable
                   accessibilityRole="button"
@@ -47,11 +53,19 @@ export function RecentSearchList({ recent, onSelect }: RecentSearchListProps) {
                   <Text numberOfLines={1} className="shrink text-base font-sans-semibold">
                     {destination.endpoint.name}
                   </Text>
-                  <View className="flex-row gap-1">
-                    {lineIds.map((lineId) => (
-                      <LineBadge key={lineId} lineId={lineId} size="sm" />
-                    ))}
-                  </View>
+                  {/* 환승역처럼 노선이 많아도 이름과 날짜를 밀어내지 않게 두 개까지만 보이고 나머지는 +N이다 */}
+                  {lineIds.length > 0 ? (
+                    <View className="shrink-0 flex-row items-center gap-1">
+                      {lineIds.slice(0, MAX_BADGES).map((lineId) => (
+                        <LineBadge key={lineId} lineId={lineId} size="sm" compact />
+                      ))}
+                      {lineIds.length > MAX_BADGES ? (
+                        <Text className="text-caption font-sans-bold text-text-secondary">
+                          +{lineIds.length - MAX_BADGES}
+                        </Text>
+                      ) : null}
+                    </View>
+                  ) : null}
                 </Pressable>
                 <Text className="text-body-sm text-text-secondary">{formatMonthDayKst(destination.searchedAt)}</Text>
                 <Pressable

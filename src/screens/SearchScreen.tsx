@@ -17,6 +17,7 @@ import {
 import { toSearchRows } from "@/features/routing/searchRows";
 import { useRecentDestinations } from "@/features/routing/useRecentDestinations";
 import { endpointToSaveBody, PLACE_LABEL, placeOfKind, placeToEndpoint } from "@/features/places/placeEndpoint";
+import { CurrentLocationRow, type CurrentLocationStatus } from "@/features/search/components/CurrentLocationRow";
 import { OriginFallback } from "@/features/search/components/OriginFallback";
 import { RecentSearchList } from "@/features/search/components/RecentSearchList";
 import { RouteEndpointBox, type EndpointField } from "@/features/search/components/RouteEndpointBox";
@@ -35,11 +36,16 @@ export function SearchScreen({
   const presetOrigin = route.params?.origin;
   const presetDestination = route.params?.destination;
   const pickPlace = route.params?.pickPlace;
+  // 경로 결과 화면에서 출발이나 도착을 눌러 고치러 온 경우의 그 칸
+  const editing = route.params?.edit;
   const savePlace = useSavePlaceMutation();
 
   const [origin, setOrigin] = useState<RouteEndpoint | undefined>(presetOrigin);
   const [destination, setDestination] = useState<RouteEndpoint | undefined>(presetDestination);
-  const [active, setActive] = useState<EndpointField>("destination");
+  const [active, setActive] = useState<EndpointField>(editing ?? "destination");
+  // 고치러 온 경우 두 칸이 이미 채워져 있어도, 사용자가 새로 고르기 전에는 결과로 넘어가지 않는다
+  const [changed, setChanged] = useState(!editing);
+  const initialOrigin = useRef(presetOrigin);
   const [text, setText] = useState("");
   const [originChosenByUser, setOriginChosenByUser] = useState(Boolean(presetOrigin));
   const navigated = useRef(false);
@@ -58,8 +64,13 @@ export function SearchScreen({
     if (!presetOrigin) return;
     setOrigin(presetOrigin);
     setOriginChosenByUser(true);
-    setActive("destination");
-  }, [presetOrigin]);
+    if (presetOrigin !== initialOrigin.current) {
+      setChanged(true);
+      setActive("destination");
+    } else if (!editing) {
+      setActive("destination");
+    }
+  }, [presetOrigin, editing]);
 
   // 위치를 받으면 사용자가 출발지를 직접 고르기 전까지 현재 위치를 출발지로 쓴다
   useEffect(() => {
@@ -85,7 +96,7 @@ export function SearchScreen({
 
   // 두 지점은 사용자가 고르거나 미리 정해서 들어온 경우, 위치가 잡힌 경우에만 채워지므로 둘 다 정해지면 바로 경로 목록으로 간다
   useEffect(() => {
-    if (pickPlace || navigated.current) return;
+    if (pickPlace || navigated.current || !changed) return;
     if (!isValidEndpoint(origin) || !isValidEndpoint(destination)) return;
     if (isSameEndpoint(origin, destination)) return;
 
@@ -101,11 +112,12 @@ export function SearchScreen({
       destLng: destination.lng,
     });
     navigation.replace("RouteResult", { origin, destination });
-  }, [pickPlace, origin, destination, navigation, recent]);
+  }, [pickPlace, changed, origin, destination, navigation, recent]);
 
   const choose = useCallback(
     (endpoint: RouteEndpoint) => {
       setText("");
+      setChanged(true);
       if (pickPlace) {
         const body = endpointToSaveBody(endpoint);
         if (body) savePlace.mutate({ kind: pickPlace, body }, { onSuccess: () => navigation.goBack() });
@@ -124,7 +136,17 @@ export function SearchScreen({
     [pickPlace, savePlace, navigation, active, destination, origin, recent.addDestination]
   );
 
+  // 출발지를 현재 위치로 되돌린다. 위치를 받으면 위의 효과가 출발지를 현재 위치로 채운다
+  const chooseCurrentLocation = useCallback(() => {
+    setChanged(true);
+    setText("");
+    setOriginChosenByUser(false);
+    setOrigin(location.coords ? endpointFromCoords(location.coords.latitude, location.coords.longitude) : undefined);
+    if (!destination) setActive("destination");
+  }, [location.coords, destination]);
+
   const swap = useCallback(() => {
+    setChanged(true);
     const swapped = swapEndpoints(origin, destination);
     setOriginChosenByUser(true);
     setOrigin(swapped.origin);
@@ -137,6 +159,7 @@ export function SearchScreen({
     isValidEndpoint(origin) && isValidEndpoint(destination) && isSameEndpoint(origin, destination);
 
   const showSuggestions = active === "destination" && text.trim().length === 0;
+  const locationStatus: CurrentLocationStatus = locationDenied ? "DENIED" : location.coords ? "READY" : "LOCATING";
 
   const typing = text.trim() !== query.trim();
 
@@ -209,11 +232,16 @@ export function SearchScreen({
         keyExtractor={(row) => row.key}
         renderItem={({ item }) => <SearchResultRow row={item} onPress={() => choose(item.endpoint)} />}
         ListHeaderComponent={
-          showSuggestions ? (
-            <View className="pb-8">
-              <RecentSearchList recent={recent} onSelect={(endpoint) => choose(endpoint)} />
-            </View>
-          ) : null
+          <>
+            {active === "origin" && !pickPlace ? (
+              <CurrentLocationRow status={locationStatus} selected={!originChosenByUser && Boolean(origin)} onPress={chooseCurrentLocation} />
+            ) : null}
+            {showSuggestions ? (
+              <View className="pb-8">
+                <RecentSearchList recent={recent} onSelect={(endpoint) => choose(endpoint)} />
+              </View>
+            ) : null}
+          </>
         }
         ListEmptyComponent={
           showSuggestions || text.trim().length === 0 ? null : (

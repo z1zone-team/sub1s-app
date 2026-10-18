@@ -40,6 +40,12 @@ export const LINES: Readonly<Record<string, LineInfo>> = {
 
 export const WALK_LINE_ID = "WALK";
 
+/** 목록처럼 좁은 곳에 쓰는 한 글자 배지 글자. 숫자 호선은 그대로, 나머지는 이름의 첫 글자다(GTX-A는 G, 경의중앙은 경) */
+export function compactLineLabel(lineId: string): string {
+  const { shortLabel } = getLineInfo(lineId);
+  return [...shortLabel][0] ?? "";
+}
+
 const UNKNOWN_LINE_COLOR = "#B0B8C1";
 
 export function getLineInfo(lineId: string): LineInfo {
