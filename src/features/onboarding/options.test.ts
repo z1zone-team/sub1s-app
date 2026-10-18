@@ -1,4 +1,4 @@
-import { canProceed, PURPOSES, ROUTE_PREFS, toggleSelection } from "./options";
+import { canProceed, PURPOSES, ROUTE_PREFS, toggleSelection, unsupportedPreferenceNotice } from "./options";
 
 describe("toggleSelection", () => {
   it("고르지 않은 항목은 뒤에 더한다", () => {
@@ -30,5 +30,23 @@ describe("선택지", () => {
     expect(ROUTE_PREFS.map((option) => option.code)).toEqual([
       "FAST", "FEW_TRANSFERS", "WEAK_AC", "UNCROWDED", "LESS_WALK", "SEAT", "ELEVATOR", "LOW_FARE", "AVOID_STAIRS", "EXPRESS", "FAMILIAR_ROUTE",
     ]);
+  });
+});
+
+describe("unsupportedPreferenceNotice", () => {
+  it("서버가 보내는 반영 못 한 선호를 이름으로 이어 붙인다", () => {
+    expect(unsupportedPreferenceNotice(["SEAT", "ELEVATOR", "AVOID_STAIRS"])).toBe(
+      "아직 반영하지 못한 선호: 앉아서 가기 · 엘리베이터 있는 역 · 계단 피하기",
+    );
+  });
+
+  it("없거나 비었거나 이름을 모르는 코드뿐이면 문구를 만들지 않는다", () => {
+    expect(unsupportedPreferenceNotice(undefined)).toBeNull();
+    expect(unsupportedPreferenceNotice([])).toBeNull();
+    expect(unsupportedPreferenceNotice(["UNKNOWN"])).toBeNull();
+  });
+
+  it("이름을 아는 코드만 남긴다", () => {
+    expect(unsupportedPreferenceNotice(["UNKNOWN", "FAMILIAR_ROUTE"])).toBe("아직 반영하지 못한 선호: 익숙한 경로");
   });
 });
