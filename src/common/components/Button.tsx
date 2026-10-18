@@ -44,7 +44,7 @@ export function Button({
       accessibilityState={{ disabled: inactive, busy: loading }}
       disabled={inactive}
       onPress={onPress}
-      className={cn("h-control-lg flex-row items-center justify-center gap-2 rounded-md", CONTAINER[variant], inactive ? "opacity-50" : "", className)}
+      className={cn("h-control-lg flex-row items-center justify-center gap-2 rounded-md px-5.5", CONTAINER[variant], inactive ? "opacity-50" : "", className)}
     >
       {loading ? (
         <ActivityIndicator color={variant === "primary" ? colors.onPrimary : colors.text} />
