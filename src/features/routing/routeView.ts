@@ -339,3 +339,27 @@ export function describeDoor(door: string): string {
   const [car, doorNo] = door.split("-");
   return doorNo ? `${car}번째 칸 ${doorNo}번 문` : door;
 }
+
+export interface DoorGuideInput {
+  /** 환승할 때 추천 문 (경로의 recommendedDoors) */
+  transferDoors?: readonly string[];
+  elevatorDoors?: readonly string[];
+  /** 서버가 아직 주지 않는 역은 비어 있다 */
+  stairDoors?: readonly string[];
+  exitNos?: readonly string[];
+}
+
+/** 환승, 하차 안내를 줄 단위로. ["빠른 환승 6-2", "엘리베이터 3-4 · 계단 7-1", "출구 2, 3번"]. 값이 없는 줄은 뺀다 */
+export function doorGuideLines({ transferDoors = [], elevatorDoors = [], stairDoors = [], exitNos = [] }: DoorGuideInput): string[] {
+  const facility = [
+    elevatorDoors.length > 0 ? `엘리베이터 ${elevatorDoors.join(", ")}` : "",
+    stairDoors.length > 0 ? `계단 ${stairDoors.join(", ")}` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  return [
+    transferDoors.length > 0 ? `빠른 환승 ${transferDoors.join(", ")}` : "",
+    facility,
+    exitNos.length > 0 ? `출구 ${exitNos.join(", ")}번` : "",
+  ].filter(Boolean);
+}

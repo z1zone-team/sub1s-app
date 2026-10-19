@@ -15,6 +15,7 @@ import {
   isEstimatedCongestion,
   clockRange,
   describeDoor,
+  doorGuideLines,
   formatWaiting,
   groupRouteOptions,
   matchedPreferences,
@@ -290,6 +291,28 @@ describe("describeDoor", () => {
     expect(describeDoor("6-2")).toBe("6번째 칸 2번 문");
     expect(describeDoor("10-4")).toBe("10번째 칸 4번 문");
     expect(describeDoor("weird")).toBe("weird");
+  });
+});
+
+describe("doorGuideLines", () => {
+  it("splits a transfer into the transfer door and the elevator and stair doors", () => {
+    expect(doorGuideLines({ transferDoors: ["6-2"], elevatorDoors: ["3-4"], stairDoors: ["7-1"] })).toEqual([
+      "빠른 환승 6-2",
+      "엘리베이터 3-4 · 계단 7-1",
+    ]);
+  });
+
+  it("lists the elevator doors and the exits of an alighting station on separate lines", () => {
+    expect(doorGuideLines({ elevatorDoors: ["3-4", "8-1"], stairDoors: ["2-4"], exitNos: ["2", "3"] })).toEqual([
+      "엘리베이터 3-4, 8-1 · 계단 2-4",
+      "출구 2, 3번",
+    ]);
+  });
+
+  it("leaves out stairs the server did not send and lines without values", () => {
+    expect(doorGuideLines({ elevatorDoors: ["3-4"] })).toEqual(["엘리베이터 3-4"]);
+    expect(doorGuideLines({ stairDoors: ["7-1"] })).toEqual(["계단 7-1"]);
+    expect(doorGuideLines({})).toEqual([]);
   });
 });
 

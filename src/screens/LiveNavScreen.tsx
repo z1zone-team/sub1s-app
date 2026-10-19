@@ -41,7 +41,7 @@ import { useSmartAlert } from "@/features/guide/useSmartAlert";
 import { VWorldMap } from "@/features/map/VWorldMap";
 import { RideBadge } from "@/features/routing/components/RideBadge";
 import { endpointCoords, type RouteEndpoint } from "@/features/routing/endpoint";
-import { describeDoor } from "@/features/routing/routeView";
+import { doorGuideLines } from "@/features/routing/routeView";
 import type { RootStackParamList } from "@/navigation/navigation-types";
 import { getLineInfo } from "@/theme";
 import { cn } from "@/lib/cn";
@@ -225,20 +225,15 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
   const showAlight = riding && upcoming?.kind === "ALIGHT" && upcomingAway === 1;
   const showTransfer = riding && upcoming?.kind === "TRANSFER" && upcomingAway === 1;
   const arrivedAtEnd = stopsLeft <= 0;
-  const alightStationId = showAlight ? stops[upcoming.index]?.stationId : undefined;
-  const facilities = useStationFacilitiesQuery(alightStationId);
-  const alightDoors = facilities.data?.available ? facilities.data.elevatorDoors : [];
-  const alightExits = facilities.data?.available ? facilities.data.exits : [];
-  const popupDetail = showAlight
-    ? [
-        alightDoors.length > 0 ? `빠른 하차 · 엘리베이터 · ${alightDoors.map(describeDoor).join(", ")}` : "",
-        alightExits.length > 0 ? `출구 ${alightExits.map((exit) => exit.exitNo).join(", ")}번` : "",
-      ]
-        .filter(Boolean)
-        .join(" · ")
-    : showTransfer && doors.length > 0
-      ? `빠른 환승 · ${doors.map(describeDoor).join(", ")}`
-      : "";
+  const popupStationId = showAlight || showTransfer ? stops[upcoming.index]?.stationId : undefined;
+  const facilities = useStationFacilitiesQuery(popupStationId);
+  const available = facilities.data?.available ? facilities.data : undefined;
+  const popupDetail = doorGuideLines({
+    transferDoors: showTransfer ? doors : undefined,
+    elevatorDoors: available?.elevatorDoors,
+    stairDoors: available?.stairDoors,
+    exitNos: showAlight ? available?.exits.map((exit) => exit.exitNo) : undefined,
+  }).join("\n");
 
   const bottomPadding = Math.max(insets.bottom, 12) + 10;
   const hasPopup = showAlight || showTransfer || arrivedAtEnd;
