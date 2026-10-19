@@ -157,6 +157,10 @@ describe("routeMapData", () => {
     expect(data.lines[0].points).toEqual([[37.5, 126.8], [37.52, 126.9], [37.5, 127.0]]);
     expect(data.lines[0].dashed).toBe(false);
     expect(data.lines[1].dashed).toBe(true);
+    // 열차 구간만 흰 테두리와 진행 방향 화살표가 있고, 도보 점선에는 없다
+    expect(data.lines[0]).toMatchObject({ border: true, arrows: true });
+    expect(data.lines[1].border).toBeUndefined();
+    expect(data.lines[1].arrows).toBeUndefined();
     expect(data.fit).toBe(true);
   });
 

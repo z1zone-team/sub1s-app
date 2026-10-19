@@ -1,4 +1,4 @@
-import { buildMapHtml, FOCUS_ZOOM, LONG_PRESS_MS, parseMapLongPress } from "./mapHtml";
+import { ARROW_SPACING_PX, buildMapHtml, FOCUS_ZOOM, LINE_BORDER_PX, LONG_PRESS_MS, parseMapLongPress } from "./mapHtml";
 
 describe("parseMapLongPress", () => {
   it("길게 누른 좌표를 꺼낸다", () => {
@@ -54,5 +54,21 @@ describe("buildMapHtml focus", () => {
     expect(html).toContain(`map.setView(data.focus[0], ${FOCUS_ZOOM})`);
     expect(html).toContain(`map.fitBounds(data.focus,`);
     expect(html).toContain(`maxZoom: ${FOCUS_ZOOM}`);
+  });
+});
+
+describe("buildMapHtml 선 스타일", () => {
+  const html = buildMapHtml("KEY", { name: "Base", extension: "png" }, false);
+
+  it("테두리가 있는 열차 선은 흰 테두리를 먼저 깔고 점선에는 깔지 않는다", () => {
+    expect(html).toContain("line.border && !line.dashed");
+    expect(html).toContain('color: "#FFFFFF", weight: weight + ' + LINE_BORDER_PX + " * 2");
+  });
+
+  it("화살표는 일정 간격으로 진행 방향에 찍고 확대나 이동, 데이터가 바뀔 때마다 다시 그린다", () => {
+    expect(html).toContain("var next = " + ARROW_SPACING_PX + " / 2");
+    expect(html).toContain('map.on("zoomend moveend", drawArrows)');
+    expect(html).toMatch(/drawArrows\(\);\s*\};/);
+    expect(html).toContain("if (line.arrows && !line.dashed) arrowLines.push(line)");
   });
 });
