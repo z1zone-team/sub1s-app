@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { createLevelMeter, LEVEL_SAMPLE_MS } from "@/features/voice/speechLevel";
+import { createSilenceStop } from "@/features/voice/silenceStop";
 import {
   RecordingPresets,
   requestRecordingPermissionsAsync,
@@ -16,7 +17,12 @@ export interface AudioRecordingResult {
   fileSizeBytes?: number;
 }
 
-export function useAudioRecorder() {
+interface AudioRecorderOptions {
+  /** 말이 끝나고 조용해지면(또는 처음부터 말이 없으면) 녹음을 저절로 끝낸다 */
+  stopOnSilence?: boolean;
+}
+
+export function useAudioRecorder({ stopOnSilence = false }: AudioRecorderOptions = {}) {
   // 입력 크기(metering)를 읽어 파형이 목소리 크기를 따라 움직이게 한다
   const recorder = useExpoAudioRecorder({ ...RecordingPresets.HIGH_QUALITY, isMeteringEnabled: true });
   const [isRecording, setIsRecording] = useState<boolean>(false);
@@ -24,7 +30,9 @@ export function useAudioRecorder() {
   const [durationMillis, setDurationMillis] = useState<number>(0);
   const [recordingResult, setRecordingResult] = useState<AudioRecordingResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [endedWithoutSpeech, setEndedWithoutSpeech] = useState<boolean>(false);
 
+  const silenceStopRef = useRef(createSilenceStop());
   const startedAtRef = useRef<number>(0);
   const activeRef = useRef<boolean>(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -79,6 +87,7 @@ export function useAudioRecorder() {
     setError(null);
     setRecordingResult(null);
     setDurationMillis(0);
+    setEndedWithoutSpeech(false);
 
     try {
       const permission = await requestRecordingPermissionsAsync();
@@ -99,10 +108,17 @@ export function useAudioRecorder() {
       // 입력 크기만 따로 자주 읽는다. 주변 소음에 맞춰 0~1로 바꿔 파형의 진폭으로 쓴다
       setLevel(0);
       levelMeterRef.current.reset();
+      silenceStopRef.current.reset();
       meterTimerRef.current = setInterval(() => {
         const metering = recorder.getStatus().metering;
         const level = levelMeterRef.current.push(metering);
         setLevel(level);
+
+        // stopRecording이 이 타이머를 바로 멈추므로 한 번만 불린다
+        if (stopOnSilence && silenceStopRef.current.push(level, Date.now() - startedAtRef.current)) {
+          setEndedWithoutSpeech(!silenceStopRef.current.heardSpeech());
+          void stopRecording();
+        }
       }, LEVEL_SAMPLE_MS);
 
       timerRef.current = setInterval(() => {
@@ -123,7 +139,7 @@ export function useAudioRecorder() {
       clearTimer();
       return false;
     }
-  }, [clearTimer, recorder, stopRecording]);
+  }, [clearTimer, recorder, stopOnSilence, stopRecording]);
 
   useEffect(() => {
     return () => {
@@ -141,11 +157,14 @@ export function useAudioRecorder() {
     level,
     durationMillis,
     recordingResult,
+    /** stopOnSilence로 끝났는데 말이 한 번도 들어오지 않았는지. 이때는 녹음을 서버에 보내지 않는 게 낫다 */
+    endedWithoutSpeech,
     error,
     startRecording,
     stopRecording,
     reset: () => {
       setError(null);
+      setEndedWithoutSpeech(false);
       setRecordingResult(null);
       setDurationMillis(0);
     },
