@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
 import { useCreateTravelLogMutation } from "@/apis/mutations/travel/useCreateTravelLogMutation";
 import { useDeviateCheckMutation } from "@/apis/mutations/tracking/useDeviateCheckMutation";
+import { useNextTrainsQuery } from "@/apis/queries/stations/useNextTrainsQuery";
 import { useStationFacilitiesQuery } from "@/apis/queries/stations/useStationFacilitiesQuery";
 import { useTrainPositionsQuery } from "@/apis/queries/trains/useTrainPositionsQuery";
 import { Button } from "@/common/components/Button";
@@ -23,6 +24,7 @@ import { PhaseCard } from "@/features/guide/components/PhaseCard";
 import { ProgressTrack } from "@/features/guide/components/ProgressTrack";
 import { guideMapData } from "@/features/guide/guideMap";
 import {
+  nextTrainText,
   phaseBannerLabel,
   phaseTitle,
   remainingParts,
@@ -41,7 +43,7 @@ import { useSmartAlert } from "@/features/guide/useSmartAlert";
 import { VWorldMap } from "@/features/map/VWorldMap";
 import { RideBadge } from "@/features/routing/components/RideBadge";
 import { endpointCoords, type RouteEndpoint } from "@/features/routing/endpoint";
-import { doorGuideLines } from "@/features/routing/routeView";
+import { doorGuideLines, pickNextTrain } from "@/features/routing/routeView";
 import type { RootStackParamList } from "@/navigation/navigation-types";
 import { getLineInfo } from "@/theme";
 import { cn } from "@/lib/cn";
@@ -128,8 +130,22 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
 
   const smartAlert = useSmartAlert();
 
-  const { stops, info, progress, nowMs, segment, upcoming, coords, phase, boardingIndex } = guide;
+  const { stops, info, progress, nowMs, segment, upcoming, coords, phase, boardingIndex, boardingSegment } = guide;
   const nameAt = (index: number) => info.get(stops[index]?.stationId ?? "")?.name ?? "";
+  // 탈 역으로 걷는 중과 승강장에서 기다리는 중에만 그 역의 다음 열차를 가져온다(서울시 호출 한도를 아끼려고)
+  const boardingStationId = boardingIndex !== undefined ? stops[boardingIndex]?.stationId : undefined;
+  const nextTrains = useNextTrainsQuery(
+    { stationId: boardingStationId ?? "", limit: 3 },
+    { enabled: Boolean(boardingStationId) && (phase === "WALK_TO_STATION" || phase === "WAITING") }
+  );
+  const nextTrainLine =
+    nextTrains.data?.status === "OK" && boardingSegment
+      ? nextTrainText(
+          pickNextTrain(nextTrains.data.trains, boardingSegment),
+          nextTrains.data.source,
+          (nowMs - Date.parse(nextTrains.data.updatedAt)) / 1000
+        )
+      : "";
   const names = stops.map((_, index) => nameAt(index));
   const destination = nameAt(stops.length - 1);
   const visible = visibleStopIndexes(names);
@@ -297,6 +313,7 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
               <PhaseCard
                 title={phaseTitle(phase, nameAt(boardingIndex))}
                 detail={walkDetail(guide.walkDistanceM)}
+                nextTrain={nextTrainLine}
                 actionLabel="역에 도착했어요"
                 onAction={guide.reachStation}
                 hint={guide.locationGranted ? "역 근처에 오면 자동으로 알려 줘요" : undefined}
@@ -306,6 +323,7 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
               <PhaseCard
                 title={phaseTitle(phase, nameAt(boardingIndex))}
                 detail={segment ? rideDetail(getLineInfo(segment.lineId).name, segment.toStationName) : undefined}
+                nextTrain={nextTrainLine}
                 actionLabel="열차에 탔어요"
                 onAction={guide.board}
               />
