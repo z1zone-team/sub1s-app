@@ -164,6 +164,24 @@ describe("routeMapData", () => {
     expect(data.fit).toBe(true);
   });
 
+  it("호선을 갈아타는 곳은 내리는 역과 타는 역을 점선으로 잇는다", () => {
+    const data = routeMapData(
+      option(
+        [segment({ fromStationId: "a", toStationId: "c" }), segment({ lineId: "01", fromStationId: "d", toStationId: "b" })],
+        ["a", "b", "c", "d", "b"]
+      ),
+      coords
+    );
+    const link = data.lines.find((l) => l.dashed);
+    expect(link?.points).toEqual([[37.5, 127.0], [37.49, 127.02]]);
+    // 같은 자리에서 갈아타면 잇지 않는다
+    const same = routeMapData(
+      option([segment({ fromStationId: "a", toStationId: "c" }), segment({ lineId: "01", fromStationId: "c", toStationId: "d" })], ["a", "b", "c", "d"]),
+      coords
+    );
+    expect(same.lines.some((l) => l.dashed)).toBe(false);
+  });
+
   it("승하차역과 처음, 끝에 점을 찍는다", () => {
     const data = routeMapData(option([segment({ fromStationId: "a", toStationId: "c" })], ["a", "b", "c"]), coords);
     expect(data.markers).toHaveLength(4);

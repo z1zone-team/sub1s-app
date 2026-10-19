@@ -128,6 +128,8 @@ export interface RouteEndpointCoords {
 
 const WALK_COLOR = "#B0B8C1";
 const ENDPOINT_COLOR = "#191F28";
+/** 환승 점선을 그릴 최소 거리(약 5m). 같은 자리면 잇지 않는다 */
+const TRANSFER_LINK_MIN_DEG = 0.00005;
 
 /** 역 ID를 지도 좌표로 바꾼다. 좌표로 정한 출발지와 도착지는 endpoints로 푼다. 모르면 undefined */
 export function pointLookup(coords: StationCoords, endpoints: RouteEndpointCoords = {}) {
@@ -199,6 +201,16 @@ export function routeMapData(option: SubwayRouteOptionDto, coords: StationCoords
   option.segments.forEach((segment, index) => {
     const ride = isRide(segment);
     const points = segmentPoints[index];
+    // 열차에서 내려 다른 열차로 갈아타는 곳은 서버가 도보 구간 없이 주므로, 내리는 곳과 타는 곳이 다르면 점선으로 잇는다
+    const prev = option.segments[index - 1];
+    const prevPoints = segmentPoints[index - 1];
+    if (ride && prev && isRide(prev) && prevPoints?.length && points.length) {
+      const from = prevPoints[prevPoints.length - 1];
+      const to = points[0];
+      if (Math.abs(from[0] - to[0]) > TRANSFER_LINK_MIN_DEG || Math.abs(from[1] - to[1]) > TRANSFER_LINK_MIN_DEG) {
+        lines.push({ color: WALK_COLOR, points: [from, to], weight: 4, dashed: true });
+      }
+    }
     const color = ride ? getLineInfo(segment.lineId).color : WALK_COLOR;
     // 열차 구간은 흰 테두리와 진행 방향 화살표가 있는 선으로, 도보는 점선으로 그린다
     if (points.length >= 2) lines.push({ color, points, weight: ride ? 6 : 4, dashed: !ride, ...(ride ? { border: true, arrows: true } : {}) });
