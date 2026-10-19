@@ -77,6 +77,12 @@ jest.mock("expo-haptics", () => ({
   notificationAsync: jest.fn().mockResolvedValue(undefined),
 }));
 
+// Mock expo-task-manager
+jest.mock("expo-task-manager", () => ({
+  defineTask: jest.fn(),
+  isTaskDefinedAsync: jest.fn().mockResolvedValue(true),
+}));
+
 // Mock expo-location
 jest.mock("expo-location", () => ({
   Accuracy: {

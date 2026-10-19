@@ -21,6 +21,12 @@ export const NOTIFICATION_CHANNELS = {
     importance: Notifications.AndroidImportance.MAX,
     vibrationPattern: [0, 500, 200, 500, 200, 500],
   },
+  GUIDE: {
+    id: "subway-guide",
+    name: "안내 중 이동 안내",
+    importance: Notifications.AndroidImportance.HIGH,
+    vibrationPattern: [0, 250],
+  },
   SETTLEMENT: {
     id: "subway-settlement",
     name: "월말 정산 및 통계",
