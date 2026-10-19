@@ -3,6 +3,7 @@ import { ActivityIndicator, View } from "react-native";
 import { cssInterop } from "nativewind";
 import { WebView } from "react-native-webview";
 import { Text } from "@/common/components/Text";
+import { useDeviceHeading } from "@/common/device/location/useDeviceHeading";
 import { useAppearanceStore } from "@/common/settings/appearance-store";
 import { ENV } from "@/constants/env";
 import { useTheme } from "@/theme/useTheme";
@@ -38,6 +39,8 @@ export function VWorldMap({ data, className = "", mode: modeProp, onLongPress }:
     return buildMapHtml(ENV.VWORLD_KEY, layer, needsLabelOverlay(mode, mapStyle));
   }, [mode, mapStyle, webGl]);
   const [webGlReady, setWebGlReady] = useState(false);
+  // 내 위치 표시가 있는 지도에서는 폰이 바라보는 방향을 부채꼴로 보여 준다(2D, 3D 모두). 없으면 센서를 켜지 않는다
+  const hasMe = useMemo(() => data.markers.some((marker) => marker.kind === "me"), [data.markers]);
 
   // 모드나 스타일이 바뀌면 페이지를 새로 올리므로 준비 상태를 처음부터 다시 본다
   useEffect(() => {
@@ -53,6 +56,15 @@ export function VWorldMap({ data, className = "", mode: modeProp, onLongPress }:
   }, [data]);
 
   useEffect(push, [push]);
+
+  // 방향 값은 화면 상태를 거치지 않고 받는 즉시 지도 페이지로 보낸다(거치면 그만큼 늦게 따라 돈다)
+  const headingRef = useRef<number | null>(null);
+  const sendHeading = useCallback((value: number | null) => {
+    headingRef.current = value;
+    if (!loaded.current) return;
+    webViewRef.current?.injectJavaScript(`window.setHeading && window.setHeading(${value === null ? "null" : value}); true;`);
+  }, []);
+  useDeviceHeading(hasMe, sendHeading);
 
   if (!ENV.VWORLD_KEY) {
     return (
@@ -86,6 +98,7 @@ export function VWorldMap({ data, className = "", mode: modeProp, onLongPress }:
         onLoadEnd={() => {
           loaded.current = true;
           push();
+          sendHeading(headingRef.current);
         }}
         className="flex-1 bg-transparent"
       />

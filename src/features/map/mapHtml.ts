@@ -73,6 +73,56 @@ export function parseMapLongPress(raw: string): MapLongPress | null {
   }
 }
 
+/** 내 위치 표시 뒤에 깔리는 바라보는 방향 부채꼴(시야). 위쪽(북쪽)을 향해 그려 두고 돌려서 쓴다 */
+export const ME_CONE_SVG =
+  '<svg class="me-cone" viewBox="0 0 80 80"><defs><radialGradient id="cone" cx="40" cy="40" r="38" gradientUnits="userSpaceOnUse">' +
+  '<stop offset="0" stop-color="#2F6BFF" stop-opacity="0.55"/><stop offset="1" stop-color="#2F6BFF" stop-opacity="0"/></radialGradient></defs>' +
+  '<path d="M40 40 L22.2 6.4 A38 38 0 0 1 57.8 6.4 Z" fill="url(#cone)"/></svg>';
+
+/** 부채꼴 스타일. 돌리는 것은 페이지 스크립트가 프레임마다 하므로 CSS 전환은 쓰지 않는다 */
+export const ME_CONE_CSS = ".me-cone { position: absolute; left: 0; top: 0; width: 80px; height: 80px; display: none; }";
+
+/** 프레임마다 보이는 각도가 목표 각도와의 차이의 이만큼을 따라간다. 클수록 빠르게 따라가지만 센서 떨림이 보인다 */
+const CONE_FOLLOW_RATIO = 0.3;
+
+/**
+ * 부채꼴을 돌리는 페이지 안 스크립트. 페이지가 지도의 회전각을 돌려주는 bearingOf()를 먼저 정의해야 한다.
+ * 센서 값은 초당 10번쯤 뚝뚝 오므로 프레임마다 목표 각도로 다가가며 돌리고, 359도에서 1도로 넘어갈 때 한 바퀴 돌지 않게 누적한 각도를 쓴다.
+ * 방향을 모르면(null) 숨긴다
+ */
+export const ME_CONE_SCRIPT = `
+  var heading = null;
+  var targetAngle = null;
+  var shownAngle = null;
+  var coneRaf = 0;
+  function renderCone() {
+    var cones = document.querySelectorAll(".me-cone");
+    for (var i = 0; i < cones.length; i++) {
+      cones[i].style.display = shownAngle === null ? "none" : "block";
+      if (shownAngle !== null) cones[i].style.transform = "rotate(" + shownAngle + "deg)";
+    }
+  }
+  function stepCone() {
+    coneRaf = 0;
+    var diff = targetAngle - shownAngle;
+    shownAngle = Math.abs(diff) < 0.2 ? targetAngle : shownAngle + diff * ${CONE_FOLLOW_RATIO};
+    renderCone();
+    if (shownAngle !== targetAngle) coneRaf = requestAnimationFrame(stepCone);
+  }
+  function applyCone() {
+    if (heading === null) { targetAngle = null; shownAngle = null; renderCone(); return; }
+    var target = heading - bearingOf();
+    targetAngle = targetAngle === null ? target : targetAngle + ((((target - targetAngle) % 360) + 540) % 360 - 180);
+    if (shownAngle === null) shownAngle = targetAngle;
+    renderCone();
+    if (!coneRaf && shownAngle !== targetAngle) coneRaf = requestAnimationFrame(stepCone);
+  }
+  window.setHeading = function (value) {
+    heading = typeof value === "number" ? value : null;
+    applyCone();
+  };
+`;
+
 export const LONG_PRESS_MS = 600;
 export const LONG_PRESS_SLOP_PX = 10;
 
@@ -99,6 +149,7 @@ export function buildMapHtml(vworldKey: string, layer: TileLayerName = { name: "
   .label { background: rgba(255,255,255,0.9); border: 0; border-radius: 8px; padding: 1px 6px; font: 600 11px sans-serif; color: #191F28; box-shadow: none; }
   /* 프로토타입 Main.dc.html의 내 위치 표시. 지도 1단위가 약 2.13px이라 유령은 0.22배 -> 약 20 x 23px */
   .me-wrap { position: relative; width: 80px; height: 80px; }
+  ${ME_CONE_CSS}
   .me-halo { position: absolute; left: 27px; top: 27px; width: 26px; height: 26px; border-radius: 50%; background: #002968; opacity: 0.22; animation: pulse 1.8s ease-out infinite; }
   .me-shadow { position: absolute; left: 32px; top: 40px; width: 16px; height: 5px; border-radius: 50%; background: #191F28; opacity: 0.15; }
   .me-ghost { position: absolute; left: 30px; top: 18px; width: 21px; height: 24px; overflow: visible; animation: hover 1.8s ease-in-out infinite; }
@@ -161,7 +212,7 @@ export function buildMapHtml(vworldKey: string, layer: TileLayerName = { name: "
       className: "",
       iconSize: [80, 80],
       iconAnchor: [40, 40],
-      html: '<div class="me-wrap"><div class="me-halo"></div><div class="me-shadow"></div>' +
+      html: '<div class="me-wrap">' + ${JSON.stringify(ME_CONE_SVG)} + '<div class="me-halo"></div><div class="me-shadow"></div>' +
         '<svg class="me-ghost" viewBox="10 8 44 50" fill="none">' +
         '<path d="M12 46V28a18 18 0 0 1 36 0v16C48 47 49.5 49 52 50.5C53.5 51.5 52.5 53.5 50 53.5C47.5 53.5 46.5 51.5 44.5 51.8C42.5 52.1 42 55 39 55C36 55 35.5 52.2 33 52.4C30.5 52.6 30 55.5 26.8 55.5C23.6 55.5 23.2 52.6 20.8 52.6C18 52.6 16.5 54 14.6 53C12.6 52 12 49.5 12 46z" fill="#FFFFFF" stroke="#002968" stroke-width="3.4" stroke-linejoin="round"/>' +
         '<circle cx="24" cy="29" r="3.4" fill="#002968"/><circle cx="36" cy="29" r="3.4" fill="#002968"/>' +
@@ -203,6 +254,8 @@ export function buildMapHtml(vworldKey: string, layer: TileLayerName = { name: "
     mapEl.addEventListener("touchend", cancelPress, { passive: true });
     mapEl.addEventListener("touchcancel", cancelPress, { passive: true });
     mapEl.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+    function bearingOf() { return 0; }
+    ${ME_CONE_SCRIPT}
     window.updateMap = function (data) {
       layer.clearLayers();
       arrowLines = [];
@@ -225,6 +278,7 @@ export function buildMapHtml(vworldKey: string, layer: TileLayerName = { name: "
         }
         if (m.kind === "me") {
           L.marker([m.lat, m.lng], { icon: ME_ICON, interactive: false, keyboard: false }).addTo(layer);
+          applyCone();
           bounds.push([m.lat, m.lng]);
           return;
         }

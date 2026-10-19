@@ -30,6 +30,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         backgroundColor: "#0B0F19",
       },
       predictiveBackGestureEnabled: false,
+      // 안드로이드 12 이상에서 이 권한이 없으면 expo-sensors가 센서를 초당 5번(200ms)으로만 읽는다. 일반 권한이라 허용 팝업은 뜨지 않는다
+      permissions: ["android.permission.HIGH_SAMPLING_RATE_SENSORS"],
       // 초대 링크만 처리한다. 도메인에 assetlinks.json 배포 후 앱 재빌드가 필요하다.
       intentFilters: [
         {

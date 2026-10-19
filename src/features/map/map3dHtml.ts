@@ -1,4 +1,13 @@
-import { ARROW_SPACING_PX, DEFAULT_CENTER, DEFAULT_ZOOM, LONG_PRESS_MS, LONG_PRESS_SLOP_PX } from "./mapHtml";
+import {
+  ARROW_SPACING_PX,
+  DEFAULT_CENTER,
+  DEFAULT_ZOOM,
+  LONG_PRESS_MS,
+  LONG_PRESS_SLOP_PX,
+  ME_CONE_CSS,
+  ME_CONE_SCRIPT,
+  ME_CONE_SVG,
+} from "./mapHtml";
 
 /** 3D 지도가 처음 그려졌을 때 WebView가 앱에 보내는 메시지 */
 export const MAP_READY_MESSAGE = "ready";
@@ -11,6 +20,10 @@ const BUILDING_MIN_ZOOM = 14;
 
 /** 건물 높이를 모를 때 쓰는 값(m) */
 const DEFAULT_BUILDING_HEIGHT = 12;
+
+/** 내 위치가 바뀔 때 유령이 미끄러지듯 옮겨 가는 시간(ms). 이보다 먼 거리(m)는 옮겨 가지 않고 바로 놓는다 */
+const ME_MOVE_MS = 900;
+const ME_JUMP_METERS = 2000;
 
 /** MapLibre GL JS를 unpkg에서 불러온다. 정확한 버전을 고정한다 */
 const MAPLIBRE_CSS = "https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css";
@@ -52,6 +65,14 @@ export function build3dMapHtml(): string {
 <style>
   html, body, #map { margin: 0; height: 100%; width: 100%; background: #E5E8EB; }
   .dot { box-sizing: border-box; border: 2px solid #fff; border-radius: 50%; }
+  /* 2D 지도와 같은 내 위치 표시(맥동, 떠 있는 유령)와 바라보는 방향 부채꼴 */
+  .me-wrap { position: relative; width: 80px; height: 80px; }
+  .me-halo { position: absolute; left: 27px; top: 27px; width: 26px; height: 26px; border-radius: 50%; background: #002968; opacity: 0.22; animation: pulse 1.8s ease-out infinite; }
+  .me-shadow { position: absolute; left: 32px; top: 40px; width: 16px; height: 5px; border-radius: 50%; background: #191F28; opacity: 0.15; }
+  .me-ghost { position: absolute; left: 30px; top: 18px; width: 21px; height: 24px; animation: hover 1.8s ease-in-out infinite; }
+  ${ME_CONE_CSS}
+  @keyframes pulse { 0% { transform: scale(1); opacity: 0.22; } 100% { transform: scale(2.8); opacity: 0; } }
+  @keyframes hover { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.6px); } }
   .tag { position: absolute; left: 50%; bottom: 100%; transform: translate(-50%, -4px); white-space: nowrap; font: 600 12px sans-serif; color: #191F28; background: rgba(255,255,255,0.9); padding: 1px 5px; border-radius: 4px; }
 </style>
 <script>
@@ -72,6 +93,8 @@ export function build3dMapHtml(): string {
   var pendingData = null;
   var markerEls = [];
   var map = null;
+  var meMarker = null;
+  var meAnim = 0;
 
   function startMap() {
     map = new maplibregl.Map({
@@ -106,6 +129,7 @@ export function build3dMapHtml(): string {
       map.addImage("route-arrow", arrowImage(), { pixelRatio: 2 });
       map.addLayer({ id: "lines-arrows", type: "symbol", source: "lines", filter: ["==", ["get", "arrows"], true],
         layout: { "symbol-placement": "line", "symbol-spacing": ${ARROW_SPACING_PX}, "icon-image": "route-arrow", "icon-allow-overlap": true, "icon-ignore-placement": true, "icon-rotation-alignment": "map", "icon-pitch-alignment": "viewport" } });
+      map.on("rotate", applyCone);
       setupLongPress();
       ready = true;
       if (pendingData) window.updateMap(pendingData);
@@ -140,10 +164,10 @@ export function build3dMapHtml(): string {
 
   function markerElement(m) {
     var el = document.createElement("div");
-    if (m.kind === "me" || m.kind === "pin") {
+    if (m.kind === "pin") {
       var img = document.createElement("img");
-      img.src = m.kind === "me" ? GHOST : PIN;
-      img.style.width = (m.kind === "me" ? 21 : 27) + "px";
+      img.src = PIN;
+      img.style.width = "27px";
       img.style.display = "block";
       el.appendChild(img);
       return { el: el, anchor: "bottom" };
@@ -162,6 +186,44 @@ export function build3dMapHtml(): string {
     return { el: el, anchor: "center" };
   }
 
+  // 내 위치는 마커를 계속 두고 위치만 옮긴다. 가까운 이동은 미끄러지듯, 먼 이동은 바로 놓는다
+  function meElement() {
+    var el = document.createElement("div");
+    el.className = "me-wrap";
+    el.innerHTML = ${JSON.stringify(ME_CONE_SVG)} +
+      '<div class="me-halo"></div><div class="me-shadow"></div><img class="me-ghost" src="' + GHOST + '" />';
+    return el;
+  }
+
+  function bearingOf() { return map ? map.getBearing() : 0; }
+  ${ME_CONE_SCRIPT}
+
+  function metersBetween(a, b) {
+    var dLat = (a.lat - b.lat) * 111320;
+    var dLng = (a.lng - b.lng) * 111320 * Math.cos(a.lat * Math.PI / 180);
+    return Math.sqrt(dLat * dLat + dLng * dLng);
+  }
+
+  function placeMe(lng, lat) {
+    if (!meMarker) {
+      meMarker = new maplibregl.Marker({ element: meElement(), anchor: "center" }).setLngLat([lng, lat]).addTo(map);
+      applyCone();
+      return;
+    }
+    var from = meMarker.getLngLat();
+    var to = { lng: lng, lat: lat };
+    if (meAnim) cancelAnimationFrame(meAnim);
+    if (metersBetween(from, to) < 0.5 || metersBetween(from, to) > ${ME_JUMP_METERS}) { meMarker.setLngLat([lng, lat]); return; }
+    var startedAt = performance.now();
+    function step(now) {
+      var t = Math.min(1, (now - startedAt) / ${ME_MOVE_MS});
+      var eased = 1 - Math.pow(1 - t, 3);
+      meMarker.setLngLat([from.lng + (to.lng - from.lng) * eased, from.lat + (to.lat - from.lat) * eased]);
+      meAnim = t < 1 ? requestAnimationFrame(step) : 0;
+    }
+    meAnim = requestAnimationFrame(step);
+  }
+
   function applyData(data) {
     var points = [];
     var features = [];
@@ -178,11 +240,16 @@ export function build3dMapHtml(): string {
 
     markerEls.forEach(function (m) { m.remove(); });
     markerEls = [];
+    var me = null;
     (data.markers || []).forEach(function (m) {
       points.push([m.lng, m.lat]);
+      if (m.kind === "me") { me = m; return; }
       var made = markerElement(m);
       markerEls.push(new maplibregl.Marker({ element: made.el, anchor: made.anchor }).setLngLat([m.lng, m.lat]).addTo(map));
     });
+
+    if (me) placeMe(me.lng, me.lat);
+    else if (meMarker) { meMarker.remove(); meMarker = null; }
 
     var padding = { top: (data.topInset || 0) + 60, bottom: (data.bottomInset || 0) + 60, left: 50, right: 50 };
     var focusPoints = data.focus && data.focus.length > 0 ? data.focus.map(function (p) { return [p[1], p[0]]; }) : null;
