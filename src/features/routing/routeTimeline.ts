@@ -140,8 +140,8 @@ export function pointLookup(coords: StationCoords, endpoints: RouteEndpointCoord
 }
 
 /**
- * 구간마다 지도에서 지나는 좌표. 탑승은 지나는 역을 잇고, 도보는 실제 보행 경로(있으면)를 잇고,
- * 모르면 처음과 끝 좌표다. 좌표를 모르는 곳은 빠지므로 비어 있을 수 있다
+ * 구간마다 지도에서 지나는 좌표. 탑승은 실제 선로 모양(있으면)을, 없으면 지나는 역을 잇고,
+ * 도보는 실제 보행 경로(있으면)를 잇고, 모르면 처음과 끝 좌표다. 좌표를 모르는 곳은 빠지므로 비어 있을 수 있다
  */
 export function routeSegmentPoints(
   option: SubwayRouteOptionDto,
@@ -160,8 +160,13 @@ export function routeSegmentPoints(
     const start = ids.indexOf(segment.fromStationId, searchFrom);
     const end = start >= 0 ? ids.indexOf(segment.toStationId, start) : -1;
     if (ride && start >= 0 && end > start) {
-      points = ids.slice(start, end + 1).map(point).filter((p): p is [number, number] => Boolean(p));
       searchFrom = end;
+      // 서버가 준 실제 선로 모양. 양 끝이 역 좌표라서 이어 붙이지 않고 그대로 쓴다
+      const track = segment.path ? decodePolyline(segment.path) : [];
+      points =
+        track.length >= 2
+          ? track
+          : ids.slice(start, end + 1).map(point).filter((p): p is [number, number] => Boolean(p));
     }
     if (!ride && segment.path) {
       // 실제 보행 경로 선. 선 끝은 가장 가까운 보행로에 붙은 점이라 출발지와 역 좌표를 양 끝에 이어 붙인다

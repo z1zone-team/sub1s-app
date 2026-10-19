@@ -236,10 +236,18 @@ describe("routeMapData", () => {
       expect(data.lines[0].points).toEqual([[37.49, 126.79], [37.5, 126.8]]);
     });
 
-    it("탑승 구간은 path가 있어도 역 순서로 그린다", () => {
+    it("탑승 구간은 path가 있으면 실제 선로 모양으로 그린다", () => {
       const ride: PathSegmentDto = { ...segment({ fromStationId: "a", toStationId: "c" }), path: PATH };
       const data = routeMapData(option([ride], ["a", "b", "c"]), coords);
-      expect(data.lines[0].points).toEqual([[37.5, 126.8], [37.52, 126.9], [37.5, 127.0]]);
+      expect(data.lines[0].points).toEqual([[38.5, -120.2], [40.7, -120.95], [43.252, -126.453]]);
+    });
+
+    it("탑승 구간의 path가 없거나 깨져 있으면 지나는 역 순서로 그린다", () => {
+      const noPath: PathSegmentDto = segment({ fromStationId: "a", toStationId: "c" });
+      const broken: PathSegmentDto = { ...noPath, path: "_p~iF" };
+      const stations = [[37.5, 126.8], [37.52, 126.9], [37.5, 127.0]];
+      expect(routeMapData(option([noPath], ["a", "b", "c"]), coords).lines[0].points).toEqual(stations);
+      expect(routeMapData(option([broken], ["a", "b", "c"]), coords).lines[0].points).toEqual(stations);
     });
   });
 });
