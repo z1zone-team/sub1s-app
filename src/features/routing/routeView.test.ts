@@ -16,6 +16,7 @@ import {
   clockRange,
   describeDoor,
   doorGuideLines,
+  transferWalkLabel,
   NO_FAST_TRANSFER_TEXT,
   formatWaiting,
   groupRouteOptions,
@@ -292,6 +293,21 @@ describe("describeDoor", () => {
     expect(describeDoor("6-2")).toBe("6번째 칸 2번 문");
     expect(describeDoor("10-4")).toBe("10번째 칸 4번 문");
     expect(describeDoor("weird")).toBe("weird");
+  });
+});
+
+describe("transferWalkLabel", () => {
+  it("모르거나 0초면 없고 1분보다 짧으면 1분 미만이다", () => {
+    expect(transferWalkLabel(undefined)).toBeUndefined();
+    expect(transferWalkLabel(0)).toBeUndefined();
+    expect(transferWalkLabel(6)).toBe("1분 미만");
+    expect(transferWalkLabel(59)).toBe("1분 미만");
+  });
+
+  it("1분 이상은 분으로 올려 쓴다", () => {
+    expect(transferWalkLabel(60)).toBe("1분");
+    expect(transferWalkLabel(150)).toBe("3분");
+    expect(transferWalkLabel(360)).toBe("6분");
   });
 });
 
