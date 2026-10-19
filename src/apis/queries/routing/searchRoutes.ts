@@ -98,7 +98,7 @@ export interface PathSegmentDto {
   isEstimated?: boolean;
   walkCalories?: number;
   walkSteps?: number;
-  /** 도보 구간의 실제 보행 경로 선(구글 인코딩 폴리라인, 정밀도 5, 위도 경도 순). 직선 추정인 구간에는 없다 */
+  /** 구간의 경로 선(구글 인코딩 폴리라인, 정밀도 5, 위도 경도 순). 도보는 실제 보행 경로, 열차는 실제 선로 모양이다. 직선 추정이거나 모양을 모르는 구간에는 없다 */
   path?: string;
 }
 
