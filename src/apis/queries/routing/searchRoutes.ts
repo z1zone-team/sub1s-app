@@ -26,6 +26,30 @@ export interface OperationNotice {
   occurredAt: string;
 }
 
+/** 탑승역에 도착하는 시각에 탈 열차가 없는 이유. 첫차 전이거나 막차가 이미 떠났다 */
+export type ServiceHoursStatus = "BEFORE_FIRST_TRAIN" | "AFTER_LAST_TRAIN";
+
+/** 이 구간 탑승역의 운행 시간. 그 시각에 탈 열차가 없을 때만 온다 */
+export interface ServiceHours {
+  status: ServiceHoursStatus;
+  /** 탑승 시각이 속한 운행일의 첫차, 막차 출발 시각 (KST ISO) */
+  firstTrainAt: string;
+  lastTrainAt: string;
+  /** 다음에 탈 수 있는 첫차 출발 시각 (KST ISO). 다음 운행일 시간표를 모르면 없다 */
+  nextTrainAt?: string;
+}
+
+/** 경로 중 가장 앞선, 탈 열차가 없는 탑승 구간의 경고 */
+export interface ServiceWarning {
+  status: ServiceHoursStatus;
+  lineId: string;
+  stationId: string;
+  stationName: string;
+  nextTrainAt?: string;
+  /** 그 역의 다음 첫차를 탈 수 있게 맞춘 출발 시각 (KST ISO). 이 값으로 다시 검색한다 */
+  suggestedDepartureAt?: string;
+}
+
 /** 옵션의 객관적 장점. 문구와 추천 배지는 앱이 사용자의 설문 답과 맞춰 정한다 */
 export type RouteHighlight =
   | "FASTEST"
@@ -68,6 +92,9 @@ export interface PathSegmentDto {
   cars?: SegmentCar[];
   operationStatus: OperationStatus;
   operationNotice?: OperationNotice;
+  /** 이 구간 출발역에 도착하는 예상 시각 (KST ISO). 도보 구간과 구버전 서버에는 없다 */
+  boardingAt?: string;
+  serviceHours?: ServiceHours;
   isEstimated?: boolean;
   walkCalories?: number;
   walkSteps?: number;
@@ -91,6 +118,7 @@ export interface SubwayRouteOptionDto {
   highlights: RouteHighlight[];
   operationStatus: OperationStatus;
   operationNotice?: OperationNotice;
+  serviceWarning?: ServiceWarning;
   totalWalkDurationSec?: number;
   totalWalkDistanceKm?: number;
   totalCalories?: number;

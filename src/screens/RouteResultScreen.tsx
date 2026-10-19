@@ -21,6 +21,8 @@ import { Text } from "@/common/components/Text";
 import { toRouteSearchRequest, type RouteEndpoint } from "@/features/routing/endpoint";
 import { canFavorite, findFavorite, toSaveBody } from "@/features/routing/favoriteRoutes";
 import { RouteResultCard } from "@/features/routing/components/RouteResultCard";
+import { ServiceWarningBanner } from "@/features/routing/components/ServiceWarningBanner";
+import { serviceWarningView } from "@/features/routing/serviceWarningView";
 import { endpointLabel, waitingText } from "@/features/routing/routeCardView";
 import { departureText } from "@/features/routing/departureTime";
 import { DepartureTimeSheet } from "@/features/routing/components/DepartureTimeSheet";
@@ -71,6 +73,10 @@ export function RouteResultScreen({
     () => groupRouteOptions(search.data?.options ?? [], routePrefs, search.data?.recommendation),
     [search.data, routePrefs]
   );
+
+  // 맨 위 경로의 탑승역에 탈 열차가 없으면(첫차 전, 막차 뒤) 목록 위에 알린다
+  const serviceWarning = groups[0]?.option.serviceWarning;
+  const serviceWarningText = serviceWarning ? serviceWarningView(serviceWarning, openedAt) : undefined;
 
   // 검색 화면에서 그 칸을 고친다. 딥링크로 들어와 이름이 비어 있던 값은 역 조회로 채운 이름을 함께 넘긴다
   const editEndpoint = (edit: "origin" | "destination") =>
@@ -217,6 +223,7 @@ export function RouteResultScreen({
           data={groups}
           ListHeaderComponent={
             <View className="px-5 pt-3">
+              {serviceWarningText ? <ServiceWarningBanner view={serviceWarningText} onRetry={setDepartureMs} /> : null}
               {unsupportedPreferenceNotice(search.data?.recommendation?.unsupportedPreferences) ? (
                 <Text className="text-small text-text-secondary">
                   {unsupportedPreferenceNotice(search.data?.recommendation?.unsupportedPreferences)}
