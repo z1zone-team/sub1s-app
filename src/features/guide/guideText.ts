@@ -1,4 +1,5 @@
 import { formatClockKst, formatDistanceKm, formatDurationSec } from "@/common/utils/format";
+import type { NextTrain, NextTrainsResult } from "@/apis/queries/stations/getNextTrains";
 import type { GuidePhase } from "./guidePhase";
 import type { UpcomingAction } from "./progress";
 
@@ -65,4 +66,20 @@ export function walkDetail(distanceM: number | undefined): string {
 /** 승강장에서 탈 열차 설명: "2호선 · 건대입구역까지" */
 export function rideDetail(lineName: string, toStationName: string): string {
   return [lineName, toStationName ? `${toStationName}까지` : ""].filter(Boolean).join(" · ");
+}
+
+/**
+ * 탈 역의 다음 열차 한 줄: "판교 방면 · 5분 후 출발". 실시간이면 "도착", 시각표면 "출발"이다.
+ * 남은 시간은 서버 응답 시점 기준이라 응답 뒤로 흐른 시간(elapsedSec)을 빼고, 모르면 빈 문자열이다
+ */
+export function nextTrainText(
+  train: Pick<NextTrain, "headsign" | "arrivalInSec"> | undefined,
+  source: NextTrainsResult["source"],
+  elapsedSec = 0
+): string {
+  if (!train || train.arrivalInSec === null) return "";
+  const verb = source === "REALTIME" ? "도착" : "출발";
+  const remaining = train.arrivalInSec - Math.max(0, elapsedSec);
+  const when = remaining < 60 ? `곧 ${verb}` : `${Math.ceil(remaining / 60)}분 후 ${verb}`;
+  return train.headsign ? `${train.headsign} 방면 · ${when}` : when;
 }

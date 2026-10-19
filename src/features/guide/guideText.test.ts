@@ -2,6 +2,7 @@ import {
   arrivalDeltaText,
   minutesLabel,
   phaseBannerLabel,
+  nextTrainText,
   phaseTitle,
   remainingParts,
   remainingText,
@@ -113,5 +114,31 @@ describe("단계 문구", () => {
   it("탈 열차 설명은 호선과 내릴 역을 잇는다", () => {
     expect(rideDetail("2호선", "을지로입구")).toBe("2호선 · 을지로입구까지");
     expect(rideDetail("2호선", "")).toBe("2호선");
+  });
+});
+
+describe("nextTrainText", () => {
+  const train = { headsign: "판교", arrivalInSec: 300 };
+
+  it("시각표면 출발, 실시간이면 도착으로 분을 올림해 쓴다", () => {
+    expect(nextTrainText(train, "TIMETABLE")).toBe("판교 방면 · 5분 후 출발");
+    expect(nextTrainText({ headsign: "판교", arrivalInSec: 301 }, "REALTIME")).toBe("판교 방면 · 6분 후 도착");
+  });
+
+  it("1분 미만이면 곧 출발이나 곧 도착이다", () => {
+    expect(nextTrainText({ headsign: "판교", arrivalInSec: 45 }, "TIMETABLE")).toBe("판교 방면 · 곧 출발");
+    expect(nextTrainText({ headsign: "판교", arrivalInSec: 0 }, "REALTIME")).toBe("판교 방면 · 곧 도착");
+  });
+
+  it("응답 뒤로 흐른 시간을 뺀다", () => {
+    expect(nextTrainText(train, "TIMETABLE", 120)).toBe("판교 방면 · 3분 후 출발");
+    expect(nextTrainText(train, "TIMETABLE", 290)).toBe("판교 방면 · 곧 출발");
+    expect(nextTrainText(train, "TIMETABLE", -30)).toBe("판교 방면 · 5분 후 출발");
+  });
+
+  it("열차나 남은 시간을 모르면 빈 문자열, 행선지가 없으면 시간만 쓴다", () => {
+    expect(nextTrainText(undefined, "TIMETABLE")).toBe("");
+    expect(nextTrainText({ headsign: "판교", arrivalInSec: null }, "TIMETABLE")).toBe("");
+    expect(nextTrainText({ headsign: "", arrivalInSec: 120 }, "TIMETABLE")).toBe("2분 후 출발");
   });
 });

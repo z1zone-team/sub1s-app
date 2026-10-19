@@ -191,6 +191,8 @@ export function useGuide({ option, sessionId, startedAtMs, originCoords }: UseGu
     phase,
     /** 지금 기다리거나 걸어가는 대상인 탑승역의 순번. 모두 탔으면 없다 */
     boardingIndex: gate,
+    /** 탈 열차 구간. 탑승역에서 방향과 급행 여부로 다음 열차를 고를 때 쓴다 */
+    boardingSegment,
     /** 첫 탑승역까지 남은 거리(m). 걷는 단계에서 보여 준다. 위치와 출발지를 모르면 없다 */
     walkDistanceM,
     board,
