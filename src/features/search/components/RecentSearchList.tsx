@@ -1,7 +1,7 @@
 import React from "react";
 import { Pressable, View } from "react-native";
 import { DesignIcon } from "@/common/components/DesignIcon";
-import { LineBadge } from "@/common/components/LineBadge";
+import { LineBadgeList } from "@/common/components/LineBadgeList";
 import { Text } from "@/common/components/Text";
 import { formatMonthDayKst } from "@/common/utils/format";
 import { cn } from "@/lib/cn";
@@ -53,19 +53,7 @@ export function RecentSearchList({ recent, onSelect }: RecentSearchListProps) {
                   <Text numberOfLines={1} className="shrink text-base font-sans-semibold">
                     {destination.endpoint.name}
                   </Text>
-                  {/* 환승역처럼 노선이 많아도 이름과 날짜를 밀어내지 않게 두 개까지만 보이고 나머지는 +N이다 */}
-                  {lineIds.length > 0 ? (
-                    <View className="shrink-0 flex-row items-center gap-1">
-                      {lineIds.slice(0, MAX_BADGES).map((lineId) => (
-                        <LineBadge key={lineId} lineId={lineId} size="sm" compact />
-                      ))}
-                      {lineIds.length > MAX_BADGES ? (
-                        <Text className="text-caption font-sans-bold text-text-secondary">
-                          +{lineIds.length - MAX_BADGES}
-                        </Text>
-                      ) : null}
-                    </View>
-                  ) : null}
+                  <LineBadgeList lineIds={lineIds} max={MAX_BADGES} />
                 </Pressable>
                 <Text className="text-body-sm text-text-secondary">{formatMonthDayKst(destination.searchedAt)}</Text>
                 <Pressable

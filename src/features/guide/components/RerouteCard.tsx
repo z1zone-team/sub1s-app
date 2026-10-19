@@ -8,7 +8,7 @@ import { Text } from "@/common/components/Text";
 import { formatClockKst, formatDurationSec } from "@/common/utils/format";
 import { DottedBar, FilledNode, RingNode, SolidBar } from "@/features/routing/components/RouteTimeline";
 import { RideBadge } from "@/features/routing/components/RideBadge";
-import { describeDoor, formatWaiting, pickNextTrain } from "@/features/routing/routeView";
+import { doorGuideLines, formatWaiting, pickNextTrain } from "@/features/routing/routeView";
 import { getLineInfo, useTheme } from "@/theme";
 import { cn } from "@/lib/cn";
 import { delayParts } from "../offRoute";
@@ -47,13 +47,13 @@ function NextTrainLine({ segment }: { segment: PathSegmentDto }) {
 /** 도착 행 부제: 빠른 하차(엘리베이터 인접 문)와 뒤따르는 걷기 */
 function ArriveDetail({ row }: { row: Extract<RerouteRow, { kind: "arrive" }> }) {
   const facilities = useStationFacilitiesQuery(row.stationId);
-  const doors = facilities.data?.available ? facilities.data.elevatorDoors : [];
+  const available = facilities.data?.available ? facilities.data : undefined;
   const text = [
-    doors.length > 0 ? `빠른 하차 · 엘리베이터 · ${doors.map(describeDoor).join(", ")}` : "",
+    ...doorGuideLines({ elevatorDoors: available?.elevatorDoors, stairDoors: available?.stairDoors }),
     row.walkTo && row.walkMinutes ? `${row.walkTo}까지 걸어서 ${row.walkMinutes}분` : "",
   ]
     .filter(Boolean)
-    .join(" · ");
+    .join("\n");
   return text ? <Text className="mt-0.75 text-body-sm text-text-secondary">{text}</Text> : null;
 }
 

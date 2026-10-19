@@ -10,7 +10,7 @@ import { formatClock24Kst, formatDistanceKm, formatDurationSec } from "@/common/
 import { CONGESTION_BG, CONGESTION_TEXT, getLineInfo, useTheme } from "@/theme";
 import { cn } from "@/lib/cn";
 import { buildTimeline, timeLabel, type TimelineRow, type TimelineTarget } from "../routeTimeline";
-import { congestionText, describeDoor, formatWaiting, hasRecommendedCar, isEstimatedCongestion, operationLabel, pickNextTrain } from "../routeView";
+import { congestionText, doorGuideLines, formatWaiting, hasRecommendedCar, isEstimatedCongestion, operationLabel, pickNextTrain } from "../routeView";
 import { CarCongestionCard } from "./CarCongestionCard";
 import { RideBadge } from "./RideBadge";
 
@@ -167,7 +167,7 @@ function BoardContent({ row }: { row: Extract<TimelineRow, { kind: "board" }> })
   );
 }
 
-/** 하차나 환승 행. 빠른 하차는 엘리베이터 인접 문과 출구를, 빠른 환승은 환승 문을 안내한다 */
+/** 하차나 환승 행. 빠른 환승 문, 엘리베이터와 계단에서 가까운 문, 출구를 줄 단위로 안내한다 */
 function AlightContent({
   segment,
   transfer,
@@ -177,20 +177,15 @@ function AlightContent({
   transfer: boolean;
   walk?: PathSegmentDto;
 }) {
-  const facilities = useStationFacilitiesQuery(transfer ? undefined : segment.toStationId);
-  const doors = facilities.data?.available ? facilities.data.elevatorDoors : [];
-  const exits = facilities.data?.available ? facilities.data.exits : [];
+  const facilities = useStationFacilitiesQuery(segment.toStationId);
+  const available = facilities.data?.available ? facilities.data : undefined;
 
-  const detail = transfer
-    ? segment.recommendedDoors && segment.recommendedDoors.length > 0
-      ? `빠른 환승 · ${segment.recommendedDoors.map(describeDoor).join(", ")}`
-      : ""
-    : [
-        doors.length > 0 ? `빠른 하차 · 엘리베이터 · ${doors.map(describeDoor).join(", ")}` : "",
-        exits.length > 0 ? `출구 ${exits.map((exit) => exit.exitNo).join(", ")}번` : "",
-      ]
-        .filter(Boolean)
-        .join(" · ");
+  const detail = doorGuideLines({
+    transferDoors: transfer ? segment.recommendedDoors : undefined,
+    elevatorDoors: available?.elevatorDoors,
+    stairDoors: available?.stairDoors,
+    exitNos: transfer ? undefined : available?.exits.map((exit) => exit.exitNo),
+  }).join("\n");
 
   return (
     <View>

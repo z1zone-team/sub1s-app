@@ -21,6 +21,8 @@ export interface StationFacilities {
   hasElevator: boolean | null;
   /** 엘리베이터와 가까운 문. "칸-문" 번호이며 경로의 recommendedDoors와 같은 형식 */
   elevatorDoors: string[];
+  /** 계단과 가까운 문. 형식은 elevatorDoors와 같다. 이전 서버 응답에는 없다 */
+  stairDoors?: string[];
   exits: StationExit[];
 }
 
