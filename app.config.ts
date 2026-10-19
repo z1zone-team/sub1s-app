@@ -58,6 +58,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         {
           locationWhenInUsePermission:
             "안내 중에 가까운 지하철역을 찾아 현재 위치를 보정하는 데 사용해요.",
+          // 안내 중 앱이 백그라운드여도 위치를 받는다. 상단 알림이 보이는 포그라운드 서비스로만 받아서 "항상 허용" 권한은 필요 없다
+          isAndroidForegroundServiceEnabled: true,
         },
       ],
     ],

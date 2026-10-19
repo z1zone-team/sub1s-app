@@ -12,6 +12,7 @@ import { resolveStartRoute } from "@/common/auth/startRoute";
 import { useAppearanceStore } from "@/common/settings/appearance-store";
 import { useGuestStore } from "@/common/auth/guest-store";
 import { useAuthSync } from "@/common/auth/useAuthSync";
+import { useGuideLocationService } from "@/features/guide/useGuideLocationService";
 import { usePushNavigation, usePushRegistration } from "@/common/notifications/pushRegistration";
 import type { PushTarget } from "@/common/notifications/pushRoute";
 import { FriendsScreen } from "@/screens/FriendsScreen";
@@ -48,6 +49,7 @@ export function RootNavigator() {
   const hydrateGuest = useGuestStore((state) => state.hydrate);
   useAuthSync();
   usePushRegistration();
+  useGuideLocationService();
 
   // 앱이 꺼져 있다가 알림으로 열리면 내비게이션이 준비될 때까지 기다렸다가 이동한다
   const pendingTarget = useRef<NonNullable<PushTarget> | null>(null);

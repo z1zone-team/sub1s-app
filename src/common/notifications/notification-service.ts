@@ -58,6 +58,20 @@ export async function scheduleStationAlert(
   return notificationId;
 }
 
+/**
+ * 안내 중 앱이 백그라운드일 때 걷기, 승차 안내를 즉시 로컬 알림으로 띄운다(안내 단계가 바뀔 때 한 번씩)
+ */
+export async function showGuideNotification(params: { title: string; body: string }): Promise<string> {
+  return Notifications.scheduleNotificationAsync({
+    content: {
+      title: params.title,
+      body: params.body,
+      data: { type: "GUIDE" },
+    },
+    trigger: { channelId: NOTIFICATION_CHANNELS.GUIDE.id },
+  });
+}
+
 export interface SmartAlertNotificationParams {
   kind: "TRANSFER" | "ALIGHT";
   title: string;

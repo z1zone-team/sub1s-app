@@ -3,6 +3,7 @@ import type { OffRouteAlert } from "@/apis/queries/tracking/getTrackingSession";
 import type { SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
 import { useReportPositionMutation } from "@/apis/mutations/tracking/useReportPositionMutation";
 import { useReportLocationMutation } from "@/apis/mutations/tracking/useReportLocationMutation";
+import { newerCoords, useGuideLocationStore } from "@/common/device/location/guideLocationTask";
 import { useForegroundLocation } from "@/common/device/location/useForegroundLocation";
 import {
   buildStops,
@@ -26,6 +27,7 @@ import {
 } from "./guidePhase";
 import { isOffRouteAlert, shouldShowAlert } from "./offRoute";
 import { useOffRouteStore } from "./offroute-store";
+import { useGuideNotices } from "./useGuideNotices";
 import { useStopInfo } from "./useStopInfo";
 
 const TICK_MS = 15_000;
@@ -115,7 +117,9 @@ export function useGuide({ option, sessionId, startedAtMs, originCoords }: UseGu
   }, []);
 
   const location = useForegroundLocation({ autoStart: true, timeInterval: TICK_MS, distanceInterval: 30 });
-  const coords = location.coords;
+  // 앱이 백그라운드로 가면 포그라운드 서비스가 보내는 위치가 더 최근이다
+  const backgroundCoords = useGuideLocationStore((state) => state.latest);
+  const coords = newerCoords(location.coords, backgroundCoords);
   const lastGpsIndex = useRef(-1);
 
   useEffect(() => {
@@ -168,6 +172,15 @@ export function useGuide({ option, sessionId, startedAtMs, originCoords }: UseGu
       : baseProgress;
   const from = position ?? originCoords;
   const walkDistanceM = from && boardingCoords ? Math.round(distanceMeters(from, boardingCoords)) : undefined;
+
+  // 앱이 백그라운드일 때 단계가 바뀌면 걷기, 승차 알림을 띄운다
+  const boardingSegment = gate !== undefined ? option.segments[stops[gate]?.segmentIndex ?? -1] : undefined;
+  useGuideNotices(sessionId, {
+    phase,
+    boardedRides: phaseState.boardedRides,
+    boarding: boardingStation && boardingSegment ? { stationName: boardingStation.name, segment: boardingSegment } : undefined,
+    distanceToStationM: walkDistanceM,
+  });
 
   return {
     stops,

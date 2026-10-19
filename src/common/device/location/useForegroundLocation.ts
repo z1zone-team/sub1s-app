@@ -25,7 +25,7 @@ export interface UseForegroundLocationOptions {
   fixTimeoutMs?: number;
 }
 
-function toLocationCoords(loc: Location.LocationObject): LocationCoords {
+export function toLocationCoords(loc: Location.LocationObject): LocationCoords {
   return {
     latitude: loc.coords.latitude,
     longitude: loc.coords.longitude,
