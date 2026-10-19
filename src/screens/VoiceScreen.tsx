@@ -75,7 +75,7 @@ function VoiceHeader({ onClose }: { onClose: () => void }) {
 export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackParamList, "Voice">) {
   const { isSignedIn } = useAuth();
   const insets = useSafeAreaInsets();
-  const recorder = useAudioRecorder();
+  const recorder = useAudioRecorder({ stopOnSilence: true });
   const recommend = useVoiceJobMutation();
   const briefingVoice = useBriefingVoice();
   const { addDestination } = useRecentDestinations();
@@ -137,12 +137,13 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
     void listen();
   }, [isSignedIn, listen]);
 
-  // 30초 제한으로 녹음이 저절로 끝나면 그 녹음을 보낸다
+  // 30초 제한이나 말이 끝난 뒤의 조용함으로 녹음이 저절로 끝나면 그 녹음을 보낸다. 말이 한 번도 없었으면 보내지 않고 실패로 본다
   useEffect(() => {
     if (phase.name === "listening" && !recorder.isRecording && recorder.recordingResult) {
-      submit(recorder.recordingResult);
+      if (recorder.endedWithoutSpeech) setPhase({ name: "failed", failure: "NO_SPEECH" });
+      else submit(recorder.recordingResult);
     }
-  }, [phase.name, recorder.isRecording, recorder.recordingResult, submit]);
+  }, [phase.name, recorder.isRecording, recorder.recordingResult, recorder.endedWithoutSpeech, submit]);
 
   const stop = async () => {
     const recording = await recorder.stopRecording();
