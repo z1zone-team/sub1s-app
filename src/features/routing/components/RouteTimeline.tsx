@@ -10,7 +10,7 @@ import { formatClock24Kst, formatDistanceKm, formatDurationSec } from "@/common/
 import { CONGESTION_BG, CONGESTION_TEXT, getLineInfo, useTheme } from "@/theme";
 import { cn } from "@/lib/cn";
 import { buildTimeline, timeLabel, type TimelineRow, type TimelineTarget } from "../routeTimeline";
-import { congestionText, doorGuideLines, formatWaiting, hasRecommendedCar, isEstimatedCongestion, operationLabel, pickNextTrain } from "../routeView";
+import { congestionText, doorGuideLines, formatWaiting, hasRecommendedCar, isEstimatedCongestion, operationLabel, pickNextTrain, transferWalkLabel } from "../routeView";
 import { CarCongestionCard } from "./CarCongestionCard";
 import { RideBadge } from "./RideBadge";
 
@@ -172,14 +172,17 @@ function AlightContent({
   segment,
   transfer,
   walk,
+  transferWalkSec,
 }: {
   segment: PathSegmentDto;
   transfer: boolean;
   walk?: PathSegmentDto;
+  transferWalkSec?: number;
 }) {
   const facilities = useStationFacilitiesQuery(segment.toStationId);
   const available = facilities.data?.available ? facilities.data : undefined;
 
+  const walkLabel = transferWalkLabel(transferWalkSec);
   const detail = doorGuideLines({
     transfer,
     transferDoors: transfer ? segment.recommendedDoors : undefined,
@@ -194,6 +197,12 @@ function AlightContent({
         {segment.toStationName} {transfer ? "환승" : "하차"}
       </Text>
       {detail ? <Text className="mt-1 text-body-sm text-text-secondary">{detail}</Text> : null}
+      {transfer && walkLabel ? (
+        <View className="mt-2.5 flex-row items-center gap-1.5">
+          <DesignIcon name="walk" size={14} tone="text" strokeWidth={2.2} />
+          <Text className="text-body-sm font-sans-bold">환승 걷기 {walkLabel}</Text>
+        </View>
+      ) : null}
       {walk ? <WalkLine segment={walk} /> : null}
     </View>
   );
@@ -258,7 +267,7 @@ export function RouteTimeline({ option, destinationName, onSelect }: RouteTimeli
           rail={<><RingNode color={lineColor(row.segment)} /><DottedBar /></>}
           onPress={onSelect && (() => onSelect({ kind: "station", stationId: row.segment.toStationId }))}
         >
-          <AlightContent segment={row.segment} transfer={row.transfer} walk={walk} />
+          <AlightContent segment={row.segment} transfer={row.transfer} walk={walk} transferWalkSec={row.transferWalkSec} />
         </Row>
       );
     } else {

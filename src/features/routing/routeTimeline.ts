@@ -20,8 +20,8 @@ export type TimelineRow =
   | { kind: "depart"; key: string; timeMs?: number }
   /** 열차를 타는 역. 이 구간의 정보(칸별 혼잡도 등)가 붙는다 */
   | { kind: "board"; key: string; timeMs?: number; segment: PathSegmentDto; isFirstRide: boolean }
-  /** 열차에서 내리는 역. 다음이 열차면 환승이다 */
-  | { kind: "alight"; key: string; timeMs?: number; segment: PathSegmentDto; transfer: boolean }
+  /** 열차에서 내리는 역. 다음이 열차면 환승이고, transferWalkSec는 다음 열차를 타러 걷는 시간(모르면 없음) */
+  | { kind: "alight"; key: string; timeMs?: number; segment: PathSegmentDto; transfer: boolean; transferWalkSec?: number }
   /** 걷는 구간 */
   | { kind: "walk"; key: string; segment: PathSegmentDto }
   | { kind: "arrive"; key: string; timeMs?: number };
@@ -34,7 +34,8 @@ export function timeLabel(timeMs: number | undefined): string {
 /**
  * 프로토타입 경로 상세의 타임라인 행들. 도착 시각에서 소요 시간을 거꾸로 빼 출발 시각을 구하고,
  * 구간 소요 시간을 차례로 더해 승차, 하차 시각을 정한다. 도착 시각이 없으면 시각을 비운다.
- * 환승이 있으면 구간마다 승차, 하차 행이 이어진다
+ * 환승이 있으면 구간마다 승차, 하차 행이 이어진다.
+ * 서버가 주는 승차 시각(boardingAt)에는 앞선 환승 걷기가 들어 있어서 있으면 그 값을 쓰고, 없으면 소요 시간만 더한다
  */
 export function buildTimeline(option: SubwayRouteOptionDto): TimelineRow[] {
   const arrival = Date.parse(option.estimatedArrivalTimestamp);
@@ -55,10 +56,23 @@ export function buildTimeline(option: SubwayRouteOptionDto): TimelineRow[] {
       advance(segment.durationSec);
       return;
     }
+    const boardingMs = segment.boardingAt ? Date.parse(segment.boardingAt) : Number.NaN;
+    if (!Number.isNaN(boardingMs)) cursor = boardingMs;
     rows.push({ kind: "board", key: `board-${key}`, timeMs: cursor, segment, isFirstRide: index === firstRideIndex });
     advance(segment.durationSec);
     const next = option.segments[index + 1];
-    rows.push({ kind: "alight", key: `alight-${key}`, timeMs: cursor, segment, transfer: Boolean(next && isRide(next)) });
+    const transfer = Boolean(next && isRide(next));
+    const nextBoardingMs = transfer && next.boardingAt ? Date.parse(next.boardingAt) : Number.NaN;
+    const transferWalkSec =
+      cursor !== undefined && !Number.isNaN(nextBoardingMs) ? Math.max(0, Math.round((nextBoardingMs - cursor) / 1000)) : undefined;
+    rows.push({
+      kind: "alight",
+      key: `alight-${key}`,
+      timeMs: cursor,
+      segment,
+      transfer,
+      ...(transferWalkSec !== undefined ? { transferWalkSec } : {}),
+    });
   });
 
   rows.push({ kind: "arrive", key: "arrive", timeMs: known ? arrival : undefined });

@@ -12,7 +12,7 @@ import type {
 } from "@/apis/queries/routing/searchRoutes";
 import type { NextTrain } from "@/apis/queries/stations/getNextTrains";
 import { factorWeights, pickRecommended, scoreOptions } from "./recommendScore";
-import { formatClockKst } from "@/common/utils/format";
+import { formatClockKst, formatDurationSec } from "@/common/utils/format";
 import { WALK_LINE_ID } from "@/theme";
 
 export const MODE_TITLE: Record<RouteMode, string> = {
@@ -342,6 +342,12 @@ export function describeDoor(door: string): string {
 
 /** 환승인데 빠른 환승 문 자료가 없을 때 보이는 문구 */
 export const NO_FAST_TRANSFER_TEXT = "빠른 환승 정보가 없어요";
+
+/** 환승 걷기 시간 문구. 모르거나 0초면 없고, 1분보다 짧으면 "1분 미만"이다 */
+export function transferWalkLabel(seconds: number | undefined): string | undefined {
+  if (seconds === undefined || !Number.isFinite(seconds) || seconds <= 0) return undefined;
+  return seconds < 60 ? "1분 미만" : formatDurationSec(seconds);
+}
 
 export interface DoorGuideInput {
   /** 환승 행이면 true. 이때 transferDoors가 비어 있으면 NO_FAST_TRANSFER_TEXT가 첫 줄이 된다 */

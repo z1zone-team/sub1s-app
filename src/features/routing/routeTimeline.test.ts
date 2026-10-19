@@ -70,6 +70,32 @@ describe("buildTimeline", () => {
     expect(rows.filter((row) => row.kind === "board")).toHaveLength(2);
   });
 
+  it("서버의 승차 시각(boardingAt)이 있으면 환승 걷기만큼 다음 승차가 늦고 환승 걷기 시간을 알려 준다", () => {
+    // 도착 14:46:30. 14:19 승차 -> 10분 주행 -> 14:29 하차 -> 150초 걷기 -> 14:31:30 승차 -> 15분 주행 -> 14:46:30 하차
+    const rows = buildTimeline({
+      ...option([
+        segment({ durationSec: 600, boardingAt: "2026-10-12T05:19:00.000Z" }),
+        segment({ lineId: "02", fromStationId: "02_1", toStationId: "02_2", durationSec: 900, boardingAt: "2026-10-12T05:31:30.000Z" }),
+      ]),
+      totalDurationSec: 1650,
+      estimatedArrivalTimestamp: "2026-10-12T05:46:30.000Z",
+    });
+    const boards = rows.filter((row) => row.kind === "board");
+    const alights = rows.filter((row) => row.kind === "alight");
+    expect(boards.map((row) => timeLabel(row.kind === "board" ? row.timeMs : undefined))).toEqual(["14:19", "14:31"]);
+    expect(alights.map((row) => (row.kind === "alight" ? row.transferWalkSec : -1))).toEqual([150, undefined]);
+    expect(timeLabel(alights[0].kind === "alight" ? alights[0].timeMs : undefined)).toBe("14:29");
+    expect(timeLabel(alights[1].kind === "alight" ? alights[1].timeMs : undefined)).toBe("14:46");
+  });
+
+  it("승차 시각이 없으면 소요 시간만 더하고 환승 걷기 시간은 모른다", () => {
+    const rows = buildTimeline(
+      option([segment({ durationSec: 600 }), segment({ lineId: "02", fromStationId: "02_1", toStationId: "02_2", durationSec: 900 })])
+    );
+    const alight = rows.find((row) => row.kind === "alight");
+    expect(alight && alight.kind === "alight" ? alight.transferWalkSec : "x").toBeUndefined();
+  });
+
   it("첫 탑승만 isFirstRide다", () => {
     const rows = buildTimeline(
       option([walk(300, "x", "09_907"), segment({ durationSec: 600 }), segment({ lineId: "02", durationSec: 600 })])
