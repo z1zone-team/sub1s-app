@@ -17,7 +17,7 @@ import { Chip } from "@/common/components/Chip";
 import { BrandLogo } from "@/common/components/BrandLogo";
 import { DesignIcon, type DesignIconName } from "@/common/components/DesignIcon";
 import { Icon } from "@/common/components/Icon";
-import { LineBadge } from "@/common/components/LineBadge";
+import { LineBadgeList } from "@/common/components/LineBadgeList";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { cn } from "@/lib/cn";
@@ -349,9 +349,7 @@ export function HomeScreen() {
                       <Text numberOfLines={1} className="shrink text-base font-sans-bold">
                         {destination.endpoint.name}
                       </Text>
-                      {lineIds.map((lineId) => (
-                        <LineBadge key={lineId} lineId={lineId} size="sm" />
-                      ))}
+                      <LineBadgeList lineIds={lineIds} />
                     </View>
                     <Text className="text-body-sm text-text-secondary">{formatMonthDayKst(destination.searchedAt)}</Text>
                   </Pressable>

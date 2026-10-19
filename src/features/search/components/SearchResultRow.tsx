@@ -1,6 +1,6 @@
 import React from "react";
 import { Pressable, View } from "react-native";
-import { LineBadge } from "@/common/components/LineBadge";
+import { LineBadgeList } from "@/common/components/LineBadgeList";
 import { Text } from "@/common/components/Text";
 import type { SearchRow } from "@/features/routing/searchRows";
 
@@ -27,9 +27,7 @@ export function SearchResultRow({ row, onPress }: { row: SearchRow; onPress: () 
           </Text>
         ) : null}
       </View>
-      {row.lineIds.map((lineId) => (
-        <LineBadge key={lineId} lineId={lineId} />
-      ))}
+      <LineBadgeList lineIds={row.lineIds} size="md" />
     </Pressable>
   );
 }
