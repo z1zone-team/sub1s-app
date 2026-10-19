@@ -24,7 +24,16 @@ export interface MapLine {
   dashed?: boolean;
   /** 지도를 맞출 때 이 선은 빼고 계산한다. 배경으로만 흐리게 깔 때 쓴다 */
   noFit?: boolean;
+  /** 선 아래에 흰 테두리를 깐다. 점선에는 쓰지 않는다 */
+  border?: boolean;
+  /** 선 위에 진행 방향(points 순서) 화살표를 일정 간격으로 찍는다 */
+  arrows?: boolean;
 }
+
+/** 선 테두리가 선 양쪽으로 더하는 굵기(px) */
+export const LINE_BORDER_PX = 2;
+/** 화살표 사이의 화면 간격(px) */
+export const ARROW_SPACING_PX = 64;
 
 export interface MapData {
   markers: MapMarker[];
@@ -112,6 +121,42 @@ export function buildMapHtml(vworldKey: string, layer: TileLayerName = { name: "
     L.tileLayer("${tileUrl(layer)}", { maxZoom: 19, detectRetina: true }).addTo(map);
     ${labelOverlay ? `L.tileLayer("${tileUrl(LABEL_OVERLAY_LAYER)}", { maxZoom: 19, detectRetina: true }).addTo(map);` : ""}
     var layer = L.layerGroup().addTo(map);
+    // 진행 방향 화살표. 확대 수준마다 화면 간격이 달라 따로 두고 다시 그린다
+    var arrowLayer = L.layerGroup().addTo(map);
+    var arrowLines = [];
+    function arrowIcon(angle, color) {
+      return L.divIcon({
+        className: "",
+        iconSize: [16, 16],
+        iconAnchor: [8, 8],
+        html: '<svg width="16" height="16" viewBox="-8 -8 16 16" style="transform: rotate(' + angle + 'deg); overflow: visible">' +
+          '<path d="M-2.6 -3.8 L2.4 0 L-2.6 3.8" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      });
+    }
+    function drawArrows() {
+      arrowLayer.clearLayers();
+      var view = map.getBounds().pad(0.2);
+      arrowLines.forEach(function (line) {
+        var pts = line.points.map(function (p) { return map.latLngToLayerPoint(p); });
+        var next = ${ARROW_SPACING_PX} / 2;
+        var travelled = 0;
+        for (var i = 1; i < pts.length; i += 1) {
+          var a = pts[i - 1];
+          var b = pts[i];
+          var length = a.distanceTo(b);
+          if (length === 0) continue;
+          var angle = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+          while (travelled + length >= next) {
+            var t = (next - travelled) / length;
+            var at = map.layerPointToLatLng(L.point(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t));
+            if (view.contains(at)) L.marker(at, { icon: arrowIcon(angle, line.color), interactive: false, keyboard: false }).addTo(arrowLayer);
+            next += ${ARROW_SPACING_PX};
+          }
+          travelled += length;
+        }
+      });
+    }
+    map.on("zoomend moveend", drawArrows);
     var ME_ICON = L.divIcon({
       className: "",
       iconSize: [80, 80],
@@ -160,10 +205,16 @@ export function buildMapHtml(vworldKey: string, layer: TileLayerName = { name: "
     mapEl.addEventListener("contextmenu", function (e) { e.preventDefault(); });
     window.updateMap = function (data) {
       layer.clearLayers();
+      arrowLines = [];
       var bounds = [];
       (data.lines || []).forEach(function (line) {
         if (line.points.length < 2) return;
-        L.polyline(line.points, { color: line.color, weight: line.weight || 5, opacity: line.opacity == null ? 1 : line.opacity, lineCap: "round", lineJoin: "round", dashArray: line.dashed ? "2 10" : null }).addTo(layer);
+        var weight = line.weight || 5;
+        if (line.border && !line.dashed) {
+          L.polyline(line.points, { color: "#FFFFFF", weight: weight + ${LINE_BORDER_PX} * 2, opacity: line.opacity == null ? 1 : line.opacity, lineCap: "round", lineJoin: "round" }).addTo(layer);
+        }
+        L.polyline(line.points, { color: line.color, weight: weight, opacity: line.opacity == null ? 1 : line.opacity, lineCap: "round", lineJoin: "round", dashArray: line.dashed ? "2 10" : null }).addTo(layer);
+        if (line.arrows && !line.dashed) arrowLines.push(line);
         if (!line.noFit) line.points.forEach(function (p) { bounds.push(p); });
       });
       (data.markers || []).forEach(function (m) {
@@ -197,6 +248,7 @@ export function buildMapHtml(vworldKey: string, layer: TileLayerName = { name: "
         var shift = ((data.bottomInset || 0) - (data.topInset || 0)) / 2;
         if (shift) map.panBy([0, shift], { animate: false });
       }
+      drawArrows();
     };
   }
 </script>

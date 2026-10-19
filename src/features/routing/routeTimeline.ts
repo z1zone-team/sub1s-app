@@ -195,7 +195,8 @@ export function routeMapData(option: SubwayRouteOptionDto, coords: StationCoords
     const ride = isRide(segment);
     const points = segmentPoints[index];
     const color = ride ? getLineInfo(segment.lineId).color : WALK_COLOR;
-    if (points.length >= 2) lines.push({ color, points, weight: ride ? 6 : 4, dashed: !ride });
+    // 열차 구간은 흰 테두리와 진행 방향 화살표가 있는 선으로, 도보는 점선으로 그린다
+    if (points.length >= 2) lines.push({ color, points, weight: ride ? 6 : 4, dashed: !ride, ...(ride ? { border: true, arrows: true } : {}) });
 
     if (ride) {
       for (const id of [segment.fromStationId, segment.toStationId]) {
