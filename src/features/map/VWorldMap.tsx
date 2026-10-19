@@ -22,25 +22,19 @@ interface VWorldMapProps {
   onLongPress?: (point: MapLongPress) => void;
 }
 
-/** 3D 지도의 도메인 확인에 쓰는 호스트. 키를 등록한 주소에서 뽑는다 */
-function refererHost(referer: string): string {
-  try {
-    return new URL(referer).host;
-  } catch {
-    return referer;
-  }
-}
-
 /** V-World 지도를 WebView로 보여 주고 데이터가 바뀔 때마다 마커와 선을 다시 그린다. 키가 없으면 안내만 보인다 */
-export function VWorldMap({ data, className = "", mode = "2D", onLongPress }: VWorldMapProps) {
+export function VWorldMap({ data, className = "", mode: modeProp, onLongPress }: VWorldMapProps) {
   const webViewRef = useRef<WebView>(null);
   const loaded = useRef(false);
   const mapStyle = useAppearanceStore((state) => state.mapStyle);
+  // 모드를 따로 주지 않으면 홈에서 고른 모드를 따른다
+  const storedMode = useAppearanceStore((state) => state.mapMode);
+  const mode = modeProp ?? storedMode;
   const { scheme } = useTheme();
   const webGl = isWebGlMode(mode);
   const html = useMemo(() => {
     const layer = tileLayerOf(mode, mapStyle);
-    if (webGl) return build3dMapHtml(ENV.VWORLD_KEY, refererHost(ENV.VWORLD_REFERER), layer);
+    if (webGl) return build3dMapHtml();
     return buildMapHtml(ENV.VWORLD_KEY, layer, needsLabelOverlay(mode, mapStyle));
   }, [mode, mapStyle, webGl]);
   const [webGlReady, setWebGlReady] = useState(false);

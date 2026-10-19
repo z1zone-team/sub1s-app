@@ -1,6 +1,8 @@
 import {
   needsLabelOverlay,
+  DEFAULT_MAP_MODE,
   DEFAULT_MAP_STYLE,
+  isMapMode,
   isMapStyle,
   isWebGlMode,
   LABEL_OVERLAY_LAYER,
@@ -12,6 +14,14 @@ import {
 } from "./mapStyle";
 
 describe("지도 모드", () => {
+  it("기억해 둔 값이 모드일 때만 모드로 읽고 기본은 2D다", () => {
+    expect(DEFAULT_MAP_MODE).toBe("2D");
+    expect(isMapMode("3D")).toBe(true);
+    expect(isMapMode("SATELLITE")).toBe(true);
+    expect(isMapMode("4D")).toBe(false);
+    expect(isMapMode(null)).toBe(false);
+  });
+
   it("2D, 3D, 실제(위성) 순서로 돌고 위성 다음은 다시 2D다", () => {
     expect(nextMapMode("2D")).toBe("3D");
     expect(nextMapMode("3D")).toBe("SATELLITE");

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useAppearanceStore } from "@/common/settings/appearance-store";
 import { Alert, Pressable, ScrollView, View, type LayoutChangeEvent } from "react-native";
 import { useAuth } from "@clerk/expo";
 import { useFocusEffect, useNavigation, useRoute, type RouteProp } from "@react-navigation/native";
@@ -34,7 +35,7 @@ import { useStationsQuery } from "@/apis/queries/stations/useStationsQuery";
 import { PlaceCard } from "@/features/search/components/PlaceCard";
 import { useSelectedPlaceStore } from "@/features/search/selected-place-store";
 import { VWorldMap } from "@/features/map/VWorldMap";
-import { modeButtonAccessibilityLabel, modeButtonLabel, nextMapMode, type MapMode } from "@/features/map/mapStyle";
+import { modeButtonAccessibilityLabel, modeButtonLabel, nextMapMode } from "@/features/map/mapStyle";
 import { PickStatusCard } from "@/features/map/components/PickStatusCard";
 import { pickErrorMessage } from "@/features/map/pickMessage";
 import { useReversePlaceMutation } from "@/apis/queries/places/useReversePlaceMutation";
@@ -126,7 +127,8 @@ export function HomeScreen() {
   const activeGuide = useActiveGuideStore((state) => state.guide);
   const [areaHeight, setAreaHeight] = useState(0);
   const [areaWidth, setAreaWidth] = useState(0);
-  const [mapMode, setMapMode] = useState<MapMode>("2D");
+  const mapMode = useAppearanceStore((state) => state.mapMode);
+  const setMapMode = useAppearanceStore((state) => state.setMapMode);
   const [recenterCount, setRecenterCount] = useState(0);
 
   // 안내에서 돌아오면 선택한 장소 대신 현재 위치를 중심으로 다시 맞춘다.
@@ -181,7 +183,7 @@ export function HomeScreen() {
     // 지도가 상태 표시줄 뒤까지 채우도록 안전 영역을 Screen이 아니라 각 요소가 직접 처리한다
     <Screen edges={[]}>
       <View onLayout={onLayout} className="flex-1 bg-surface">
-        <VWorldMap data={mapData} mode={mapMode} className="flex-1" onLongPress={onMapLongPress} />
+        <VWorldMap data={mapData} className="flex-1" onLongPress={onMapLongPress} />
 
         <View style={{ top: searchTop }} className="absolute inset-x-4 flex-row items-center gap-2">
           <View className="h-control-lg flex-1 flex-row items-center gap-1 rounded-pill border border-border bg-bg pl-2 pr-1.5">
@@ -248,7 +250,7 @@ export function HomeScreen() {
         </ScrollView>
 
         <View style={{ top: searchTop + FAB_OFFSET }} className="absolute right-4 gap-2.5">
-          <FloatingButton label={modeButtonAccessibilityLabel(mapMode)} onPress={() => setMapMode(nextMapMode)}>
+          <FloatingButton label={modeButtonAccessibilityLabel(mapMode)} onPress={() => void setMapMode(nextMapMode(mapMode))}>
             <Text className="text-body-sm font-sans-bold text-text">{modeButtonLabel(mapMode)}</Text>
           </FloatingButton>
           <FloatingButton label="즐겨찾기 경로" onPress={() => setFavoritesOpen(true)}>
