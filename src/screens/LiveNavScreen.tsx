@@ -229,6 +229,7 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
   const facilities = useStationFacilitiesQuery(popupStationId);
   const available = facilities.data?.available ? facilities.data : undefined;
   const popupDetail = doorGuideLines({
+    transfer: showTransfer,
     transferDoors: showTransfer ? doors : undefined,
     elevatorDoors: available?.elevatorDoors,
     stairDoors: available?.stairDoors,

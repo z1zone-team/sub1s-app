@@ -16,6 +16,7 @@ import {
   clockRange,
   describeDoor,
   doorGuideLines,
+  NO_FAST_TRANSFER_TEXT,
   formatWaiting,
   groupRouteOptions,
   matchedPreferences,
@@ -307,6 +308,19 @@ describe("doorGuideLines", () => {
       "엘리베이터 3-4, 8-1 · 계단 2-4",
       "출구 2, 3번",
     ]);
+  });
+
+  it("says there is no fast transfer info for a transfer without doors, even with elevator and stair lines", () => {
+    expect(doorGuideLines({ transfer: true, transferDoors: [] })).toEqual([NO_FAST_TRANSFER_TEXT]);
+    expect(doorGuideLines({ transfer: true, elevatorDoors: ["3-4"], stairDoors: ["7-1"] })).toEqual([
+      NO_FAST_TRANSFER_TEXT,
+      "엘리베이터 3-4 · 계단 7-1",
+    ]);
+  });
+
+  it("does not add the no-info line to an alighting row or a transfer that has doors", () => {
+    expect(doorGuideLines({ transfer: false })).toEqual([]);
+    expect(doorGuideLines({ transfer: true, transferDoors: ["6-2"] })).toEqual(["빠른 환승 6-2"]);
   });
 
   it("leaves out stairs the server did not send and lines without values", () => {

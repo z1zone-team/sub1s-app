@@ -181,6 +181,7 @@ function AlightContent({
   const available = facilities.data?.available ? facilities.data : undefined;
 
   const detail = doorGuideLines({
+    transfer,
     transferDoors: transfer ? segment.recommendedDoors : undefined,
     elevatorDoors: available?.elevatorDoors,
     stairDoors: available?.stairDoors,
