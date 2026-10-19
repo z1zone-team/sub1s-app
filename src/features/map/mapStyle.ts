@@ -8,6 +8,12 @@ export const DEFAULT_MAP_STYLE: MapStyle = "BASIC";
 
 const MODE_ORDER: readonly MapMode[] = ["2D", "3D", "SATELLITE"];
 
+export const DEFAULT_MAP_MODE: MapMode = "2D";
+
+export function isMapMode(value: unknown): value is MapMode {
+  return MODE_ORDER.includes(value as MapMode);
+}
+
 /** 모드 버튼을 누를 때마다 2D, 3D, 실제(위성) 순서로 돈다 */
 export function nextMapMode(mode: MapMode): MapMode {
   return MODE_ORDER[(MODE_ORDER.indexOf(mode) + 1) % MODE_ORDER.length];

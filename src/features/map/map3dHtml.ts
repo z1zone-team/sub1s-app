@@ -1,20 +1,23 @@
-import { DEFAULT_CENTER, DEFAULT_ZOOM, LONG_PRESS_MS, LONG_PRESS_SLOP_PX } from "./mapHtml";
-import type { TileLayerName } from "./mapStyle";
+import { ARROW_SPACING_PX, DEFAULT_CENTER, DEFAULT_ZOOM, LONG_PRESS_MS, LONG_PRESS_SLOP_PX } from "./mapHtml";
 
 /** 3D 지도가 처음 그려졌을 때 WebView가 앱에 보내는 메시지 */
 export const MAP_READY_MESSAGE = "ready";
 
 /** 3D 지도의 기울기(도). 위에서 비스듬히 내려다본다 */
-const TILT_DEGREES = 45;
+const TILT_DEGREES = 55;
 
-/** 3D 화면을 그리는 최대 배율. 기기 화소 밀도를 따르되 이 값을 넘기지 않는다(성능) */
-const MAX_RESOLUTION_SCALE = 2.5;
+/** 건물 3D를 그리기 시작하는 확대 수준. 그보다 멀면 평면 지도라 건물을 그리지 않는다 */
+const BUILDING_MIN_ZOOM = 14;
 
-/** 지도 타일을 고르는 화면 오차(px). 작을수록 선명하지만 더 많이 내려받는다. 기본은 2 */
-const MAX_SCREEN_SPACE_ERROR = 1;
+/** 건물 높이를 모를 때 쓰는 값(m) */
+const DEFAULT_BUILDING_HEIGHT = 12;
 
-/** 확대 수준을 카메라 거리(m)로 바꾸는 상수. 2D 지도와 비슷한 크기로 보이게 맞춘 값 */
-const RANGE_AT_ZOOM_0 = 30_000_000;
+/** MapLibre GL JS를 unpkg에서 불러온다. 정확한 버전을 고정한다 */
+const MAPLIBRE_CSS = "https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css";
+const MAPLIBRE_JS = "https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js";
+
+/** OpenFreeMap의 밝은 회색 지도 스타일(OpenStreetMap 기반 벡터 타일, 키 없음) */
+const STYLE_URL = "https://tiles.openfreemap.org/styles/positron";
 
 export function isMapReadyMessage(raw: string): boolean {
   try {
@@ -36,96 +39,159 @@ const PIN_SVG =
   '<circle cx="12" cy="10.8" r="3.6" fill="#FFFFFF"/></svg>';
 
 /**
- * V-World WebGL 3D 지도(API 3.0)로 그리는 페이지. 2D 페이지처럼 앱이 window.updateMap(데이터)을 불러 마커와 선을 바꾼다.
- * 기본 지도는 위성 사진이라, 처음 그려질 때 고른 스타일의 타일(Base 등)로 바꿔 끼운다.
- * 지도 API가 도메인 확인을 하므로 domain을 함께 넘긴다.
+ * 색 없는 단순한 건물 덩어리로 그리는 3D 지도 페이지(MapLibre GL JS + OpenFreeMap, OpenStreetMap 기반).
+ * 위성 질감 대신 회색 지도 위에 건물만 높이로 솟게 해 가볍다. 2D 페이지처럼 앱이 window.updateMap(데이터)을 불러 마커와 선을 바꾼다
  */
-export function build3dMapHtml(vworldKey: string, domain: string, layer: TileLayerName): string {
-  const key = encodeURIComponent(vworldKey);
-  const domainParam = domain ? `&domain=${encodeURIComponent(domain)}` : "";
-  const tileUrl = `https://api.vworld.kr/req/wmts/1.0.0/${key}/${layer.name}/{z}/{y}/{x}.${layer.extension}`;
+export function build3dMapHtml(): string {
   return `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<style>html, body, #vmap { margin: 0; height: 100%; width: 100%; background: #E5E8EB; }</style>
+<link rel="stylesheet" href="${MAPLIBRE_CSS}" />
+<style>
+  html, body, #map { margin: 0; height: 100%; width: 100%; background: #E5E8EB; }
+  .dot { box-sizing: border-box; border: 2px solid #fff; border-radius: 50%; }
+  .tag { position: absolute; left: 50%; bottom: 100%; transform: translate(-50%, -4px); white-space: nowrap; font: 600 12px sans-serif; color: #191F28; background: rgba(255,255,255,0.9); padding: 1px 5px; border-radius: 4px; }
+</style>
 <script>
   function send(message) {
     if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(JSON.stringify(message));
   }
   window.onerror = function (m, s, l) { send({ type: "error", message: m + " @" + s + ":" + l }); };
 </script>
-<script src="https://map.vworld.kr/js/webglMapInit.js.do?version=3.0&apiKey=${key}${domainParam}"></script>
+<script src="${MAPLIBRE_JS}"></script>
 </head>
 <body>
-<div id="vmap"></div>
+<div id="map"></div>
 <script>
-  var viewer = null;
-  var pendingData = null;
-  var ready = false;
+  var DEFAULT_CENTER = [${DEFAULT_CENTER[1]}, ${DEFAULT_CENTER[0]}];
   var GHOST = "data:image/svg+xml," + encodeURIComponent('${GHOST_SVG}');
   var PIN = "data:image/svg+xml," + encodeURIComponent('${PIN_SVG}');
-  var DEFAULT_CENTER = [${DEFAULT_CENTER[1]}, ${DEFAULT_CENTER[0]}];
+  var ready = false;
+  var pendingData = null;
+  var markerEls = [];
+  var map = null;
 
-  function rangeOf(zoom) { return ${RANGE_AT_ZOOM_0} / Math.pow(2, zoom); }
+  function startMap() {
+    map = new maplibregl.Map({
+      container: "map",
+      style: "${STYLE_URL}",
+      center: DEFAULT_CENTER,
+      zoom: ${DEFAULT_ZOOM} - 1,
+      pitch: ${TILT_DEGREES},
+      maxPitch: 70,
+      attributionControl: false
+    });
+    map.on("load", function () {
+      // 평면 건물 대신 높이로 솟은 회색 덩어리를 그린다
+      if (map.getLayer("building")) map.setLayoutProperty("building", "visibility", "none");
+      map.addLayer({
+        id: "building-3d", type: "fill-extrusion", source: "openmaptiles", "source-layer": "building", minzoom: ${BUILDING_MIN_ZOOM},
+        paint: {
+          "fill-extrusion-color": "#D5D9E0",
+          "fill-extrusion-height": ["to-number", ["get", "render_height"], ${DEFAULT_BUILDING_HEIGHT}],
+          "fill-extrusion-base": ["to-number", ["get", "render_min_height"], 0],
+          "fill-extrusion-opacity": 0.92
+        }
+      });
+      map.addSource("lines", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      var join = { "line-cap": "round", "line-join": "round" };
+      map.addLayer({ id: "lines-border", type: "line", source: "lines", filter: ["==", ["get", "border"], true], layout: join,
+        paint: { "line-color": "#FFFFFF", "line-width": ["+", ["get", "weight"], 4] } });
+      map.addLayer({ id: "lines-solid", type: "line", source: "lines", filter: ["!=", ["get", "dashed"], true], layout: join,
+        paint: { "line-color": ["get", "color"], "line-width": ["get", "weight"], "line-opacity": ["get", "opacity"] } });
+      map.addLayer({ id: "lines-dashed", type: "line", source: "lines", filter: ["==", ["get", "dashed"], true], layout: { "line-join": "round" },
+        paint: { "line-color": ["get", "color"], "line-width": ["get", "weight"], "line-opacity": ["get", "opacity"], "line-dasharray": [2, 2] } });
+      map.addImage("route-arrow", arrowImage(), { pixelRatio: 2 });
+      map.addLayer({ id: "lines-arrows", type: "symbol", source: "lines", filter: ["==", ["get", "arrows"], true],
+        layout: { "symbol-placement": "line", "symbol-spacing": ${ARROW_SPACING_PX}, "icon-image": "route-arrow", "icon-allow-overlap": true, "icon-ignore-placement": true, "icon-rotation-alignment": "map", "icon-pitch-alignment": "viewport" } });
+      setupLongPress();
+      ready = true;
+      if (pendingData) window.updateMap(pendingData);
+      // 타일이 올라온 첫 순간을 앱에 알려 로딩 표시를 걷게 한다
+      map.once("idle", function () { send({ type: "${MAP_READY_MESSAGE}" }); });
+    });
+    map.on("error", function (e) {
+      send({ type: "error", message: "map " + (e && e.error && e.error.message) });
+    });
+  }
 
-  var lastView = null;
+  // 선 위에 찍는 진행 방향 화살표. 2D와 같은 하얀 꺾쇠를 오른쪽 방향으로 그리고, 화면에 세운 채 선 방향으로만 돌려 쓴다
+  function arrowImage() {
+    var size = 32;
+    var canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    var ctx = canvas.getContext("2d");
+    ctx.translate(size / 2, size / 2);
+    ctx.scale(2, 2);
+    ctx.strokeStyle = "#FFFFFF";
+    ctx.lineWidth = 2.4;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    ctx.moveTo(-2.6, -3.8);
+    ctx.lineTo(2.4, 0);
+    ctx.lineTo(-2.6, 3.8);
+    ctx.stroke();
+    return ctx.getImageData(0, 0, size, size);
+  }
 
-  function lookAt(lng, lat, range) {
-    lastView = [lng, lat, range];
-    var camera = viewer.camera;
-    camera.lookAt(Cesium.Cartesian3.fromDegrees(lng, lat, 0), new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-${TILT_DEGREES}), range));
-    camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
+  function markerElement(m) {
+    var el = document.createElement("div");
+    if (m.kind === "me" || m.kind === "pin") {
+      var img = document.createElement("img");
+      img.src = m.kind === "me" ? GHOST : PIN;
+      img.style.width = (m.kind === "me" ? 21 : 27) + "px";
+      img.style.display = "block";
+      el.appendChild(img);
+      return { el: el, anchor: "bottom" };
+    }
+    var size = (m.radius || 5) * 2 + 4;
+    el.className = "dot";
+    el.style.width = size + "px";
+    el.style.height = size + "px";
+    el.style.background = m.color;
+    if (m.label) {
+      var tag = document.createElement("div");
+      tag.className = "tag";
+      tag.textContent = m.label;
+      el.appendChild(tag);
+    }
+    return { el: el, anchor: "center" };
   }
 
   function applyData(data) {
-    viewer.entities.removeAll();
     var points = [];
+    var features = [];
     (data.lines || []).forEach(function (line) {
       if (line.points.length < 2) return;
-      var positions = [];
-      line.points.forEach(function (p) { positions.push(p[1], p[0]); points.push([p[1], p[0]]); });
-      var color = Cesium.Color.fromCssColorString(line.color).withAlpha(line.opacity == null ? 1 : line.opacity);
-      viewer.entities.add({
-        polyline: {
-          positions: Cesium.Cartesian3.fromDegreesArray(positions),
-          width: line.weight || 5,
-          clampToGround: true,
-          material: line.dashed ? new Cesium.PolylineDashMaterialProperty({ color: color, dashLength: 14 }) : color
-        }
-      });
+      var coords = line.points.map(function (p) { return [p[1], p[0]]; });
+      if (!line.noFit) coords.forEach(function (c) { points.push(c); });
+      features.push({ type: "Feature", properties: {
+        color: line.color, weight: line.weight || 5, opacity: line.opacity == null ? 1 : line.opacity,
+        dashed: !!line.dashed, border: !!line.border && !line.dashed, arrows: !!line.arrows && !line.dashed
+      }, geometry: { type: "LineString", coordinates: coords } });
     });
+    map.getSource("lines").setData({ type: "FeatureCollection", features: features });
+
+    markerEls.forEach(function (m) { m.remove(); });
+    markerEls = [];
     (data.markers || []).forEach(function (m) {
-      var position = Cesium.Cartesian3.fromDegrees(m.lng, m.lat, 0);
       points.push([m.lng, m.lat]);
-      if (m.kind === "me" || m.kind === "pin") {
-        viewer.entities.add({
-          position: position,
-          billboard: {
-            image: m.kind === "me" ? GHOST : PIN,
-            scale: m.kind === "me" ? 0.5 : 0.85,
-            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-            disableDepthTestDistance: Number.POSITIVE_INFINITY
-          }
-        });
-        return;
-      }
-      viewer.entities.add({
-        position: position,
-        point: { pixelSize: (m.radius || 5) * 2, color: Cesium.Color.fromCssColorString(m.color), outlineColor: Cesium.Color.WHITE, outlineWidth: 2, disableDepthTestDistance: Number.POSITIVE_INFINITY },
-        label: m.label ? { text: m.label, font: "600 12px sans-serif", fillColor: Cesium.Color.fromCssColorString("#191F28"), showBackground: true, backgroundColor: Cesium.Color.WHITE.withAlpha(0.9), pixelOffset: new Cesium.Cartesian2(0, -14), disableDepthTestDistance: Number.POSITIVE_INFINITY } : undefined
-      });
+      var made = markerElement(m);
+      markerEls.push(new maplibregl.Marker({ element: made.el, anchor: made.anchor }).setLngLat([m.lng, m.lat]).addTo(map));
     });
-    if (data.fit && points.length > 0) {
-      var cartesians = points.map(function (p) { return Cesium.Cartesian3.fromDegrees(p[0], p[1], 0); });
-      var sphere = Cesium.BoundingSphere.fromPoints(cartesians);
-      var center = Cesium.Cartographic.fromCartesian(sphere.center);
-      // 아래를 바텀시트가 덮으므로 여유를 두고 멀리서 본다
-      var range = Math.max(sphere.radius * 3.2, rangeOf(16)) * (1 + (data.bottomInset || 0) / 600);
-      lookAt(Cesium.Math.toDegrees(center.longitude), Cesium.Math.toDegrees(center.latitude), range);
+
+    var padding = { top: (data.topInset || 0) + 60, bottom: (data.bottomInset || 0) + 60, left: 50, right: 50 };
+    var focusPoints = data.focus && data.focus.length > 0 ? data.focus.map(function (p) { return [p[1], p[0]]; }) : null;
+    var target = focusPoints || (data.fit ? points : null);
+    if (target && target.length > 0) {
+      var bounds = target.reduce(function (b, c) { return b.extend(c); }, new maplibregl.LngLatBounds(target[0], target[0]));
+      map.fitBounds(bounds, { padding: padding, maxZoom: 17, pitch: ${TILT_DEGREES}, duration: 0 });
     } else if (data.center) {
-      lookAt(data.center[1], data.center[0], rangeOf(data.zoom || ${DEFAULT_ZOOM}));
+      map.jumpTo({ center: [data.center[1], data.center[0]], zoom: (data.zoom || ${DEFAULT_ZOOM}) - 1, pitch: ${TILT_DEGREES}, padding: { top: data.topInset || 0, bottom: data.bottomInset || 0, left: 0, right: 0 } });
     }
   }
 
@@ -135,7 +201,7 @@ export function build3dMapHtml(vworldKey: string, domain: string, layer: TileLay
   };
 
   function setupLongPress() {
-    var canvas = viewer.scene.canvas;
+    var canvas = map.getCanvas();
     var timer = null;
     var start = null;
     function cancel() { if (timer) { clearTimeout(timer); timer = null; } }
@@ -146,10 +212,8 @@ export function build3dMapHtml(vworldKey: string, domain: string, layer: TileLay
       timer = setTimeout(function () {
         timer = null;
         var rect = canvas.getBoundingClientRect();
-        var ground = viewer.camera.pickEllipsoid(new Cesium.Cartesian2(start.x - rect.left, start.y - rect.top), viewer.scene.globe.ellipsoid);
-        if (!ground) return;
-        var c = Cesium.Cartographic.fromCartesian(ground);
-        send({ type: "longPress", lat: Cesium.Math.toDegrees(c.latitude), lng: Cesium.Math.toDegrees(c.longitude) });
+        var at = map.unproject([start.x - rect.left, start.y - rect.top]);
+        send({ type: "longPress", lat: at.lat, lng: at.lng });
       }, ${LONG_PRESS_MS});
     }, { passive: true });
     canvas.addEventListener("touchmove", function (e) {
@@ -163,53 +227,7 @@ export function build3dMapHtml(vworldKey: string, domain: string, layer: TileLay
     canvas.addEventListener("contextmenu", function (e) { e.preventDefault(); });
   }
 
-  function onViewer() {
-    var layers = viewer.imageryLayers;
-    for (var i = 0; i < layers.length; i++) layers.get(i).show = false;
-    layers.addImageryProvider(new Cesium.UrlTemplateImageryProvider({ url: "${tileUrl}", maximumLevel: 18 }));
-    // 기본은 CSS 픽셀 기준이라 흐리다. 기기 화소 밀도로 그리고 더 촘촘한 지도 타일을 쓴다
-    viewer.useBrowserRecommendedResolution = false;
-    viewer.resolutionScale = Math.min(window.devicePixelRatio || 1, ${MAX_RESOLUTION_SCALE});
-    viewer.scene.globe.maximumScreenSpaceError = ${MAX_SCREEN_SPACE_ERROR};
-    setupLongPress();
-    lookAt(DEFAULT_CENTER[0], DEFAULT_CENTER[1], rangeOf(${DEFAULT_ZOOM}));
-    ready = true;
-    if (pendingData) window.updateMap(pendingData);
-    // 타일이 모두 올라온 첫 순간을 앱에 알려 로딩 표시를 걷게 한다
-    // V-World가 시작한 뒤 자체 초기 위치로 카메라를 옮기므로, 처음 몇 초 동안은 사용자가 지도를 만지기 전까지 마지막으로 맞춘 위치를 유지한다
-    var touched = false;
-    viewer.scene.canvas.addEventListener("touchstart", function () { touched = true; }, { passive: true });
-    var holdUntil = Date.now() + 8000;
-    var hold = setInterval(function () {
-      if (touched || Date.now() > holdUntil) { clearInterval(hold); return; }
-      if (lastView) lookAt(lastView[0], lastView[1], lastView[2]);
-    }, 400);
-    var done = false;
-    viewer.scene.globe.tileLoadProgressEvent.addEventListener(function (remaining) {
-      if (remaining !== 0 || done) return;
-      done = true;
-      send({ type: "${MAP_READY_MESSAGE}" });
-    });
-  }
-
-  try {
-    var map = new vw.Map();
-    map.setOption({
-      mapId: "vmap",
-      initPosition: new vw.CameraPosition(new vw.CoordZ(${DEFAULT_CENTER[1]}, ${DEFAULT_CENTER[0]}, 3000), new vw.Direction(0, -${TILT_DEGREES}, 0)),
-      logo: false,
-      navigation: false
-    });
-    map.start();
-    var poll = setInterval(function () {
-      if (typeof ws3d === "undefined" || !ws3d.viewer) return;
-      clearInterval(poll);
-      viewer = ws3d.viewer;
-      onViewer();
-    }, 200);
-  } catch (e) {
-    send({ type: "error", message: "init " + e.message });
-  }
+  try { startMap(); } catch (e) { send({ type: "error", message: "init " + e.message }); }
 </script>
 </body>
 </html>`;
