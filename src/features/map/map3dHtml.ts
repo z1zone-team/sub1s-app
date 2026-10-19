@@ -1,4 +1,4 @@
-import { DEFAULT_CENTER, DEFAULT_ZOOM, LONG_PRESS_MS, LONG_PRESS_SLOP_PX } from "./mapHtml";
+import { ARROW_SPACING_PX, DEFAULT_CENTER, DEFAULT_ZOOM, LONG_PRESS_MS, LONG_PRESS_SLOP_PX } from "./mapHtml";
 
 /** 3D 지도가 처음 그려졌을 때 WebView가 앱에 보내는 메시지 */
 export const MAP_READY_MESSAGE = "ready";
@@ -51,7 +51,7 @@ export function build3dMapHtml(): string {
 <link rel="stylesheet" href="${MAPLIBRE_CSS}" />
 <style>
   html, body, #map { margin: 0; height: 100%; width: 100%; background: #E5E8EB; }
-  .dot { box-sizing: border-box; border: 2px solid #fff; border-radius: 50%; position: relative; }
+  .dot { box-sizing: border-box; border: 2px solid #fff; border-radius: 50%; }
   .tag { position: absolute; left: 50%; bottom: 100%; transform: translate(-50%, -4px); white-space: nowrap; font: 600 12px sans-serif; color: #191F28; background: rgba(255,255,255,0.9); padding: 1px 5px; border-radius: 4px; }
 </style>
 <script>
@@ -103,6 +103,9 @@ export function build3dMapHtml(): string {
         paint: { "line-color": ["get", "color"], "line-width": ["get", "weight"], "line-opacity": ["get", "opacity"] } });
       map.addLayer({ id: "lines-dashed", type: "line", source: "lines", filter: ["==", ["get", "dashed"], true], layout: { "line-join": "round" },
         paint: { "line-color": ["get", "color"], "line-width": ["get", "weight"], "line-opacity": ["get", "opacity"], "line-dasharray": [2, 2] } });
+      map.addImage("route-arrow", arrowImage(), { pixelRatio: 2 });
+      map.addLayer({ id: "lines-arrows", type: "symbol", source: "lines", filter: ["==", ["get", "arrows"], true],
+        layout: { "symbol-placement": "line", "symbol-spacing": ${ARROW_SPACING_PX}, "icon-image": "route-arrow", "icon-allow-overlap": true, "icon-ignore-placement": true, "icon-rotation-alignment": "map", "icon-pitch-alignment": "viewport" } });
       setupLongPress();
       ready = true;
       if (pendingData) window.updateMap(pendingData);
@@ -112,6 +115,27 @@ export function build3dMapHtml(): string {
     map.on("error", function (e) {
       send({ type: "error", message: "map " + (e && e.error && e.error.message) });
     });
+  }
+
+  // 선 위에 찍는 진행 방향 화살표. 2D와 같은 하얀 꺾쇠를 오른쪽 방향으로 그리고, 화면에 세운 채 선 방향으로만 돌려 쓴다
+  function arrowImage() {
+    var size = 32;
+    var canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    var ctx = canvas.getContext("2d");
+    ctx.translate(size / 2, size / 2);
+    ctx.scale(2, 2);
+    ctx.strokeStyle = "#FFFFFF";
+    ctx.lineWidth = 2.4;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    ctx.moveTo(-2.6, -3.8);
+    ctx.lineTo(2.4, 0);
+    ctx.lineTo(-2.6, 3.8);
+    ctx.stroke();
+    return ctx.getImageData(0, 0, size, size);
   }
 
   function markerElement(m) {
@@ -147,7 +171,7 @@ export function build3dMapHtml(): string {
       if (!line.noFit) coords.forEach(function (c) { points.push(c); });
       features.push({ type: "Feature", properties: {
         color: line.color, weight: line.weight || 5, opacity: line.opacity == null ? 1 : line.opacity,
-        dashed: !!line.dashed, border: !!line.border && !line.dashed
+        dashed: !!line.dashed, border: !!line.border && !line.dashed, arrows: !!line.arrows && !line.dashed
       }, geometry: { type: "LineString", coordinates: coords } });
     });
     map.getSource("lines").setData({ type: "FeatureCollection", features: features });
