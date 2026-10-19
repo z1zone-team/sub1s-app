@@ -27,7 +27,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         : `com.z1zone.sub1s.${appEnv}`,
       adaptiveIcon: {
         foregroundImage: "./assets/android-icon-foreground.png",
-        backgroundColor: "#0B0F19",
+        monochromeImage: "./assets/android-icon-monochrome.png",
+        backgroundColor: "#002967",
       },
       predictiveBackGestureEnabled: false,
       // 안드로이드 12 이상에서 이 권한이 없으면 expo-sensors가 센서를 초당 5번(200ms)으로만 읽는다. 일반 권한이라 허용 팝업은 뜨지 않는다
