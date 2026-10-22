@@ -1,6 +1,6 @@
 import React from "react";
 import { Pressable, Switch, View } from "react-native";
-import { useAuth } from "@clerk/expo";
+import { useAuth, useUser } from "@clerk/expo";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useUpdateProfileMutation } from "@/apis/mutations/users/useUpdateProfileMutation";
@@ -22,6 +22,7 @@ import { ProfileMascot } from "@/features/profile/components/ProfileMascot";
 import {
   isVisibilityOn,
   percentileText,
+  profileDisplayName,
   sumDistanceKm,
   toggledVisibility,
   visibilityDescription,
@@ -70,6 +71,7 @@ export function ProfileScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { colors } = useTheme();
   const { isSignedIn } = useAuth();
+  const { user } = useUser();
   const me = useGetMe();
   const all = useTravelStatsQuery("ALL");
   const week = useTravelStatsQuery("WEEK");
@@ -115,7 +117,7 @@ export function ProfileScreen() {
           </View>
           <View className="flex-1">
             <Text className="text-title-lg font-sans-bold" numberOfLines={1}>
-              {profile?.name || profile?.nickname || ""}
+              {profileDisplayName(profile?.name, user?.fullName, profile?.nickname)}
             </Text>
             {profile ? <Text className="mt-0.5 text-body text-text-secondary">@{profile.nickname}</Text> : null}
             {percentile ? (

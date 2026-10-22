@@ -21,6 +21,18 @@ export function visibilityDescription(visibility: RankingVisibility): string {
   return VISIBILITY_OPTIONS.find((option) => option.value === visibility)?.description ?? "";
 }
 
+/**
+ * MY 프로필 카드 윗줄에 보일 이름. 서버에 저장한 이름 -> 로그인한 계정 이름 -> 닉네임 순서로 쓴다.
+ * 로그인 동기화는 닉네임만 보내서 서버 이름은 프로필 수정에서 넣기 전까지 비어 있다
+ */
+export function profileDisplayName(
+  savedName: string | null | undefined,
+  accountName: string | null | undefined,
+  nickname: string | undefined
+): string {
+  return savedName?.trim() || accountName?.trim() || nickname || "";
+}
+
 const NICKNAME_PATTERN = /^[0-9A-Za-z가-힣ㄱ-ㅎㅏ-ㅣ_.-]+$/;
 
 /** 서버 규칙(2~20자, 한글/영문/숫자/_/./-, 공백 불가)과 같은 검사. 통과하면 빈 문구 */
