@@ -1,5 +1,6 @@
 import {
   isVisibilityOn,
+  profileDisplayName,
   nameError,
   nicknameError,
   percentileText,
@@ -103,5 +104,21 @@ describe("공개 스위치", () => {
   it("상태마다 설명이 있다", () => {
     expect(visibilityDescription("PUBLIC")).toBe("친구에게 이동 거리와 랭킹이 보여요");
     expect(visibilityDescription("PRIVATE")).toBe("나만 볼 수 있어요 · 랭킹에서 숨김");
+  });
+});
+
+describe("profileDisplayName", () => {
+  it("서버에 저장한 이름을 먼저 쓴다", () => {
+    expect(profileDisplayName("박지훈", "지훈 박", "jihun")).toBe("박지훈");
+  });
+
+  it("저장한 이름이 없으면 로그인한 계정 이름을 쓴다", () => {
+    expect(profileDisplayName(null, "지훈 박", "jihun")).toBe("지훈 박");
+    expect(profileDisplayName("  ", " 지훈 박 ", "jihun")).toBe("지훈 박");
+  });
+
+  it("둘 다 없으면 닉네임을 쓴다", () => {
+    expect(profileDisplayName(null, null, "jihun")).toBe("jihun");
+    expect(profileDisplayName(undefined, "", undefined)).toBe("");
   });
 });
