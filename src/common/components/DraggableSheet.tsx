@@ -28,7 +28,7 @@ const HANDLE_TOUCH_HEIGHT = 56;
 /** 누름 영역에서 아래쪽이 제목 줄과 겹치는 높이(px) */
 const HANDLE_OVERLAP = 20;
 /** 손잡이 영역에서 보이는 높이 */
-const HANDLE_VISIBLE_HEIGHT = HANDLE_TOUCH_HEIGHT - HANDLE_OVERLAP;
+export const SHEET_HANDLE_VISIBLE_HEIGHT = HANDLE_TOUCH_HEIGHT - HANDLE_OVERLAP;
 /** 전체 단계에서는 내용이 위까지 올라오도록 손잡이 영역을 낮춘다 */
 const HANDLE_TOUCH_HEIGHT_FULL = 36;
 const HANDLE_OVERLAP_FULL = 12;
@@ -143,12 +143,12 @@ export function DraggableSheet({
   // 전체 단계가 있으면 시트는 영역 전체 높이이고, 디폴트에서는 그 아래쪽을 화면 밖으로 내려 둔다
   const sheetHeight = expandable ? areaHeight : (height ?? bodyHeight);
   // 디폴트에서 보이는 높이: 지정한 높이, 없으면 내용 높이(손잡이 포함)에 아래 고정 영역을 더한 값이다
-  const naturalVisible = (contentFirst ? HANDLE_VISIBLE_HEIGHT + contentHeight : contentHeight) + bottomInset;
+  const naturalVisible = (contentFirst ? SHEET_HANDLE_VISIBLE_HEIGHT + contentHeight : contentHeight) + bottomInset;
   const topVisible = expandable
     ? Math.min(height ?? naturalVisible, Math.max(0, areaHeight - fullTopInset))
     : undefined;
-  const headBlockHeight = contentFirst ? HANDLE_VISIBLE_HEIGHT + headerHeight : headerHeight;
-  const bottomVisible = HANDLE_VISIBLE_HEIGHT + bottomInset;
+  const headBlockHeight = contentFirst ? SHEET_HANDLE_VISIBLE_HEIGHT + headerHeight : headerHeight;
+  const bottomVisible = SHEET_HANDLE_VISIBLE_HEIGHT + bottomInset;
   const middleVisible = skipMiddle ? bottomVisible : (middleHeight ?? headBlockHeight) + bottomInset;
   const offsets = useMemo(
     () => sheetOffsets(sheetHeight, middleVisible, bottomVisible, topVisible),

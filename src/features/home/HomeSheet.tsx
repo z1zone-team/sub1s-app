@@ -1,10 +1,16 @@
 import React from "react";
 import { Pressable, View } from "react-native";
-import { DraggableSheet } from "@/common/components/DraggableSheet";
+import { DraggableSheet, SHEET_HANDLE_VISIBLE_HEIGHT } from "@/common/components/DraggableSheet";
 import { Text } from "@/common/components/Text";
 
-/** 접힌 시트가 탭바 위로 보이는 높이 (프로토타입 200px) */
-export const SHEET_PEEK_HEIGHT = 200;
+/** 제목 줄의 높이: h-control(44) + 아래 여백 mb-1.5(6) */
+const HEADER_ROW_HEIGHT = 50;
+/** 시트 위쪽 테두리 */
+const SHEET_BORDER = 1;
+/** 시트 목록 한 줄의 높이(h-15). 목록 줄과 빈 목록 안내가 이 높이를 쓴다 */
+export const HOME_SHEET_ROW_HEIGHT = 60;
+/** 접힌 시트가 탭바 위로 보이는 높이. 손잡이, 제목 줄, 목록 한 줄만 보여 지도가 넓게 보인다 */
+export const SHEET_PEEK_HEIGHT = SHEET_HANDLE_VISIBLE_HEIGHT + HEADER_ROW_HEIGHT + HOME_SHEET_ROW_HEIGHT + SHEET_BORDER;
 
 interface HomeSheetProps {
   /** 시트가 놓이는 영역의 높이. 접힌 위치를 계산한다 */

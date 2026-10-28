@@ -24,7 +24,7 @@ import { Text } from "@/common/components/Text";
 import { cn } from "@/lib/cn";
 import { formatMonthDayKst } from "@/common/utils/format";
 import { GuideBubble } from "@/features/home/GuideBubble";
-import { HomeSheet, SHEET_PEEK_HEIGHT } from "@/features/home/HomeSheet";
+import { HOME_SHEET_ROW_HEIGHT, HomeSheet, SHEET_PEEK_HEIGHT } from "@/features/home/HomeSheet";
 import { FavoriteRoutesSheet } from "@/features/home/FavoriteRoutesSheet";
 import { favoriteEndpoint, toHomeRouteChips } from "@/features/routing/favoriteRoutes";
 import { useRecentDestinations } from "@/features/routing/useRecentDestinations";
@@ -331,7 +331,9 @@ export function HomeScreen() {
             onActionPress={() => navigation.navigate("Search")}
           >
             {recent.destinations.length === 0 ? (
-              <Text className="p-6 text-center text-text-secondary">아직 검색한 도착지가 없어요</Text>
+              <View style={{ height: HOME_SHEET_ROW_HEIGHT }} className="justify-center">
+                <Text className="text-center text-text-secondary">아직 검색한 도착지가 없어요</Text>
+              </View>
             ) : (
               recent.destinations.map((destination) => {
                 const lineIds = destination.endpoint.stationId
