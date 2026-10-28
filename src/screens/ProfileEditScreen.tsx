@@ -1,22 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { TextInput, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { ApiError } from "@/apis/client";
 import { useUpdateProfileMutation } from "@/apis/mutations/users/useUpdateProfileMutation";
 import { useGetMe } from "@/apis/queries/auth/useGetMe";
 import { Button } from "@/common/components/Button";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
+import { profileSaveErrorMessage } from "@/features/profile/profileErrors";
 import { nameError, nicknameError } from "@/features/profile/profileView";
 import type { RootStackParamList } from "@/navigation/navigation-types";
 
 const INPUT = "h-row rounded-md border border-border px-3.5 font-sans text-base text-text";
-
-function serverMessage(error: Error): string {
-  if (error instanceof ApiError && error.code === "NICKNAME_TAKEN") return "이미 사용 중인 닉네임이에요";
-  if (error instanceof ApiError && error.status === 400) return "입력한 내용을 다시 확인해 주세요";
-  return "저장하지 못했어요. 다시 시도해 주세요.";
-}
 
 export function ProfileEditScreen({
   navigation,
@@ -76,7 +70,7 @@ export function ProfileEditScreen({
         {nickError ? <Text className="text-small text-error">{nickError}</Text> : null}
       </View>
 
-      {save.error ? <Text className="text-body-sm text-error">{serverMessage(save.error)}</Text> : null}
+      {save.error ? <Text className="text-body-sm text-error">{profileSaveErrorMessage(save.error)}</Text> : null}
 
       <Button label="저장" onPress={submit} disabled={!canSave} loading={save.isPending} />
     </Screen>

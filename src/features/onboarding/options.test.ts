@@ -1,4 +1,4 @@
-import { canProceed, PURPOSES, ROUTE_PREFS, toggleSelection, unsupportedPreferenceNotice } from "./options";
+import { canProceed, nextStep, PURPOSES, ROUTE_PREFS, toggleSelection, totalSteps, unsupportedPreferenceNotice } from "./options";
 
 describe("toggleSelection", () => {
   it("고르지 않은 항목은 뒤에 더한다", () => {
@@ -48,5 +48,23 @@ describe("unsupportedPreferenceNotice", () => {
 
   it("이름을 아는 코드만 남긴다", () => {
     expect(unsupportedPreferenceNotice(["UNKNOWN", "FAMILIAR_ROUTE"])).toBe("아직 반영하지 못한 선호: 익숙한 경로");
+  });
+});
+
+describe("onboarding steps", () => {
+  it("처음 설문은 닉네임까지 3단계이고 수정 모드는 2단계다", () => {
+    expect(totalSteps(false)).toBe(3);
+    expect(totalSteps(true)).toBe(2);
+  });
+
+  it("마지막 단계 다음은 없다", () => {
+    expect(nextStep(1, false)).toBe(2);
+    expect(nextStep(2, false)).toBe(3);
+    expect(nextStep(3, false)).toBeNull();
+    expect(nextStep(2, true)).toBeNull();
+  });
+
+  it("닉네임 단계는 설문 선택과 상관없이 넘어갈 수 있다(닉네임은 화면에서 검사)", () => {
+    expect(canProceed(3, [], [])).toBe(true);
   });
 });

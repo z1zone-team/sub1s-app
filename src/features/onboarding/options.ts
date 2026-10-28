@@ -40,9 +40,21 @@ export function toggleSelection(selected: string[], code: string): string[] {
   return selected.includes(code) ? selected.filter((item) => item !== code) : [...selected, code];
 }
 
-export type Step = 1 | 2;
+/** 1: 용무, 2: 경로 취향, 3: 닉네임(처음 설문에서만) */
+export type Step = 1 | 2 | 3;
 
-/** 각 단계는 하나 이상 골라야 넘어갈 수 있다 */
+/** 설문 단계(1, 2)는 하나 이상 골라야 넘어갈 수 있다. 닉네임 단계는 화면에서 따로 검사한다 */
 export function canProceed(step: Step, purposes: string[], routePrefs: string[]): boolean {
+  if (step === 3) return true;
   return (step === 1 ? purposes : routePrefs).length > 0;
+}
+
+/** 전체 단계 수. 설정에서 다시 고칠 때는 닉네임 단계가 없다(닉네임은 프로필 수정에서 바꾼다) */
+export function totalSteps(editing: boolean): 2 | 3 {
+  return editing ? 2 : 3;
+}
+
+/** 다음 단계. 마지막 단계면 null(저장하고 끝낸다) */
+export function nextStep(step: Step, editing: boolean): Step | null {
+  return step < totalSteps(editing) ? ((step + 1) as Step) : null;
 }
