@@ -30,6 +30,7 @@ import { WalkNavScreen } from "@/screens/WalkNavScreen";
 import { MoveMapScreen } from "@/screens/MoveMapScreen";
 import { TimelineScreen } from "@/screens/TimelineScreen";
 import { SplashScreen } from "@/common/components/SplashScreen";
+import { useSplashMinimumElapsed } from "@/common/components/splashTiming";
 import { useTheme } from "@/theme";
 import { buildNavigationTheme } from "@/theme/navigationTheme";
 import { linking } from "./linking";
@@ -81,7 +82,10 @@ export function RootNavigator() {
     authTimedOut,
   });
 
-  if (start === "LOADING") return <SplashScreen />;
+  // 로딩이 빨리 끝나도 스플래시 연출(나타나기, 유령 흔들림)이 보이도록 최소 시간은 보여 준다
+  const splashElapsed = useSplashMinimumElapsed();
+
+  if (start === "LOADING" || !splashElapsed) return <SplashScreen />;
 
   return (
     <NavigationContainer
