@@ -50,6 +50,17 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       ],
     },
     plugins: [
+      // 앱이 켜질 때 안드로이드·iOS가 먼저 띄우는 시작 화면. 이어서 나오는 앱 스플래시(SplashScreen)와 같은 남색 바탕에 흰 로고
+      [
+        "expo-splash-screen",
+        {
+          backgroundColor: "#002968",
+          image: "./assets/splash/splash-logo.png",
+          imageWidth: 272,
+          resizeMode: "contain",
+          dark: { backgroundColor: "#002968", image: "./assets/splash/splash-logo.png" },
+        },
+      ],
       "expo-secure-store",
       "@clerk/expo",
       [
