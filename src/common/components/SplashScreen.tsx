@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import { Animated, Easing, View } from "react-native";
 
 /** 유령을 뺀 로고 바탕과 유령. 프로토타입 Splash.dc.html과 같은 그림이다 */
@@ -22,20 +22,28 @@ const SWING_ORIGIN = "13.9% 1%";
 const SWING_EASING = Easing.bezier(0.45, 0, 0.55, 1);
 
 /**
- * 폰트와 로그인 상태를 읽는 동안 보이는 화면. 로고가 0.5초 동안 92%에서 100%로 커지며 나타나고(appear),
+ * 폰트를 읽는 동안(App)과 로그인 상태를 읽는 동안(RootNavigator) 스플래시가 이어서 두 번 그려진다.
+ * 값을 화면 밖에 두어 두 번째로 그려질 때 나타나기를 처음부터 다시 하지 않고 이어 간다
+ */
+const progress = new Animated.Value(0);
+const swing = new Animated.Value(0);
+let appearStarted = false;
+
+/**
+ * 폰트와 로그인 상태를 읽는 동안(최소 1.5초) 보이는 화면. 로고가 0.5초 동안 92%에서 100%로 커지며 나타나고(appear),
  * 'b'의 유령이 열차 손잡이를 잡은 채 좌우로 흔들린다(swing)
  */
 export function SplashScreen() {
-  const progress = useRef(new Animated.Value(0)).current;
-  const swing = useRef(new Animated.Value(0)).current;
-
   useEffect(() => {
-    Animated.timing(progress, {
-      toValue: 1,
-      duration: APPEAR_MS,
-      easing: Easing.bezier(0.2, 0.8, 0.2, 1),
-      useNativeDriver: true,
-    }).start();
+    if (!appearStarted) {
+      appearStarted = true;
+      Animated.timing(progress, {
+        toValue: 1,
+        duration: APPEAR_MS,
+        easing: Easing.bezier(0.2, 0.8, 0.2, 1),
+        useNativeDriver: true,
+      }).start();
+    }
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(swing, { toValue: 1, duration: SWING_MS / 2, easing: SWING_EASING, useNativeDriver: true }),
@@ -44,7 +52,7 @@ export function SplashScreen() {
     );
     loop.start();
     return () => loop.stop();
-  }, [progress, swing]);
+  }, []);
 
   const rotate = swing.interpolate({ inputRange: [0, 1], outputRange: [`-${SWING_DEG}deg`, `${SWING_DEG}deg`] });
 
