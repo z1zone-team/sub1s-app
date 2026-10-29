@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { Animated, Easing, View } from "react-native";
 
 /** 유령을 뺀 로고 바탕과 유령. 프로토타입 Splash.dc.html과 같은 그림이다 */
@@ -23,27 +23,35 @@ const SWING_EASING = Easing.bezier(0.45, 0, 0.55, 1);
 
 /**
  * 폰트를 읽는 동안(App)과 로그인 상태를 읽는 동안(RootNavigator) 스플래시가 이어서 두 번 그려진다.
- * 값을 화면 밖에 두어 두 번째로 그려질 때 나타나기를 처음부터 다시 하지 않고 이어 간다
+ * 처음 나타나기 시작한 시각을 기억해 두고, 두 번째로 그려질 때는 그만큼 진행된 상태에서 이어 간다.
+ * (애니메이션 값을 화면 밖에 두면 첫 화면이 사라질 때 진행 중이던 네이티브 애니메이션이 멈춰 로고가 반투명하게 남는다)
  */
-const progress = new Animated.Value(0);
-const swing = new Animated.Value(0);
-let appearStarted = false;
+let appearStartedAt: number | null = null;
+
+/** 나타나기가 이미 시작됐으면 지금까지 진행된 정도(0~1), 아니면 0 */
+function appearProgressNow(): number {
+  if (appearStartedAt === null) return 0;
+  return Math.min(1, (Date.now() - appearStartedAt) / APPEAR_MS);
+}
 
 /**
- * 폰트와 로그인 상태를 읽는 동안(최소 1.5초) 보이는 화면. 로고가 0.5초 동안 92%에서 100%로 커지며 나타나고(appear),
+ * 폰트와 로그인 상태를 읽는 동안(최소 3초) 보이는 화면. 로고가 0.5초 동안 92%에서 100%로 커지며 나타나고(appear),
  * 'b'의 유령이 열차 손잡이를 잡은 채 좌우로 흔들린다(swing)
  */
 export function SplashScreen() {
+  const progress = useRef(new Animated.Value(appearProgressNow())).current;
+  const swing = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
-    if (!appearStarted) {
-      appearStarted = true;
-      Animated.timing(progress, {
-        toValue: 1,
-        duration: APPEAR_MS,
-        easing: Easing.bezier(0.2, 0.8, 0.2, 1),
-        useNativeDriver: true,
-      }).start();
-    }
+    if (appearStartedAt === null) appearStartedAt = Date.now();
+    const remaining = APPEAR_MS - (Date.now() - appearStartedAt);
+    const appear = Animated.timing(progress, {
+      toValue: 1,
+      duration: Math.max(0, remaining),
+      easing: Easing.bezier(0.2, 0.8, 0.2, 1),
+      useNativeDriver: true,
+    });
+    appear.start();
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(swing, { toValue: 1, duration: SWING_MS / 2, easing: SWING_EASING, useNativeDriver: true }),
@@ -51,8 +59,11 @@ export function SplashScreen() {
       ])
     );
     loop.start();
-    return () => loop.stop();
-  }, []);
+    return () => {
+      appear.stop();
+      loop.stop();
+    };
+  }, [progress, swing]);
 
   const rotate = swing.interpolate({ inputRange: [0, 1], outputRange: [`-${SWING_DEG}deg`, `${SWING_DEG}deg`] });
 
