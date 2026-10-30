@@ -63,6 +63,11 @@ describe("homeMapData", () => {
     expect(data.markers[0].kind).toBe("me");
   });
 
+  it("내 위치 마커에 캐릭터의 표정을 싣는다", () => {
+    const data = homeMapData({ me: { lat: 37.5, lng: 127 }, mood: "TIRED" });
+    expect(data.markers[0].mood).toBe("TIRED");
+  });
+
   it("내 위치만 있어도, 고른 장소가 있어도 처음 확대 수준은 16이다", () => {
     expect(homeMapData({ me: { lat: 37.5, lng: 127 } }).zoom).toBe(16);
     expect(homeMapData({ me: { lat: 37.5, lng: 127 }, pin: { lat: 37.56, lng: 126.97 } }).zoom).toBe(16);

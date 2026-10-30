@@ -1,3 +1,4 @@
+import { GHOST_MARKER_INNER, type GhostMood } from "./ghostMarker";
 import { LABEL_OVERLAY_LAYER, type TileLayerName } from "./mapStyle";
 
 /** Leaflet 1.9.4를 cdnjs에서 불러온다. 정확한 버전을 고정한다 */
@@ -13,6 +14,8 @@ export interface MapMarker {
   radius?: number;
   /** "me"면 점 대신 프로토타입의 캐릭터와 맥동 효과로, "pin"이면 지도 검색에서 고른 장소의 핀으로 그린다 */
   kind?: "me" | "pin";
+  /** kind가 "me"일 때 캐릭터의 표정. 이번 달 이동 거리로 정하고, 없으면 보통 */
+  mood?: GhostMood;
 }
 
 export interface MapLine {
@@ -208,16 +211,16 @@ export function buildMapHtml(vworldKey: string, layer: TileLayerName = { name: "
       });
     }
     map.on("zoomend moveend", drawArrows);
-    var ME_ICON = L.divIcon({
-      className: "",
-      iconSize: [80, 80],
-      iconAnchor: [40, 40],
-      html: '<div class="me-wrap">' + ${JSON.stringify(ME_CONE_SVG)} + '<div class="me-halo"></div><div class="me-shadow"></div>' +
-        '<svg class="me-ghost" viewBox="10 8 44 50" fill="none">' +
-        '<path d="M12 46V28a18 18 0 0 1 36 0v16C48 47 49.5 49 52 50.5C53.5 51.5 52.5 53.5 50 53.5C47.5 53.5 46.5 51.5 44.5 51.8C42.5 52.1 42 55 39 55C36 55 35.5 52.2 33 52.4C30.5 52.6 30 55.5 26.8 55.5C23.6 55.5 23.2 52.6 20.8 52.6C18 52.6 16.5 54 14.6 53C12.6 52 12 49.5 12 46z" fill="#FFFFFF" stroke="#002968" stroke-width="3.4" stroke-linejoin="round"/>' +
-        '<circle cx="24" cy="29" r="3.4" fill="#002968"/><circle cx="36" cy="29" r="3.4" fill="#002968"/>' +
-        '<path d="M26.5 36.5q3.5 3 7 0" stroke="#002968" stroke-width="2.6" stroke-linecap="round"/></svg></div>'
-    });
+    var GHOST_FACES = ${JSON.stringify(GHOST_MARKER_INNER)};
+    function meIcon(mood) {
+      return L.divIcon({
+        className: "",
+        iconSize: [80, 80],
+        iconAnchor: [40, 40],
+        html: '<div class="me-wrap">' + ${JSON.stringify(ME_CONE_SVG)} + '<div class="me-halo"></div><div class="me-shadow"></div>' +
+          '<svg class="me-ghost" viewBox="10 8 44 50" fill="none">' + (GHOST_FACES[mood] || GHOST_FACES.NORMAL) + '</svg></div>'
+      });
+    }
     var PIN_ICON = L.divIcon({
       className: "",
       iconSize: [32, 40],
@@ -277,7 +280,7 @@ export function buildMapHtml(vworldKey: string, layer: TileLayerName = { name: "
           return;
         }
         if (m.kind === "me") {
-          L.marker([m.lat, m.lng], { icon: ME_ICON, interactive: false, keyboard: false }).addTo(layer);
+          L.marker([m.lat, m.lng], { icon: meIcon(m.mood), interactive: false, keyboard: false }).addTo(layer);
           applyCone();
           bounds.push([m.lat, m.lng]);
           return;

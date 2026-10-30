@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { LAST_KNOWN_MAX_AGE_MS, useForegroundLocation } from "@/common/device";
 import { getCurrentCoordinates, type CurrentCoordinates } from "@/common/device/location/getCurrentCoordinates";
+import { useTravelStatsQuery } from "@/apis/queries/profile/useTravelStatsQuery";
+import { moodOf } from "@/features/ranking/rankingView";
 import { homeMapData } from "./mapData";
 import type { MapData } from "./mapHtml";
 
@@ -36,6 +38,8 @@ export function useHomeMapData(pin?: { lat: number; lng: number }): MapData {
       return () => { active = false; };
     }, [])
   );
+  const monthStats = useTravelStatsQuery("MONTH");
+  const mood = moodOf(monthStats.data?.totalDistanceKm ?? 0).key;
   const pinLat = pin?.lat;
   const pinLng = pin?.lng;
   return useMemo(
@@ -43,7 +47,8 @@ export function useHomeMapData(pin?: { lat: number; lng: number }): MapData {
       homeMapData({
         me: coords ? { lat: coords.latitude, lng: coords.longitude } : initialLocation ?? undefined,
         pin: pinLat !== undefined && pinLng !== undefined ? { lat: pinLat, lng: pinLng } : undefined,
+        mood,
       }),
-    [coords, initialLocation, pinLat, pinLng]
+    [coords, initialLocation, pinLat, pinLng, mood]
   );
 }

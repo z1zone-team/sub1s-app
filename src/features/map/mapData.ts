@@ -1,5 +1,6 @@
 import type { LineMapResponseDto } from "@/apis/queries/profile/getLineMap";
 import { LINES } from "@/theme";
+import type { GhostMood } from "./ghostMarker";
 import type { MapData, MapLine, MapMarker } from "./mapHtml";
 
 const DIMMED_OPACITY = 0.25;
@@ -137,6 +138,8 @@ export interface HomeMapInput {
   me?: { lat: number; lng: number };
   /** 지도 검색에서 고른 장소. 있으면 그곳을 중심으로 보여 준다 */
   pin?: { lat: number; lng: number };
+  /** 내 캐릭터의 표정. 이번 달 이동 거리로 정한다 */
+  mood?: GhostMood;
 }
 
 /** 내 위치 색은 쓰이지 않지만 마커 형식상 필요하다. 내 위치는 캐릭터로 그린다 */
@@ -146,9 +149,9 @@ const ME_COLOR = "#002968";
  * 홈 지도는 프로토타입처럼 내 위치를 캐릭터로 표시하고, 지도 검색에서 고른 장소가 있으면 핀을 더한다.
  * 고른 장소가 있으면 그곳을, 없으면 내 위치를, 둘 다 없으면 기본 위치를 보여 준다
  */
-export function homeMapData({ me, pin }: HomeMapInput): MapData {
+export function homeMapData({ me, pin, mood }: HomeMapInput): MapData {
   const markers: MapMarker[] = [];
-  if (me) markers.push({ lat: me.lat, lng: me.lng, color: ME_COLOR, kind: "me" });
+  if (me) markers.push({ lat: me.lat, lng: me.lng, color: ME_COLOR, kind: "me", mood });
   if (pin) markers.push({ lat: pin.lat, lng: pin.lng, color: ME_COLOR, kind: "pin" });
 
   const focus = pin ?? me;

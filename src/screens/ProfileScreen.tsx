@@ -17,7 +17,7 @@ import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { formatDistanceKm } from "@/common/utils/format";
 import { valueParts } from "@/features/guide/arrivedView";
-import { kstYearMonth, periodKeyOf } from "@/features/ranking/rankingView";
+import { kstYearMonth, moodOf, periodKeyOf } from "@/features/ranking/rankingView";
 import { ProfileMascot } from "@/features/profile/components/ProfileMascot";
 import {
   isVisibilityOn,
@@ -75,6 +75,7 @@ export function ProfileScreen() {
   const me = useGetMe();
   const all = useTravelStatsQuery("ALL");
   const week = useTravelStatsQuery("WEEK");
+  const monthStats = useTravelStatsQuery("MONTH");
   const { year, month } = kstYearMonth(Date.now());
   const ranking = useRankingQuery({ periodType: "MONTHLY", periodKey: periodKeyOf("MONTHLY", year, month), limit: 1 });
   const updateProfile = useUpdateProfileMutation();
@@ -112,7 +113,7 @@ export function ProfileScreen() {
         <View className="flex-row items-center gap-4 px-6 pb-2 pt-6">
           <View className="h-19 w-19 items-center justify-center rounded-pill bg-surface">
             <Bob lift={3} periodMs={2400}>
-              <ProfileMascot size={56} />
+              <ProfileMascot size={56} mood={moodOf(monthStats.data?.totalDistanceKm ?? 0).key} />
             </Bob>
           </View>
           <View className="flex-1">
