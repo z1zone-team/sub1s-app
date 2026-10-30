@@ -3,7 +3,7 @@
 화면에 쓰는 그림을 `.svg` 파일로 두고 컴포넌트처럼 불러온다 (`react-native-svg-transformer`).
 
 ```tsx
-import Ghost from "@assets/svg/ghost-profile.svg";
+import Ghost from "@assets/svg/ghost-mood-normal.svg";
 
 <Ghost width={56} height={56} />
 ```

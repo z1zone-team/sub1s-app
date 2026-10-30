@@ -1,3 +1,4 @@
+import { GHOST_MARKER_INNER } from "./ghostMarker";
 import {
   ARROW_SPACING_PX,
   DEFAULT_CENTER,
@@ -40,12 +41,6 @@ export function isMapReadyMessage(raw: string): boolean {
   }
 }
 
-const GHOST_SVG =
-  '<svg xmlns="http://www.w3.org/2000/svg" width="42" height="48" viewBox="10 8 44 50" fill="none">' +
-  '<path d="M12 46V28a18 18 0 0 1 36 0v16C48 47 49.5 49 52 50.5C53.5 51.5 52.5 53.5 50 53.5C47.5 53.5 46.5 51.5 44.5 51.8C42.5 52.1 42 55 39 55C36 55 35.5 52.2 33 52.4C30.5 52.6 30 55.5 26.8 55.5C23.6 55.5 23.2 52.6 20.8 52.6C18 52.6 16.5 54 14.6 53C12.6 52 12 49.5 12 46z" fill="#FFFFFF" stroke="#002968" stroke-width="3.4" stroke-linejoin="round"/>' +
-  '<circle cx="24" cy="29" r="3.4" fill="#002968"/><circle cx="36" cy="29" r="3.4" fill="#002968"/>' +
-  '<path d="M26.5 36.5q3.5 3 7 0" stroke="#002968" stroke-width="2.6" stroke-linecap="round"/></svg>';
-
 const PIN_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 24 30" fill="none">' +
   '<path d="M12 1.5C6.8 1.5 2.5 5.7 2.5 10.9c0 6.7 9.5 17.6 9.5 17.6s9.5-10.9 9.5-17.6C21.5 5.7 17.2 1.5 12 1.5z" fill="#002968" stroke="#FFFFFF" stroke-width="1.6" stroke-linejoin="round"/>' +
@@ -87,7 +82,11 @@ export function build3dMapHtml(): string {
 <div id="map"></div>
 <script>
   var DEFAULT_CENTER = [${DEFAULT_CENTER[1]}, ${DEFAULT_CENTER[0]}];
-  var GHOST = "data:image/svg+xml," + encodeURIComponent('${GHOST_SVG}');
+  var GHOST_FACES = ${JSON.stringify(GHOST_MARKER_INNER)};
+  function ghostSrc(mood) {
+    var inner = GHOST_FACES[mood] || GHOST_FACES.NORMAL;
+    return "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="42" height="48" viewBox="10 8 44 50" fill="none">' + inner + '</svg>');
+  }
   var PIN = "data:image/svg+xml," + encodeURIComponent('${PIN_SVG}');
   var ready = false;
   var pendingData = null;
@@ -95,6 +94,7 @@ export function build3dMapHtml(): string {
   var map = null;
   var meMarker = null;
   var meAnim = 0;
+  var meMood = null;
 
   function startMap() {
     map = new maplibregl.Map({
@@ -187,11 +187,11 @@ export function build3dMapHtml(): string {
   }
 
   // 내 위치는 마커를 계속 두고 위치만 옮긴다. 가까운 이동은 미끄러지듯, 먼 이동은 바로 놓는다
-  function meElement() {
+  function meElement(mood) {
     var el = document.createElement("div");
     el.className = "me-wrap";
     el.innerHTML = ${JSON.stringify(ME_CONE_SVG)} +
-      '<div class="me-halo"></div><div class="me-shadow"></div><img class="me-ghost" src="' + GHOST + '" />';
+      '<div class="me-halo"></div><div class="me-shadow"></div><img class="me-ghost" src="' + ghostSrc(mood) + '" />';
     return el;
   }
 
@@ -204,11 +204,16 @@ export function build3dMapHtml(): string {
     return Math.sqrt(dLat * dLat + dLng * dLng);
   }
 
-  function placeMe(lng, lat) {
+  function placeMe(lng, lat, mood) {
     if (!meMarker) {
-      meMarker = new maplibregl.Marker({ element: meElement(), anchor: "center" }).setLngLat([lng, lat]).addTo(map);
+      meMarker = new maplibregl.Marker({ element: meElement(mood), anchor: "center" }).setLngLat([lng, lat]).addTo(map);
+      meMood = mood;
       applyCone();
       return;
+    }
+    if (mood !== meMood) {
+      meMood = mood;
+      meMarker.getElement().querySelector(".me-ghost").src = ghostSrc(mood);
     }
     var from = meMarker.getLngLat();
     var to = { lng: lng, lat: lat };
@@ -248,7 +253,7 @@ export function build3dMapHtml(): string {
       markerEls.push(new maplibregl.Marker({ element: made.el, anchor: made.anchor }).setLngLat([m.lng, m.lat]).addTo(map));
     });
 
-    if (me) placeMe(me.lng, me.lat);
+    if (me) placeMe(me.lng, me.lat, me.mood);
     else if (meMarker) { meMarker.remove(); meMarker = null; }
 
     var padding = { top: (data.topInset || 0) + 60, bottom: (data.bottomInset || 0) + 60, left: 50, right: 50 };
