@@ -102,8 +102,8 @@ describe("공개 스위치", () => {
   });
 
   it("상태마다 설명이 있다", () => {
-    expect(visibilityDescription("PUBLIC")).toBe("친구에게 이동 거리와 랭킹이 보여요");
-    expect(visibilityDescription("PRIVATE")).toBe("나만 볼 수 있어요 · 랭킹에서 숨김");
+    expect(visibilityDescription("PUBLIC")).toBe("모두에게 이동 거리와 랭킹이 보여요");
+    expect(visibilityDescription("PRIVATE")).toBe("친구가 아닌 사람에게는 랭킹에서 숨겨요 · 친구에게는 항상 보여요");
   });
 });
 

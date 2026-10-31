@@ -8,13 +8,15 @@ import { RowAvatar } from "./RankCharacters";
 interface RankRowProps {
   rank: number;
   name: string;
-  /** "96.3km" 또는 내 순위가 목록 밖일 때의 "963점" */
+  /** "963점" */
   value: string;
+  /** "96.3km". 점수 아래에 작게 보인다. 내 순위가 목록 밖일 때는 없다 */
+  sub?: string;
   isMe: boolean;
 }
 
-/** 4위부터의 한 줄: 순위, 동그란 아바타, 닉네임(내 줄은 굵게 + 나 배지), 거리 */
-export function RankRow({ rank, name, value, isMe }: RankRowProps) {
+/** 4위부터의 한 줄: 순위, 동그란 아바타, 닉네임(내 줄은 굵게 + 나 배지), 점수와 그 아래 작은 거리 */
+export function RankRow({ rank, name, value, sub, isMe }: RankRowProps) {
   const [part] = valueParts(value);
   return (
     <View className={cn("h-16 flex-row items-center gap-3.5 rounded-lg px-3", isMe ? "bg-primary-tint" : "")}>
@@ -32,10 +34,13 @@ export function RankRow({ rank, name, value, isMe }: RankRowProps) {
           </View>
         ) : null}
       </View>
-      <Text className={cn("text-subtitle", isMe ? "font-sans-bold" : "font-sans-medium")}>
-        {part.number}
-        {part.unit ? <Text className="ml-0.5 text-small font-sans-semibold text-text-secondary">{part.unit}</Text> : null}
-      </Text>
+      <View className="items-end">
+        <Text className={cn("text-subtitle", isMe ? "font-sans-bold" : "font-sans-medium")}>
+          {part.number}
+          {part.unit ? <Text className="ml-0.5 text-small font-sans-semibold text-text-secondary">{part.unit}</Text> : null}
+        </Text>
+        {sub ? <Text className="text-caption text-text-secondary">{sub}</Text> : null}
+      </View>
     </View>
   );
 }

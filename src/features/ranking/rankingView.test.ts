@@ -83,11 +83,15 @@ describe("podium와 목록", () => {
     expect(podium(data(all)).map((entry) => entry.rank)).toEqual([1, 2, 3]);
   });
 
+  it("시상대에 점수를 크게, 거리를 따로 준다", () => {
+    expect(podium(data(all))[0]).toMatchObject({ points: "100점", km: "10.0km" });
+  });
+
   it("4위부터 목록에 두고 익명은 익명으로 보여 준다", () => {
     const rows = rowsAfterPodium(data(all));
     expect(rows).toEqual([
-      { kind: "ROW", rank: 4, nickname: "@닉4", isMe: false, value: "40.0km" },
-      { kind: "ROW", rank: 5, nickname: "익명", isMe: false, value: "50.0km" },
+      { kind: "ROW", rank: 4, nickname: "@닉4", isMe: false, value: "100점", sub: "40.0km" },
+      { kind: "ROW", rank: 5, nickname: "익명", isMe: false, value: "100점", sub: "50.0km" },
     ]);
   });
 
