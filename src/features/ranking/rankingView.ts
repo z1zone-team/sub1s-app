@@ -49,8 +49,10 @@ export interface RankingRow {
   rank: number;
   nickname: string;
   isMe: boolean;
-  /** 내 항목이 목록 밖일 때는 거리를 몰라 점수로 보여 준다 */
+  /** "963점" */
   value: string;
+  /** "96.3km". 내 항목이 목록 밖일 때는 거리를 몰라 없다 */
+  sub?: string;
 }
 
 export interface GapRow {
@@ -61,12 +63,13 @@ export interface GapRow {
 export const displayName = (item: Pick<LeaderboardItemDto, "nickname" | "isAnonymous">): string =>
   item.isAnonymous ? "익명" : `@${item.nickname}`;
 
-/** "1,204.6"처럼 천 단위 쉼표를 붙인 거리 숫자(단위 없음). 시상대와 목록 숫자에 쓴다 */
+/** "1,204.6"처럼 천 단위 쉼표를 붙인 거리 숫자(단위 없음). 점수 아래 작은 거리 표시에 쓴다 */
 export function kmNumber(km: number): string {
   return km.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
 
 const kmText = (km: number): string => kmNumber(km) + "km";
+const pointsText = (points: number): string => `${points.toLocaleString("en-US")}점`;
 
 /**
  * 4위부터의 목록. 내 순위가 받아온 목록에 없으면 "···" 뒤에 내 순위와 점수를 붙인다
@@ -80,7 +83,8 @@ export function rowsAfterPodium(data: RankingResponseDto | undefined): Array<Ran
       rank: item.rank,
       nickname: displayName(item),
       isMe: !!item.isMe,
-      value: kmText(item.totalDistanceKm),
+      value: pointsText(item.totalPoints),
+      sub: kmText(item.totalDistanceKm),
     }));
 
   const meListed = data.leaderboard.some((item) => item.isMe);
@@ -91,18 +95,21 @@ export function rowsAfterPodium(data: RankingResponseDto | undefined): Array<Ran
       rank: data.myRank,
       nickname: "나",
       isMe: true,
-      value: `${data.myPoints.toLocaleString("en-US")}점`,
+      value: pointsText(data.myPoints),
     });
   }
   return rest;
 }
 
-export function podium(data: RankingResponseDto | undefined): Array<{ rank: number; name: string; km: string; isMe: boolean }> {
+export function podium(
+  data: RankingResponseDto | undefined
+): Array<{ rank: number; name: string; points: string; km: string; isMe: boolean }> {
   return (data?.leaderboard ?? [])
     .filter((item) => item.rank <= 3)
     .map((item) => ({
       rank: item.rank,
       name: displayName(item),
+      points: pointsText(item.totalPoints),
       km: kmText(item.totalDistanceKm),
       isMe: !!item.isMe,
     }));

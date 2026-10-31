@@ -2,9 +2,9 @@ import type { RankingVisibility } from "@/apis/queries/auth/getMe";
 import type { StatsBucketDto } from "@/apis/queries/profile/getTravelStats";
 
 export const VISIBILITY_OPTIONS: Array<{ value: RankingVisibility; label: string; description: string }> = [
-  { value: "PUBLIC", label: "공개", description: "친구에게 이동 거리와 랭킹이 보여요" },
-  { value: "ANONYMOUS", label: "익명", description: "랭킹에 순위와 점수만 보이고 닉네임은 익명이에요" },
-  { value: "PRIVATE", label: "비공개", description: "나만 볼 수 있어요 · 랭킹에서 숨김" },
+  { value: "PUBLIC", label: "공개", description: "모두에게 이동 거리와 랭킹이 보여요" },
+  { value: "ANONYMOUS", label: "익명", description: "친구가 아닌 사람에게는 닉네임이 익명으로 보여요 · 친구에게는 항상 보여요" },
+  { value: "PRIVATE", label: "비공개", description: "친구가 아닌 사람에게는 랭킹에서 숨겨요 · 친구에게는 항상 보여요" },
 ];
 
 /** MY의 공개 스위치는 공개(켜짐)와 비공개(꺼짐) 둘뿐이다. 익명은 설정 화면에서 고르고 스위치에는 켜짐으로 보인다 */

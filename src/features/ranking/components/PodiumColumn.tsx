@@ -8,7 +8,9 @@ import { Crown, FirstPlaceCharacter, SecondPlaceCharacter, ThirdPlaceCharacter }
 interface PodiumColumnProps {
   rank: 1 | 2 | 3;
   name: string;
-  /** "312.8km" */
+  /** "1,204점" */
+  points: string;
+  /** "312.8km". 점수 아래에 작게 보인다 */
   km: string;
 }
 
@@ -22,8 +24,8 @@ const POD = {
   3: { height: "h-14", number: "text-title-lg", numberColor: "text-text-secondary", box: "border border-b-0 border-border bg-surface" },
 } as const;
 
-/** TOP 3 시상대의 한 칸: 캐릭터, 닉네임, 거리, 그 아래 순위 단. 1등은 왕관을 쓰고 둥실 떠 있다 */
-export function PodiumColumn({ rank, name, km }: PodiumColumnProps) {
+/** TOP 3 시상대의 한 칸: 캐릭터, 닉네임, 점수와 그 아래 작은 거리, 그 아래 순위 단. 1등은 왕관을 쓰고 둥실 떠 있다 */
+export function PodiumColumn({ rank, name, points, km }: PodiumColumnProps) {
   const rise = useRef(new Animated.Value(0)).current;
   const pod = POD[rank];
 
@@ -58,7 +60,8 @@ export function PodiumColumn({ rank, name, km }: PodiumColumnProps) {
       <Text className={cn("mt-1.5 max-w-full", rank === 1 ? "text-body font-sans-bold" : "text-body-sm font-sans-bold")} numberOfLines={1}>
         {name}
       </Text>
-      <Text className="text-small text-text-secondary">{km}</Text>
+      <Text className="text-small font-sans-semibold">{points}</Text>
+      <Text className="text-caption text-text-secondary">{km}</Text>
       <Animated.View
         className={cn("mt-2 w-full items-center pt-2.5", pod.height, pod.box)}
         style={{ borderTopLeftRadius: 16, borderTopRightRadius: 12, transform: [{ scaleY: rise }], transformOrigin: "bottom" }}
