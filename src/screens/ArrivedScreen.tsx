@@ -105,15 +105,9 @@ export function ArrivedScreen({
                     이동 거리 {formatDistanceKm(log.totalDistanceKm)} × 10
                   </Text>
                   <Text className="text-body-sm font-sans-bold text-on-primary">
-                    {log.distancePoints.toLocaleString("en-US")}점
+                    {log.earnedPoints.toLocaleString("en-US")}점
                   </Text>
                 </View>
-                {log.onTimeBonus > 0 ? (
-                  <View className="flex-row justify-between">
-                    <Text className="text-body-sm text-on-primary opacity-85">예상 시간에 맞춰 도착했어요</Text>
-                    <Text className="text-body-sm font-sans-bold text-on-primary">+{log.onTimeBonus}점</Text>
-                  </View>
-                ) : null}
               </View>
             </View>
           </Up>
