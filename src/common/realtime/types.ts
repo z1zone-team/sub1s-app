@@ -16,7 +16,6 @@ export interface SmartAlertPayload {
   type: SmartAlertType;
   message: string;
   recommendedDoor: string;
-  audioUrl?: string;
 }
 
 export interface OffRouteAlertPayload {
