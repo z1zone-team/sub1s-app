@@ -283,7 +283,7 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
     const { data } = phase;
     const endpoints = endpointsOfOption(data.recommendedRoute);
     const lineId = destinationLineId(data.recommendedRoute);
-    // 서버 음성이 없거나 실패해도 기기 음성으로 읽을 수 있어서 문장이 있으면 재생할 수 있다
+    // 기기 내장 음성으로 읽으므로 문장이 있으면 재생할 수 있다
     const canPlay = canSpeakBriefing(data);
     return (
       <Screen>
