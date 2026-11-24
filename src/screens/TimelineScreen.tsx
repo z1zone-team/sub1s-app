@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useAuth } from "@clerk/expo";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute, type RouteProp } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { TravelStatsPeriod } from "@/apis/queries/profile/getTravelStats";
 import { useLineMapQuery } from "@/apis/queries/profile/useLineMapQuery";
@@ -15,6 +15,7 @@ import { LoginRequired } from "@/common/components/LoginRequired";
 import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { formatDistanceKm } from "@/common/utils/format";
+import { parseMonthKey } from "@/common/utils/monthKey";
 import { visitedMapData } from "@/features/map/mapData";
 import { VWorldMap } from "@/features/map/VWorldMap";
 import { ActivityRow } from "@/features/timeline/components/ActivityRow";
@@ -53,12 +54,20 @@ function Stat({ label, value }: { label: string; value: string }) {
 /** 프로토타입 Timeline.dc.html, TimelineEmpty.dc.html. 기록이 없으면 회색 숫자와 흐린 지도로 바뀐다 */
 export function TimelineScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const route = useRoute<RouteProp<RootStackParamList, "Timeline">>();
   const { colors } = useTheme();
   const { isSignedIn } = useAuth();
-  const [period, setPeriod] = useState<TravelStatsPeriod>("WEEK");
-  const stats = useTravelStatsQuery(period);
-  const timeline = useTimelineQuery(kstYearMonth(Date.now()));
-  const lineMap = useLineMapQuery(period);
+  const requestedMonth = parseMonthKey(route.params?.periodKey);
+  const requestedKey = requestedMonth ? route.params?.periodKey : undefined;
+  const [period, setPeriod] = useState<TravelStatsPeriod>(() => requestedKey ? "MONTH" : "WEEK");
+  useEffect(() => {
+    setPeriod(requestedKey ? "MONTH" : "WEEK");
+  }, [requestedKey, route.params?.pushOpenedAt]);
+  const selectedMonth = period === "MONTH" ? requestedMonth : undefined;
+  const monthQuery = selectedMonth ? { periodKey: requestedKey } : undefined;
+  const stats = useTravelStatsQuery(period, monthQuery);
+  const timeline = useTimelineQuery(selectedMonth ?? kstYearMonth(Date.now()));
+  const lineMap = useLineMapQuery(period, monthQuery);
   const mapData = useMemo(() => visitedMapData(lineMap.data), [lineMap.data]);
 
   const back = (
@@ -78,7 +87,7 @@ export function TimelineScreen() {
   const bars = chartBars(period, data?.buckets);
   const lines = lineRows(data?.lineBreakdown);
   const empty = !stats.isLoading && (data?.totalTravelCount ?? 0) === 0;
-  const name = periodName(period, Date.now());
+  const name = selectedMonth ? `${selectedMonth.year}년 ${selectedMonth.month}월` : periodName(period, Date.now());
   const title = <Text className="mx-5 mt-1 text-display-lg font-sans-bold">타임라인</Text>;
   const tabs = (
     <View className="mx-5 mt-4.5">
@@ -159,7 +168,7 @@ export function TimelineScreen() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="이동 지도 크게 보기"
-          onPress={() => navigation.navigate("MoveMap", { period })}
+          onPress={() => navigation.navigate("MoveMap", { period, ...monthQuery })}
           className="mx-5 mt-3.5 overflow-hidden rounded-lg border border-border bg-surface"
         >
           <VWorldMap data={mapData} className="h-75" />

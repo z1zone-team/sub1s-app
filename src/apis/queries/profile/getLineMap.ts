@@ -34,6 +34,8 @@ export interface LineMapResponseDto {
 export interface LineMapQueryDto {
   period: TravelStatsPeriod;
   userId?: string;
+  /** MONTH에서만 지정. 생략하면 이번 달 */
+  periodKey?: string;
 }
 
 /**

@@ -72,8 +72,8 @@ export const queryKeys = {
   },
   profile: {
     all: ["profile"] as const,
-    stats: (period: "WEEK" | "MONTH" | "YEAR" | "ALL" = "ALL") =>
-      [...queryKeys.profile.all, "stats", period] as const,
+    stats: (period: "WEEK" | "MONTH" | "YEAR" | "ALL" = "ALL", periodKey?: string) =>
+      periodKey ? [...queryKeys.profile.all, "stats", period, periodKey] as const : [...queryKeys.profile.all, "stats", period] as const,
     timeline: (
       year?: number,
       month?: number,
@@ -91,8 +91,8 @@ export const queryKeys = {
   },
   linemap: {
     all: ["linemap"] as const,
-    period: (period: "WEEK" | "MONTH" | "YEAR" | "ALL") =>
-      [...queryKeys.linemap.all, "period", period] as const,
+    period: (period: "WEEK" | "MONTH" | "YEAR" | "ALL", periodKey?: string) =>
+      periodKey ? [...queryKeys.linemap.all, "period", period, periodKey] as const : [...queryKeys.linemap.all, "period", period] as const,
     lines: (lineId?: string, year?: number, month?: number) =>
       [
         ...queryKeys.linemap.all,

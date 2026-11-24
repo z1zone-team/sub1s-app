@@ -9,6 +9,7 @@ import { BackButton } from "@/common/components/BackButton";
 import { DraggableSheet } from "@/common/components/DraggableSheet";
 import { Text } from "@/common/components/Text";
 import { formatDistanceKm } from "@/common/utils/format";
+import { parseMonthKey } from "@/common/utils/monthKey";
 import { valueParts } from "@/features/guide/arrivedView";
 import { visitedMapData } from "@/features/map/mapData";
 import { VWorldMap } from "@/features/map/VWorldMap";
@@ -33,15 +34,17 @@ const HEADER_OVERLAY_HEIGHT = 64;
 /** 프로토타입 MoveMap.dc.html: 전체 화면 지도 위에 둥근 뒤로 버튼과 제목, 아래에 이동 요약 시트 */
 export function MoveMapScreen({ navigation, route }: NativeStackScreenProps<RootStackParamList, "MoveMap">) {
   const { period } = route.params;
+  const selectedMonth = period === "MONTH" ? parseMonthKey(route.params.periodKey) : undefined;
+  const monthQuery = selectedMonth ? { periodKey: route.params.periodKey } : undefined;
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const [focus, setFocus] = useState<string | undefined>();
   const [selectedLogId, setSelectedLogId] = useState<string | undefined>();
   const [sheetHeight, setSheetHeight] = useState(0);
-  const lineMap = useLineMapQuery(period);
-  const stats = useTravelStatsQuery(period);
-  const timeline = useTimelineQuery(kstYearMonth(Date.now()));
+  const lineMap = useLineMapQuery(period, monthQuery);
+  const stats = useTravelStatsQuery(period, monthQuery);
+  const timeline = useTimelineQuery(selectedMonth ?? kstYearMonth(Date.now()));
 
   const rows = lineRows(stats.data?.lineBreakdown);
   const logs = logsForPeriod(timeline.data?.logs ?? [], period, stats.data?.buckets);
@@ -75,7 +78,7 @@ export function MoveMapScreen({ navigation, route }: NativeStackScreenProps<Root
         header={
           <View>
             <View className="flex-row items-baseline justify-between">
-              <Text className="text-body-sm font-sans-semibold text-text-secondary">{periodName(period, Date.now())}</Text>
+              <Text className="text-body-sm font-sans-semibold text-text-secondary">{selectedMonth ? `${selectedMonth.year}년 ${selectedMonth.month}월` : periodName(period, Date.now())}</Text>
               <Text className="text-body-sm text-text-secondary">
                 {stats.data?.totalTravelCount ?? 0}회 탑승 · 환승 {stats.data?.transferCount ?? 0}회
               </Text>

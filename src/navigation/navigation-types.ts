@@ -76,7 +76,7 @@ export type RootStackParamList = {
     destinationName: string;
     arrivedAtMs: number;
   };
-  Timeline: undefined;
+  Timeline: { periodKey?: string; pushOpenedAt?: number } | undefined;
   /** 타임라인에서 고른 기간을 이어서 보여 준다 */
-  MoveMap: { period: TravelStatsPeriod };
+  MoveMap: { period: TravelStatsPeriod; periodKey?: string };
 };
