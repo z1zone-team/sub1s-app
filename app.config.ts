@@ -1,10 +1,35 @@
 import { ExpoConfig, ConfigContext } from "expo/config";
+const { existsSync, readFileSync } = require("node:fs");
+const { resolve } = require("node:path");
 
-export default ({ config }: ConfigContext): ExpoConfig => {
+export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
   const appEnv = process.env.APP_ENV || "local";
 
   const isProd = appEnv === "production";
   const isStaging = appEnv === "staging";
+  const androidPackage = isProd ? "com.z1zone.sub1s" : `com.z1zone.sub1s.${appEnv}`;
+  const firebaseFile = process.env.GOOGLE_SERVICES_JSON || `./google-services.${appEnv}.json`;
+  let googleServicesFile: string | undefined;
+  if (existsSync(resolve(projectRoot, firebaseFile))) {
+    let firebase;
+    try {
+      firebase = JSON.parse(readFileSync(resolve(projectRoot, firebaseFile), "utf8"));
+    } catch {
+      throw new Error("Firebase 앱 설정 파일을 읽을 수 없습니다. JSON 형식과 파일 접근 권한을 확인하세요.");
+    }
+    if (!firebase || typeof firebase !== "object") throw new Error("Firebase Android 앱 설정 JSON이 아닙니다.");
+    if (firebase.type === "service_account" || "private_key" in firebase) {
+      throw new Error("GOOGLE_SERVICES_JSON에는 비공개 서비스 계정 키 대신 Android 앱 설정 파일을 지정하세요.");
+    }
+    const matchesPackage = firebase.client?.some(
+      (client: { client_info?: { android_client_info?: { package_name?: string } } }) =>
+        client.client_info?.android_client_info?.package_name === androidPackage
+    );
+    if (!matchesPackage) throw new Error("Firebase 앱 설정의 Android 패키지명이 현재 APP_ENV와 맞지 않습니다.");
+    googleServicesFile = firebaseFile;
+  } else if (process.env.GOOGLE_SERVICES_JSON) {
+    throw new Error("GOOGLE_SERVICES_JSON 경로에 Android 앱 설정 파일이 없습니다.");
+  }
 
   return {
     ...config,
@@ -22,9 +47,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         : `com.z1zone.sub1s.${appEnv}`,
     },
     android: {
-      package: isProd
-        ? "com.z1zone.sub1s"
-        : `com.z1zone.sub1s.${appEnv}`,
+      package: androidPackage,
+      ...(googleServicesFile ? { googleServicesFile } : {}),
       adaptiveIcon: {
         foregroundImage: "./assets/android-icon-foreground.png",
         monochromeImage: "./assets/android-icon-monochrome.png",
@@ -62,6 +86,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         },
       ],
       "expo-secure-store",
+      // iOS 원격 푸시는 제외한다. 공식 알림 플러그인의 Android 설정만 적용한다.
+      ["./plugins/withAndroidNotifications", { defaultChannel: "subway-settlement" }],
       "@clerk/expo",
       [
         "expo-audio",
