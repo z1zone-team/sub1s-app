@@ -86,7 +86,7 @@ pnpm start
 | `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk 로그인 공개 키 | 자리표시 값이라 **로그인이 되지 않음** |
 | `EXPO_PUBLIC_VWORLD_KEY` | V-World 지도 키(도메인 제한이 걸린 지도 전용 키) | 지도 대신 안내 문구가 보임 |
 | `EXPO_PUBLIC_VWORLD_REFERER` | 위 키에 등록한 도메인. 지도 요청의 Referer로 보냄 | 키의 도메인 제한에 걸려 타일이 안 뜰 수 있음 |
-| `EXPO_PUBLIC_EAS_PROJECT_ID` | Expo 푸시 토큰을 받는 EAS 프로젝트 ID(UUID) | 푸시 등록을 건너뜀(나머지 기능은 정상) |
+| `EXPO_PUBLIC_EAS_PROJECT_ID` | Expo 푸시 토큰을 받는 EAS 프로젝트 ID(UUID) | `app.config.ts`의 기본 Sub1S 프로젝트 ID 사용. 설정값이 유효한 UUID가 아니면 등록 생략 |
 | `EXPO_PUBLIC_CLIENT_KEY` | 서버로 보내는 클라이언트 식별 헤더 | 개발용 기본값 |
 
 ---
@@ -96,7 +96,10 @@ pnpm start
 - **서버 주소**: 안드로이드 에뮬레이터는 기본값(`10.0.2.2`)으로 호스트 PC의 서버에 닿습니다. 실기기는 PC의 같은 네트워크 주소(`http://192.168.x.x:3000`)나 운영 주소를 `EXPO_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_WS_URL`로 지정합니다.
 - **빌드**: 로그인(Clerk 소셜 로그인 리다이렉트 `sub1s://`), 푸시 토큰, 마이크, 위치를 쓰므로 **개발 빌드**(`npx expo run:android` 또는 EAS 개발 빌드)를 권장합니다. 네이티브 권한 문구(위치, 마이크)는 `app.config.ts`의 플러그인에 있어 바꾸면 다시 빌드해야 반영됩니다. Expo Go에서의 동작은 확인하지 않았습니다.
 - **로그인 제공자**: Clerk 대시보드에서 Google과 카카오(키가 `kakao`인 사용자 지정 OIDC 제공자)를 켜야 합니다.
-- **푸시**: Android는 FCM, iOS는 APNs 키를 EAS에 등록하고 서버에 `EXPO_ACCESS_TOKEN`이 있어야 도착합니다.
+- **Android 푸시**: Firebase에 현재 패키지명을 등록하고 Android 앱 설정을 `google-services.local.json`로 둡니다. 개발용 패키지는 `com.z1zone.sub1s.local`, 운영용은 `com.z1zone.sub1s`입니다. 같은 Firebase 프로젝트여도 두 앱은 각각 등록합니다. FCM V1 서비스 계정 키는 해당 Expo 앱 식별자의 Credentials에 업로드합니다. **비공개 서비스 계정 JSON은 앱에 넣지 않습니다.** [공식 FCM 안내](https://docs.expo.dev/push-notifications/fcm-credentials/)
+- **빌드 설정**: `APP_ENV`는 기본 `local`이고, 기본 Firebase 파일은 `google-services.<APP_ENV>.json`입니다. 다른 경로는 빌드 전용 `GOOGLE_SERVICES_JSON`으로 지정합니다(앱에 공개하는 `EXPO_PUBLIC_` 변수가 아님). 파일이 있으면 패키지명을 검증해 네이티브 빌드에 연결합니다. 기본 파일이 없으면 원격 푸시 설정을 생략하고, 명시한 경로가 없거나 패키지명이 다르거나 서비스 계정 키를 잘못 지정하면 오류로 중단합니다. EAS 프로필은 development→local, preview→staging, production→production을 명시합니다. 로컬 파일은 git에서 제외하므로 다른 PC·클라우드 빌드에서는 해당 파일을 별도로 준비해야 합니다(EAS 파일 환경변수를 쓸 때도 경로 변수는 `GOOGLE_SERVICES_JSON`).
+- **재빌드와 검증**: 공식 `expo-notifications` 플러그인의 Android 설정을 적용합니다. iOS 원격 푸시 제외 결정을 유지해 기존 iOS mod는 보존하고 APNs 권한은 추가하지 않습니다. Android에서 `expo prebuild --platform android` 후 개발 APK를 재빌드해야 하며, 앱 로그인·알림 권한 허용 후 토큰 등록과 실제 수신을 검증합니다. 이 설정만으로 수신 검증이 완료된 것은 아닙니다.
+- **발송 인증**: 서버 `EXPO_ACCESS_TOKEN`은 Expo의 강화 푸시 보안을 켰을 때 필요합니다. 비어 있다는 사실만으로 발송 불가로 판단하지 않습니다. [Expo 발송 보안](https://docs.expo.dev/push-notifications/sending-notifications/#additional-security)
 
 ---
 
