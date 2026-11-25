@@ -53,6 +53,14 @@ describe("factorWeights", () => {
     expect(weights.time).toBe(1.0);
   });
 
+  it("앉아서 가기는 혼잡 가중치로 읽는다", () => {
+    expect(factorWeights(meta({ reasons: ["PREF_SEAT"] })).crowd).toBeCloseTo(0.72);
+  });
+
+  it("앉아서 가기와 덜 붐비게가 함께 있으면 혼잡 가중치를 한 번만 곱한다", () => {
+    expect(factorWeights(meta({ reasons: ["PREF_UNCROWDED", "PREF_SEAT"] })).crowd).toBeCloseTo(0.72);
+  });
+
   it("심야는 혼잡을 덜 따진다", () => {
     expect(factorWeights(meta({ reasons: ["CONTEXT_NIGHT"] })).crowd).toBeCloseTo(0.2);
   });
