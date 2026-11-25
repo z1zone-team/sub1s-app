@@ -12,13 +12,15 @@ interface PlaceCardProps {
   onClose: () => void;
   onOrigin: () => void;
   onDestination: () => void;
+  /** 즐겨찾기 별 버튼. 주지 않으면 버튼이 없다 */
+  favorite?: { saved: boolean; pending: boolean; onToggle: () => void };
 }
 
 /**
  * 지도 검색에서 고른 장소의 하단 카드. 이름, 주소(장소) 또는 호선(역), 가까운 역과 도보 시간, 출발/도착 버튼.
  * 프로토타입에 없는 화면이라 홈 바텀시트의 모양(둥근 상단, 흰 배경, 18px 제목)을 따랐다
  */
-export function PlaceCard({ place, onClose, onOrigin, onDestination }: PlaceCardProps) {
+export function PlaceCard({ place, onClose, onOrigin, onDestination, favorite }: PlaceCardProps) {
   return (
     <DraggableSheet
       label={place.title}
@@ -28,14 +30,28 @@ export function PlaceCard({ place, onClose, onOrigin, onDestination }: PlaceCard
             <Text numberOfLines={1} className="shrink text-title font-sans-bold">
               {place.title}
             </Text>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="닫기"
-              onPress={onClose}
-              className="-mr-3 h-control w-control items-center justify-center"
-            >
-              <DesignIcon name="close" size={18} tone="secondary" />
-            </Pressable>
+            <View className="-mr-3 flex-row">
+              {favorite ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={favorite.saved ? "장소 즐겨찾기 해제" : "장소 즐겨찾기"}
+                  accessibilityState={{ selected: favorite.saved, disabled: favorite.pending }}
+                  disabled={favorite.pending}
+                  onPress={favorite.onToggle}
+                  className="h-control w-control items-center justify-center"
+                >
+                  <DesignIcon name="star" size={20} filled={favorite.saved} />
+                </Pressable>
+              ) : null}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="닫기"
+                onPress={onClose}
+                className="h-control w-control items-center justify-center"
+              >
+                <DesignIcon name="close" size={18} tone="secondary" />
+              </Pressable>
+            </View>
           </View>
       }
     >

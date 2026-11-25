@@ -13,6 +13,13 @@ import {
   useFavoriteRoutesQuery,
   useRemoveFavoriteRouteMutation,
 } from "@/apis/queries/users/useFavoriteRoutes";
+import {
+  useFavoritePlacesQuery,
+  useRemoveFavoritePlaceMutation,
+  useSaveFavoritePlaceMutation,
+} from "@/apis/queries/users/useFavoritePlaces";
+import { ApiError } from "@/apis/client";
+import { findFavoritePlace, toPlaceBody, toPlaceChips } from "@/features/routing/favoritePlaces";
 import { useFrequentRoutesQuery } from "@/apis/queries/profile/useFrequentRoutesQuery";
 import type { PlaceKind } from "@/apis/queries/users/places";
 import { Chip } from "@/common/components/Chip";
@@ -125,6 +132,10 @@ export function HomeScreen() {
   const favoriteRoutes = useFavoriteRoutesQuery();
   const frequentRoutes = useFrequentRoutesQuery();
   const removeFavoriteRoute = useRemoveFavoriteRouteMutation();
+  const favoritePlaces = useFavoritePlacesQuery();
+  const saveFavoritePlace = useSaveFavoritePlaceMutation();
+  const removeFavoritePlace = useRemoveFavoritePlaceMutation();
+  const placeChips = useMemo(() => toPlaceChips(favoritePlaces.data?.places), [favoritePlaces.data]);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
   const activeGuide = useActiveGuideStore((state) => state.guide);
   const [areaHeight, setAreaHeight] = useState(0);
@@ -241,6 +252,21 @@ export function HomeScreen() {
                 );
               })
             : null}
+          {placeChips.map((chip) => (
+            <Chip
+              key={chip.id}
+              compact
+              label={chip.label}
+              leading={<DesignIcon name="star" size={16} filled />}
+              onPress={() => navigation.navigate("Search", { destination: chip.endpoint })}
+              onLongPress={() =>
+                Alert.alert(`${chip.label} 즐겨찾기`, "즐겨찾기에서 지울까요?", [
+                  { text: "삭제", style: "destructive", onPress: () => removeFavoritePlace.mutate(chip.place.id) },
+                  { text: "취소", style: "cancel" },
+                ])
+              }
+            />
+          ))}
           {routeChips.map((chip) => (
             <Chip
               key={chip.id}
@@ -256,7 +282,7 @@ export function HomeScreen() {
           <FloatingButton label={modeButtonAccessibilityLabel(mapMode)} onPress={() => void setMapMode(nextMapMode(mapMode))}>
             <Text className="text-body-sm font-sans-bold text-text">{modeButtonLabel(mapMode)}</Text>
           </FloatingButton>
-          <FloatingButton label="즐겨찾기 경로" onPress={() => setFavoritesOpen(true)}>
+          <FloatingButton label="즐겨찾기" onPress={() => setFavoritesOpen(true)}>
             <DesignIcon name="star" size={20} />
           </FloatingButton>
           <FloatingButton
@@ -284,6 +310,13 @@ export function HomeScreen() {
             });
           }}
           onRemove={(favorite) => removeFavoriteRoute.mutate(favorite.id)}
+          places={favoritePlaces.data?.places}
+          placeLimit={favoritePlaces.data?.limit}
+          onSelectPlace={(place) => {
+            setFavoritesOpen(false);
+            navigation.navigate("Search", { destination: favoriteEndpoint(place) });
+          }}
+          onRemovePlace={(place) => removeFavoritePlace.mutate(place.id)}
           onLogin={() => {
             setFavoritesOpen(false);
             navigation.navigate("Login");
@@ -323,6 +356,38 @@ export function HomeScreen() {
             onDestination={() => {
               navigation.navigate("Search", { destination: selectedPlace.endpoint });
               clearSelectedPlace();
+            }}
+            favorite={{
+              saved: Boolean(findFavoritePlace(favoritePlaces.data?.places, selectedPlace.endpoint)),
+              pending: saveFavoritePlace.isPending || removeFavoritePlace.isPending,
+              onToggle: () => {
+                if (!isSignedIn) {
+                  Alert.alert("로그인이 필요해요", "로그인하면 자주 가는 곳을 저장할 수 있어요.", [
+                    { text: "로그인", onPress: () => navigation.navigate("Login") },
+                    { text: "취소", style: "cancel" },
+                  ]);
+                  return;
+                }
+                const saved = findFavoritePlace(favoritePlaces.data?.places, selectedPlace.endpoint);
+                if (saved) {
+                  removeFavoritePlace.mutate(saved.id);
+                  return;
+                }
+                const body = toPlaceBody(selectedPlace.endpoint);
+                if (!body) {
+                  Alert.alert("저장할 수 없는 곳이에요", "현재 위치는 즐겨찾기에 둘 수 없어요.");
+                  return;
+                }
+                saveFavoritePlace.mutate(body, {
+                  onError: (error) => {
+                    if (error instanceof ApiError && error.code === "FAVORITE_PLACE_LIMIT") {
+                      Alert.alert("더 저장할 수 없어요", "장소 즐겨찾기는 20곳까지 저장할 수 있어요. 홈의 ★ 목록에서 지워 주세요.");
+                    } else {
+                      Alert.alert("저장하지 못했어요", "잠시 후 다시 시도해 주세요.");
+                    }
+                  },
+                });
+              },
             }}
           />
         ) : (
