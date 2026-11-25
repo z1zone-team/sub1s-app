@@ -29,6 +29,7 @@ import { LiveNavScreen } from "@/screens/LiveNavScreen";
 import { WalkNavScreen } from "@/screens/WalkNavScreen";
 import { MoveMapScreen } from "@/screens/MoveMapScreen";
 import { TimelineScreen } from "@/screens/TimelineScreen";
+import { MonthlyRecapScreen } from "@/screens/MonthlyRecapScreen";
 import { SplashScreen } from "@/common/components/SplashScreen";
 import { useSplashMinimumElapsed } from "@/common/components/splashTiming";
 import { useTheme } from "@/theme";
@@ -43,7 +44,11 @@ const navigationRef = createNavigationContainerRef<RootStackParamList>();
 const AUTH_LOAD_TIMEOUT_MS = 5000;
 
 function navigateToPush(target: NonNullable<PushTarget>) {
-  navigationRef.navigate(target.screen, { periodKey: target.periodKey, pushOpenedAt: Date.now() });
+  if (target.screen === "MonthlyRecap") {
+    navigationRef.navigate("MonthlyRecap", { periodKey: target.periodKey, openedAt: Date.now() });
+  } else {
+    navigationRef.navigate("Timeline", { periodKey: target.periodKey, pushOpenedAt: Date.now() });
+  }
 }
 
 export function RootNavigator() {
@@ -171,6 +176,7 @@ export function RootNavigator() {
           options={{ headerShown: false, gestureEnabled: false, animation: "fade" }}
         />
         <Stack.Screen name="MoveMap" component={MoveMapScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="MonthlyRecap" component={MonthlyRecapScreen} options={{ headerShown: false }} />
         <Stack.Screen
           name="Timeline"
           component={TimelineScreen}

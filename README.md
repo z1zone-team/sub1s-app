@@ -100,7 +100,7 @@ pnpm start
 - **빌드 설정**: `APP_ENV`는 기본 `local`이고, 기본 Firebase 파일은 `google-services.<APP_ENV>.json`입니다. 다른 경로는 빌드 전용 `GOOGLE_SERVICES_JSON`으로 지정합니다(앱에 공개하는 `EXPO_PUBLIC_` 변수가 아님). 파일이 있으면 패키지명을 검증해 네이티브 빌드에 연결합니다. 기본 파일이 없으면 원격 푸시 설정을 생략하고, 명시한 경로가 없거나 패키지명이 다르거나 서비스 계정 키를 잘못 지정하면 오류로 중단합니다. EAS 프로필은 development→local, preview→staging, production→production을 명시합니다. 로컬 파일은 git에서 제외하므로 다른 PC·클라우드 빌드에서는 해당 파일을 별도로 준비해야 합니다(EAS 파일 환경변수를 쓸 때도 경로 변수는 `GOOGLE_SERVICES_JSON`).
 - **재빌드와 검증**: 공식 `expo-notifications` 플러그인의 Android 설정을 적용합니다. iOS 원격 푸시 제외 결정을 유지해 기존 iOS mod는 보존하고 APNs 권한은 추가하지 않습니다. Android에서 `expo prebuild --platform android` 후 개발 APK를 재빌드해야 하며, 앱 로그인·알림 권한 허용 후 토큰 등록과 실제 수신을 검증합니다. 이 설정만으로 수신 검증이 완료된 것은 아닙니다.
 - **발송 인증**: 서버 `EXPO_ACCESS_TOKEN`은 Expo의 강화 푸시 보안을 켰을 때 필요합니다. 비어 있다는 사실만으로 발송 불가로 판단하지 않습니다. [Expo 발송 보안](https://docs.expo.dev/push-notifications/sending-notifications/#additional-security)
-- **월말정산 진입**: 알림의 `periodKey`가 `YYYY-MM`(2000~2100년)이면 타임라인 월 탭을 선택하고 그 월의 통계·기록·이동 지도와 확대 지도를 조회합니다. 키가 없거나 잘못됐으면 기존 기본 진입을 유지합니다. 서버 `/travel/stats`, `/line-map`의 `period=MONTH&periodKey=YYYY-MM` 지원이 먼저 필요하며, 앱 캐시는 지정한 월별로 구분합니다. 기간 탭을 바꿨다가 같은 월의 다른 알림을 눌러도 월 탭을 다시 선택합니다.
+- **월말정산 진입**: `MONTHLY_SETTLEMENT` 알림의 `periodKey`가 `YYYY-MM`(2000~2100년)이면 그 달의 정산 카드를 엽니다. MY의 **지난달 정산**에서도 다시 볼 수 있습니다. 마지막 카드의 **상세 기록 보기**는 같은 달의 타임라인과 이동 지도로 이어집니다. 키가 없거나 잘못된 알림은 일반 타임라인을 엽니다. 서버 `/travel/stats`, `/line-map`의 `period=MONTH&periodKey=YYYY-MM` 지원이 필요합니다.
 
 ---
 
