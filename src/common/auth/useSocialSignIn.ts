@@ -1,6 +1,8 @@
 import { useCallback, useState } from "react";
 import { useSSO } from "@clerk/expo";
+import { makeRedirectUri } from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
+import { APP_SCHEME } from "@/constants/appScheme";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -20,7 +22,10 @@ export function useSocialSignIn() {
       setPending(provider);
       setError(null);
       try {
-        const { createdSessionId, setActive } = await startSSOFlow({ strategy: STRATEGY[provider] });
+        const { createdSessionId, setActive } = await startSSOFlow({
+          strategy: STRATEGY[provider],
+          redirectUrl: makeRedirectUri({ scheme: APP_SCHEME, path: "sso-callback" }),
+        });
         if (createdSessionId && setActive) {
           await setActive({ session: createdSessionId });
         }

@@ -1,4 +1,5 @@
 import type { LinkingOptions } from "@react-navigation/native";
+import { APP_SCHEME } from "@/constants/appScheme";
 import {
   parseEndpointParam,
   stringifyEndpointParam,
@@ -7,7 +8,7 @@ import type { RootStackParamList } from "./navigation-types";
 
 /**
  * React Navigation 딥링크 설정
- * - 앱 스킴: `sub1s://`
+ * - 앱 스킴: 운영 `sub1s://`, 개발 `sub1s-local://`, 스테이징 `sub1s-staging://`
  * - 웹 도메인: `https://sub1s.devnoco.com`
  *
  * 지원 URL 패턴:
@@ -22,7 +23,7 @@ import type { RootStackParamList } from "./navigation-types";
  */
 export const linking: LinkingOptions<RootStackParamList> = {
   prefixes: [
-    "sub1s://",
+    `${APP_SCHEME}://`,
     "https://sub1s.devnoco.com",
   ],
   config: {
