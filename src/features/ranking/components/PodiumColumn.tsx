@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { Animated, Easing, View } from "react-native";
+import { Animated, Easing, Pressable, View } from "react-native";
 import { Bob } from "@/common/components/Bob";
 import { Text } from "@/common/components/Text";
 import { cn } from "@/lib/cn";
@@ -12,6 +12,7 @@ interface PodiumColumnProps {
   points: string;
   /** "312.8km". 점수 아래에 작게 보인다 */
   km: string;
+  onPress?: () => void;
 }
 
 const RISE_MS = 500;
@@ -25,7 +26,7 @@ const POD = {
 } as const;
 
 /** TOP 3 시상대의 한 칸: 캐릭터, 닉네임, 점수와 그 아래 작은 거리, 그 아래 순위 단. 1등은 왕관을 쓰고 둥실 떠 있다 */
-export function PodiumColumn({ rank, name, points, km }: PodiumColumnProps) {
+export function PodiumColumn({ rank, name, points, km, onPress }: PodiumColumnProps) {
   const rise = useRef(new Animated.Value(0)).current;
   const pod = POD[rank];
 
@@ -42,7 +43,13 @@ export function PodiumColumn({ rank, name, points, km }: PodiumColumnProps) {
   }, [rise, rank]);
 
   return (
-    <View className="flex-1 items-center">
+    <Pressable
+      className="flex-1 items-center"
+      disabled={!onPress}
+      accessibilityRole={onPress ? "button" : undefined}
+      accessibilityLabel={onPress ? `${rank}위 ${name} 이동 기록 보기` : undefined}
+      onPress={onPress}
+    >
       {rank === 1 ? (
         <>
           <View className="mb-0.5">
@@ -73,6 +80,6 @@ export function PodiumColumn({ rank, name, points, km }: PodiumColumnProps) {
           {rank}
         </Text>
       </Animated.View>
-    </View>
+    </Pressable>
   );
 }

@@ -1,5 +1,5 @@
 import React from "react";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 import { Text } from "@/common/components/Text";
 import { valueParts } from "@/features/guide/arrivedView";
 import { cn } from "@/lib/cn";
@@ -13,13 +13,20 @@ interface RankRowProps {
   /** "96.3km". 점수 아래에 작게 보인다. 내 순위가 목록 밖일 때는 없다 */
   sub?: string;
   isMe: boolean;
+  onPress?: () => void;
 }
 
 /** 4위부터의 한 줄: 순위, 동그란 아바타, 닉네임(내 줄은 굵게 + 나 배지), 점수와 그 아래 작은 거리 */
-export function RankRow({ rank, name, value, sub, isMe }: RankRowProps) {
+export function RankRow({ rank, name, value, sub, isMe, onPress }: RankRowProps) {
   const [part] = valueParts(value);
   return (
-    <View className={cn("h-16 flex-row items-center gap-3.5 rounded-lg px-3", isMe ? "bg-primary-tint" : "")}>
+    <Pressable
+      className={cn("h-16 flex-row items-center gap-3.5 rounded-lg px-3", isMe ? "bg-primary-tint" : "")}
+      disabled={!onPress}
+      accessibilityRole={onPress ? "button" : undefined}
+      accessibilityLabel={onPress ? `${rank}위 ${name} 이동 기록 보기` : undefined}
+      onPress={onPress}
+    >
       <Text className={cn("w-6 text-center text-subtitle font-sans-bold", isMe ? "" : "text-text-secondary")}>{rank}</Text>
       <View className="h-10 w-10 items-center justify-center rounded-md-plus bg-surface">
         <RowAvatar size={24} />
@@ -41,6 +48,6 @@ export function RankRow({ rank, name, value, sub, isMe }: RankRowProps) {
         </Text>
         {sub ? <Text className="text-caption text-text-secondary">{sub}</Text> : null}
       </View>
-    </View>
+    </Pressable>
   );
 }

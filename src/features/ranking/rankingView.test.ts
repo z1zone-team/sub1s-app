@@ -84,13 +84,17 @@ describe("podium와 목록", () => {
   });
 
   it("시상대에 점수를 크게, 거리를 따로 준다", () => {
-    expect(podium(data(all))[0]).toMatchObject({ points: "100점", km: "10.0km" });
+    expect(podium(data(all))[0]).toMatchObject({ points: "100점", km: "10.0km", userId: "u1" });
+  });
+
+  it("시상대 익명 항목에 ID가 있어도 기록 화면으로 전달하지 않는다", () => {
+    expect(podium(data([item(1, { isAnonymous: true })]))[0].userId).toBeUndefined();
   });
 
   it("4위부터 목록에 두고 익명은 익명으로 보여 준다", () => {
     const rows = rowsAfterPodium(data(all));
     expect(rows).toEqual([
-      { kind: "ROW", rank: 4, nickname: "@닉4", isMe: false, value: "100점", sub: "40.0km" },
+      { kind: "ROW", rank: 4, nickname: "@닉4", isMe: false, userId: "u4", value: "100점", sub: "40.0km" },
       { kind: "ROW", rank: 5, nickname: "익명", isMe: false, value: "100점", sub: "50.0km" },
     ]);
   });

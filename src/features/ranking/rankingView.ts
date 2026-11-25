@@ -49,6 +49,7 @@ export interface RankingRow {
   rank: number;
   nickname: string;
   isMe: boolean;
+  userId?: string;
   /** "963점" */
   value: string;
   /** "96.3km". 내 항목이 목록 밖일 때는 거리를 몰라 없다 */
@@ -62,6 +63,11 @@ export interface GapRow {
 /** 닉네임은 @를 붙여 보여 준다(MY와 같은 모양). 익명은 "익명" 그대로다 */
 export const displayName = (item: Pick<LeaderboardItemDto, "nickname" | "isAnonymous">): string =>
   item.isAnonymous ? "익명" : `@${item.nickname}`;
+
+/** 익명 항목은 ID가 있더라도 공개 화면을 열지 않는다 */
+function visibleTravelUserId(item: LeaderboardItemDto): string | undefined {
+  return item.isAnonymous ? undefined : item.userId;
+}
 
 /** "1,204.6"처럼 천 단위 쉼표를 붙인 거리 숫자(단위 없음). 점수 아래 작은 거리 표시에 쓴다 */
 export function kmNumber(km: number): string {
@@ -83,6 +89,7 @@ export function rowsAfterPodium(data: RankingResponseDto | undefined): Array<Ran
       rank: item.rank,
       nickname: displayName(item),
       isMe: !!item.isMe,
+      userId: visibleTravelUserId(item),
       value: pointsText(item.totalPoints),
       sub: kmText(item.totalDistanceKm),
     }));
@@ -103,7 +110,7 @@ export function rowsAfterPodium(data: RankingResponseDto | undefined): Array<Ran
 
 export function podium(
   data: RankingResponseDto | undefined
-): Array<{ rank: number; name: string; points: string; km: string; isMe: boolean }> {
+): Array<{ rank: number; name: string; points: string; km: string; isMe: boolean; userId?: string }> {
   return (data?.leaderboard ?? [])
     .filter((item) => item.rank <= 3)
     .map((item) => ({
@@ -112,6 +119,7 @@ export function podium(
       points: pointsText(item.totalPoints),
       km: kmText(item.totalDistanceKm),
       isMe: !!item.isMe,
+      userId: visibleTravelUserId(item),
     }));
 }
 

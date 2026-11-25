@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useAuth } from "@clerk/expo";
-import { useIsFocused } from "@react-navigation/native";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTravelStatsQuery } from "@/apis/queries/profile/useTravelStatsQuery";
 import { useRankingQuery } from "@/apis/queries/ranking/useRankingQuery";
 import { DesignIcon } from "@/common/components/DesignIcon";
@@ -28,11 +29,13 @@ import {
 } from "@/features/ranking/rankingView";
 import { cn } from "@/lib/cn";
 import { useTheme } from "@/theme";
+import type { RootStackParamList } from "@/navigation/navigation-types";
 
 /** 프로토타입 Ranking.dc.html: 제목과 친구 초대, 월간/전체 탭, 시상대, 4위부터 목록, 표정 설명 */
 export function RankingScreen() {
   const { colors } = useTheme();
   const { isSignedIn } = useAuth();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [scope, setScope] = useState<RankingScope>("MONTHLY");
   const [friendsOnly, setFriendsOnly] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -59,6 +62,11 @@ export function RankingScreen() {
   const rows = rowsAfterPodium(data);
   const mood = moodOf(monthStats.data?.totalDistanceKm ?? 0);
   const order = [2, 1, 3] as const;
+  const travelAction = (userId: string | undefined, nickname: string, isMe: boolean) => {
+    if (isMe) return () => navigation.navigate("Timeline");
+    if (!userId) return undefined;
+    return () => navigation.navigate("RankedUserTravel", { userId, nickname, period: scope === "MONTHLY" ? "MONTH" : "ALL" });
+  };
 
   return (
     <Screen>
@@ -133,7 +141,7 @@ export function RankingScreen() {
             {order.map((rank) => {
               const entry = top.find((item) => item.rank === rank);
               if (!entry) return <View key={rank} className="flex-1" />;
-              return <PodiumColumn key={`${scope}-${friendsOnly}-${rank}`} rank={rank} name={entry.name} points={entry.points} km={entry.km} />;
+              return <PodiumColumn key={`${scope}-${friendsOnly}-${rank}`} rank={rank} name={entry.name} points={entry.points} km={entry.km} onPress={travelAction(entry.userId, entry.name, entry.isMe)} />;
             })}
           </View>
         ) : !ranking.isLoading ? (
@@ -148,7 +156,7 @@ export function RankingScreen() {
                   ···
                 </Text>
               ) : (
-                <RankRow key={`${row.rank}-${index}`} rank={row.rank} name={row.nickname} value={row.value} sub={row.sub} isMe={row.isMe} />
+                <RankRow key={`${row.rank}-${index}`} rank={row.rank} name={row.nickname} value={row.value} sub={row.sub} isMe={row.isMe} onPress={travelAction(row.userId, row.nickname, row.isMe)} />
               )
             )}
           </View>

@@ -4,7 +4,7 @@ export type RankingPeriodType = "MONTHLY" | "ALL";
 
 export interface LeaderboardItemDto {
   rank: number;
-  userId: string;
+  userId?: string;
   nickname: string;
   profileImageUrl?: string;
   totalPoints: number;
