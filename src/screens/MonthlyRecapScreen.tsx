@@ -1,5 +1,5 @@
-import React, { useRef, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from "react-native";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { AccessibilityInfo, ActivityIndicator, Animated, Easing, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from "react-native";
 import { useAuth } from "@clerk/expo";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -22,13 +22,39 @@ const CARD_ICONS: Record<RecapCard["key"], DesignIconName> = {
   cover: "train", distance: "route", rides: "swap", places: "locate", peak: "clock", finish: "navigate", empty: "train",
 };
 
-function StoryCard({ card, width, current }: { card: RecapCard; width: number; current: boolean }) {
+function StoryCard({ card, width, current, motionEnabled }: {
+  card: RecapCard;
+  width: number;
+  current: boolean;
+  motionEnabled: boolean;
+}) {
   const { colors } = useTheme();
   const hero = card.key === "cover" || card.key === "finish";
   const background = hero ? palettes.light.primary : colors.primaryTint;
   const titleColor = hero ? palettes.light.onPrimary : colors.text;
   const accent = hero ? palettes.light.onPrimary : colors.primary;
   const railColor = card.lineColor ?? accent;
+  const intro = useRef(new Animated.Value(1)).current;
+  const highlight = useRef(new Animated.Value(1)).current;
+  const rail = useRef(new Animated.Value(1)).current;
+
+  useLayoutEffect(() => {
+    const play = current && motionEnabled;
+    intro.setValue(play ? 0 : 1);
+    highlight.setValue(play ? 0 : 1);
+    rail.setValue(play ? 0 : 1);
+    if (!play) return;
+
+    const reveal = (value: Animated.Value, duration: number) => Animated.timing(value, {
+      toValue: 1,
+      duration,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    });
+    const animation = Animated.stagger(80, [reveal(intro, 230), reveal(highlight, 320), reveal(rail, 340)]);
+    animation.start();
+    return () => animation.stop();
+  }, [current, motionEnabled, intro, highlight, rail]);
   return (
     <ScrollView
       style={{ width, backgroundColor: background }}
@@ -37,28 +63,37 @@ function StoryCard({ card, width, current }: { card: RecapCard; width: number; c
       importantForAccessibility={current ? "auto" : "no-hide-descendants"}
       accessibilityElementsHidden={!current}
     >
-      <View style={[styles.sign, { borderColor: accent }]}>
-        <DesignIcon name={CARD_ICONS[card.key]} color={accent} size={27} />
-      </View>
-      <Text accessibilityRole="header" className="font-sans-bold" style={[styles.title, { color: titleColor }]}>
-        {card.title}
-      </Text>
-      {card.value ? (
-        <View style={styles.valueRow}>
-          <Text className="font-sans-bold" numberOfLines={2} style={[styles.value, { color: accent, fontSize: card.unit ? 72 : 47 }]}>
-            {card.value}
-          </Text>
-          {card.unit ? <Text className="font-sans-bold" style={[styles.unit, { color: accent }]}>{card.unit}</Text> : null}
+      <Animated.View style={[styles.cardGroup, { opacity: intro }]}>
+        <View style={[styles.sign, { borderColor: accent }]}>
+          <DesignIcon name={CARD_ICONS[card.key]} color={accent} size={27} />
         </View>
+        <Text accessibilityRole="header" className="font-sans-bold" style={[styles.title, { color: titleColor }]}>
+          {card.title}
+        </Text>
+      </Animated.View>
+      {card.value || card.detail || card.key === "cover" ? (
+        <Animated.View style={[styles.cardGroup, {
+          opacity: highlight,
+          transform: [{ translateY: highlight.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) }],
+        }]}>
+          {card.value ? (
+            <View style={styles.valueRow}>
+              <Text className="font-sans-bold" numberOfLines={2} style={[styles.value, { color: accent, fontSize: card.unit ? 72 : 47 }]}>
+                {card.value}
+              </Text>
+              {card.unit ? <Text className="font-sans-bold" style={[styles.unit, { color: accent }]}>{card.unit}</Text> : null}
+            </View>
+          ) : null}
+          {card.detail ? <Text style={[styles.detail, { color: hero ? titleColor : colors.textSecondary }]}>{card.detail}</Text> : null}
+          {card.key === "cover" ? <View style={styles.mascot}><ArrivedMascot size={130} /></View> : null}
+        </Animated.View>
       ) : null}
-      {card.detail ? <Text style={[styles.detail, { color: hero ? titleColor : colors.textSecondary }]}>{card.detail}</Text> : null}
-      {card.key === "cover" ? <View style={styles.mascot}><ArrivedMascot size={130} /></View> : null}
-      <View accessible={false} style={styles.rail}>
-        <View style={[styles.railLine, { backgroundColor: railColor }]} />
+      <Animated.View accessible={false} style={[styles.rail, { opacity: rail }]}>
+        <Animated.View style={[styles.railLine, { backgroundColor: railColor, transform: [{ scaleX: rail }] }]} />
         {[0, 1, 2, 3].map((station) => (
           <View key={station} style={[styles.station, { borderColor: railColor, backgroundColor: station === 2 ? railColor : background }]} />
         ))}
-      </View>
+      </Animated.View>
     </ScrollView>
   );
 }
@@ -73,12 +108,29 @@ function Story({ cards, periodLabel, onClose, onTimeline }: {
   const { colors, scheme } = useTheme();
   const pager = useRef<ScrollView>(null);
   const [index, setIndex] = useState(0);
+  const [motionEnabled, setMotionEnabled] = useState(false);
   const current = Math.min(index, cards.length - 1);
   const last = current === cards.length - 1;
 
+  useEffect(() => {
+    let listening = true;
+    let receivedChange = false;
+    const subscription = AccessibilityInfo.addEventListener("reduceMotionChanged", (reduced) => {
+      receivedChange = true;
+      setMotionEnabled(!reduced);
+    });
+    void AccessibilityInfo.isReduceMotionEnabled().then((reduced) => {
+      if (listening && !receivedChange) setMotionEnabled(!reduced);
+    }).catch(() => undefined);
+    return () => {
+      listening = false;
+      subscription.remove();
+    };
+  }, []);
+
   const go = (page: number) => {
     setIndex(page);
-    pager.current?.scrollTo({ x: page * width, animated: true });
+    pager.current?.scrollTo({ x: page * width, animated: motionEnabled });
   };
 
   return (
@@ -104,7 +156,7 @@ function Story({ cards, periodLabel, onClose, onTimeline }: {
         onMomentumScrollEnd={(event) => setIndex(Math.round(event.nativeEvent.contentOffset.x / width))}
         style={styles.pager}
       >
-        {cards.map((card, i) => <StoryCard key={card.key} card={card} width={width} current={i === current} />)}
+        {cards.map((card, i) => <StoryCard key={card.key} card={card} width={width} current={i === current} motionEnabled={motionEnabled} />)}
       </ScrollView>
       <View style={styles.footer}>
         {current > 0 ? (
@@ -164,6 +216,7 @@ const styles = StyleSheet.create({
   iconButton: { width: 48, height: 48, borderRadius: 24, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   pager: { flex: 1 },
   card: { flexGrow: 1, justifyContent: "center", paddingHorizontal: 28, paddingVertical: 28, gap: 18 },
+  cardGroup: { gap: 18 },
   sign: { width: 54, height: 54, borderRadius: 13, borderWidth: 1.5, alignItems: "center", justifyContent: "center" },
   title: { fontSize: 39, letterSpacing: -1.4 },
   valueRow: { flexDirection: "row", alignItems: "baseline", flexWrap: "wrap", columnGap: 8 },
@@ -172,7 +225,7 @@ const styles = StyleSheet.create({
   detail: { fontSize: 17 },
   mascot: { alignSelf: "center", marginTop: 12 },
   rail: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 24 },
-  railLine: { position: "absolute", height: 3, left: 5, right: 5 },
+  railLine: { position: "absolute", height: 3, left: 5, right: 5, transformOrigin: "left" },
   station: { width: 14, height: 14, borderWidth: 2, borderRadius: 7 },
   footer: { flexDirection: "row", alignItems: "center", gap: 12, padding: 18 },
   action: { flex: 1, flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 10, minHeight: 50, borderRadius: 25, paddingHorizontal: 16 },
