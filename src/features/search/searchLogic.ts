@@ -1,10 +1,9 @@
 import type { SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
 import { formatClock24Kst, formatDurationSec } from "@/common/utils/format";
 import { WALK_LINE_ID } from "@/theme";
-import { isSameEndpoint, isValidEndpoint, type RouteEndpoint } from "@/features/routing/endpoint";
+import type { RouteEndpoint } from "@/features/routing/endpoint";
 import type { SearchRow } from "@/features/routing/searchRows";
-import type { RecentDestination } from "@/features/routing/recentDestinations";
-import { walkSeconds, type RouteGroup } from "@/features/routing/routeView";
+import { walkSeconds } from "@/features/routing/routeView";
 
 /** 출발지와 도착지를 서로 바꾼다. 한쪽이 비어 있으면 빈 채로 따라간다 */
 export function swapEndpoints(
@@ -26,34 +25,6 @@ export function shouldOfferOriginFallback(input: {
 }): boolean {
   if (input.originChosenByUser || input.origin) return false;
   return input.fixTimedOut || input.locationDenied;
-}
-
-export interface RecommendedPair {
-  origin: RouteEndpoint;
-  destination: RouteEndpoint;
-}
-
-/**
- * 추천 경로의 출발과 도착. 출발은 지금의 출발지(보통 현재 위치), 도착은 가장 최근에 찾은 도착지다.
- * 둘 중 하나가 없거나 같은 곳이면 추천하지 않는다
- */
-export function recommendedPair(
-  origin: RouteEndpoint | undefined,
-  destinations: RecentDestination[]
-): RecommendedPair | undefined {
-  const destination = destinations[0]?.endpoint;
-  if (!isValidEndpoint(origin) || !isValidEndpoint(destination)) return undefined;
-  if (isSameEndpoint(origin, destination)) return undefined;
-  return { origin, destination };
-}
-
-/** 추천 경로 섹션에 보일 카드. 최적을 맨 위에 두고, 다른 경로라면 여유를 하나 더 보여 준다 */
-export function pickRecommendedGroups(groups: RouteGroup[]): RouteGroup[] {
-  const optimal = groups.find((group) => group.modes.includes("OPTIMAL"));
-  const comfortable = groups.find((group) => group.modes.includes("COMFORTABLE") && group !== optimal);
-  if (optimal && comfortable) return [optimal, comfortable];
-  if (optimal) return [optimal];
-  return groups.slice(0, 1);
 }
 
 /** "환승 0회 · 도보 8분" */

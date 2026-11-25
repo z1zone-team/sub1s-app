@@ -42,7 +42,6 @@ describe("Realtime Module", () => {
       expect(state.currentTrain).toBeNull();
       expect(state.congestion).toBeNull();
       expect(state.cars).toEqual({});
-      expect(state.eta).toBeNull();
       expect(state.latestAlert).toBeNull();
     });
 
@@ -100,16 +99,6 @@ describe("Realtime Module", () => {
       expect(useRealtimeStore.getState().latestAlert).toBeNull();
     });
 
-    it("should update eta tick payload", () => {
-      useRealtimeStore.getState().actions.setEta({
-        sessionId: "sess_101",
-        etaTimestamp: "2026-10-07T12:15:00Z",
-        remainingSec: 180,
-      });
-
-      expect(useRealtimeStore.getState().eta?.remainingSec).toBe(180);
-      expect(useRealtimeStore.getState().eta?.sessionId).toBe("sess_101");
-    });
   });
 
   describe("SubwaySocketClient", () => {

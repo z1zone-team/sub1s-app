@@ -20,6 +20,7 @@ import {
 } from "@/apis/queries/users/useFavoritePlaces";
 import { ApiError } from "@/apis/client";
 import { findFavoritePlace, toPlaceBody, toPlaceChips } from "@/features/routing/favoritePlaces";
+import { useFrequentRoutesQuery } from "@/apis/queries/profile/useFrequentRoutesQuery";
 import type { PlaceKind } from "@/apis/queries/users/places";
 import { Chip } from "@/common/components/Chip";
 import { BrandLogo } from "@/common/components/BrandLogo";
@@ -129,6 +130,7 @@ export function HomeScreen() {
   const places = useUserPlacesQuery();
   const removePlace = useRemovePlaceMutation();
   const favoriteRoutes = useFavoriteRoutesQuery();
+  const frequentRoutes = useFrequentRoutesQuery();
   const removeFavoriteRoute = useRemoveFavoriteRouteMutation();
   const favoritePlaces = useFavoritePlacesQuery();
   const saveFavoritePlace = useSaveFavoritePlaceMutation();
@@ -158,8 +160,9 @@ export function HomeScreen() {
   const hasLocation = baseMapData.markers.some((marker) => marker.kind === "me");
 
   const routeChips = useMemo(
-    () => toHomeRouteChips(favoriteRoutes.data?.favorites, recent.routes),
-    [favoriteRoutes.data, recent.routes]
+    () =>
+      toHomeRouteChips(favoriteRoutes.data?.favorites, recent.routes, undefined, frequentRoutes.data?.routes),
+    [favoriteRoutes.data, recent.routes, frequentRoutes.data]
   );
 
   const openPlace = (kind: PlaceKind) => {

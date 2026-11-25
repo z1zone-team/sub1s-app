@@ -47,6 +47,8 @@ export * from "./queries/profile/getTravelStats";
 export * from "./queries/profile/useTravelStatsQuery";
 export * from "./queries/profile/getLineMap";
 export * from "./queries/profile/useLineMapQuery";
+export * from "./queries/profile/getFrequentRoutes";
+export * from "./queries/profile/useFrequentRoutesQuery";
 export * from "./mutations/travel/createTravelLog";
 export * from "./mutations/travel/useCreateTravelLogMutation";
 

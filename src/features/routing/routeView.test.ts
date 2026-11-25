@@ -188,8 +188,16 @@ describe("reasonText", () => {
     expect(reasonText([], ["PERSONAL"])).toBeUndefined();
   });
 
-  it("ignores preference codes it does not know, such as the seat and elevator choices", () => {
+  it("ignores preferences whose highlight the route does not have", () => {
     expect(matchedPreferences(["FASTEST"], ["SEAT", "ELEVATOR", "FAST"])).toEqual(["빠르게"]);
+  });
+
+  it("explains the seat preference through the least crowded highlight", () => {
+    expect(reasonText(["LEAST_CROWDED"], ["PERSONAL"], ["SEAT"])).toBe("덜 붐벼 앉기 쉬운 길로 골랐어요");
+  });
+
+  it("says it once when both the seat and uncrowded preferences fit", () => {
+    expect(matchedPreferences(["LEAST_CROWDED"], ["UNCROWDED", "SEAT"])).toEqual(["앉아서 가기"]);
   });
 });
 

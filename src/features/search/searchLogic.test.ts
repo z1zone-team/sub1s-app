@@ -1,10 +1,6 @@
 import type { PathSegmentDto, SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
-import type { RecentDestination } from "@/features/routing/recentDestinations";
-import { groupRouteOptions } from "@/features/routing/routeView";
 import {
   arrivalText,
-  pickRecommendedGroups,
-  recommendedPair,
   rowFromEndpoint,
   shouldOfferOriginFallback,
   summarizeRoute,
@@ -47,12 +43,6 @@ const option = (over: Partial<SubwayRouteOptionDto>): SubwayRouteOptionDto => ({
   ...over,
 });
 
-const recent = (name: string, stationId?: string): RecentDestination => ({
-  endpoint: { name, stationId },
-  searchedAt: "2026-10-06T00:00:00Z",
-  routeIds: [name],
-});
-
 describe("swapEndpoints", () => {
   it("출발과 도착을 서로 바꾼다", () => {
     const a = { name: "가양", stationId: "09_907" };
@@ -63,47 +53,6 @@ describe("swapEndpoints", () => {
   it("한쪽이 비어 있으면 비어 있는 채로 따라간다", () => {
     const a = { name: "현재 위치", lat: 37.5, lng: 126.8 };
     expect(swapEndpoints(a, undefined)).toEqual({ origin: undefined, destination: a });
-  });
-});
-
-describe("recommendedPair", () => {
-  const here = { name: "현재 위치", lat: 37.56, lng: 126.85 };
-
-  it("현재 위치에서 가장 최근 도착지로 짝을 만든다", () => {
-    const pair = recommendedPair(here, [recent("신논현", "09_925"), recent("충무로", "03_331")]);
-    expect(pair?.destination.name).toBe("신논현");
-    expect(pair?.origin).toBe(here);
-  });
-
-  it("출발지나 최근 도착지가 없으면 추천하지 않는다", () => {
-    expect(recommendedPair(undefined, [recent("신논현", "09_925")])).toBeUndefined();
-    expect(recommendedPair(here, [])).toBeUndefined();
-  });
-
-  it("출발과 도착이 같은 역이면 추천하지 않는다", () => {
-    const origin = { name: "신논현", stationId: "09_925" };
-    expect(recommendedPair(origin, [recent("신논현", "09_925")])).toBeUndefined();
-  });
-});
-
-describe("pickRecommendedGroups", () => {
-  it("최적을 맨 위에 두고 다른 경로의 여유를 하나 더 보여 준다", () => {
-    const groups = groupRouteOptions([
-      option({ mode: "OPTIMAL" }),
-      option({ mode: "COMFORTABLE", totalDurationSec: 3120, transferCount: 1, segments: [segment({ lineId: "02" })] }),
-      option({ mode: "CHEAPEST", totalFare: 1750, totalDurationSec: 3300, segments: [segment({ lineId: "01" })] }),
-    ]);
-    const picked = pickRecommendedGroups(groups);
-    expect(picked.map((group) => group.modes[0])).toEqual(["OPTIMAL", "COMFORTABLE"]);
-  });
-
-  it("최적과 여유가 같은 경로면 한 장만 보여 준다", () => {
-    const groups = groupRouteOptions([option({ mode: "OPTIMAL" }), option({ mode: "COMFORTABLE" })]);
-    expect(pickRecommendedGroups(groups)).toHaveLength(1);
-  });
-
-  it("결과가 비어 있으면 빈 목록이다", () => {
-    expect(pickRecommendedGroups([])).toEqual([]);
   });
 });
 

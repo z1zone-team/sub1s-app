@@ -57,6 +57,7 @@ const PREF_TAGS: Record<string, { label: string; tags: RouteHighlight[] }> = {
   FEW_TRANSFERS: { label: "환승 적게", tags: ["FEWEST_TRANSFERS", "NO_TRANSFER"] },
   WEAK_AC: { label: "약냉방칸", tags: ["WEAK_AC_CAR"] },
   UNCROWDED: { label: "덜 붐비게", tags: ["LEAST_CROWDED"] },
+  SEAT: { label: "앉아서 가기", tags: ["LEAST_CROWDED"] },
   LESS_WALK: { label: "덜 걷게", tags: ["LEAST_WALK"] },
   AVOID_STAIRS: { label: "계단 피하기", tags: ["LEAST_VERTICAL"] },
   ELEVATOR: { label: "엘리베이터 있는 역", tags: ["BEST_ELEVATOR_ACCESS"] },
@@ -68,6 +69,7 @@ const PREF_PHRASE: Record<string, { connective: string; attributive: string }> =
   "환승 적게": { connective: "환승 적고", attributive: "환승 적은" },
   "약냉방칸": { connective: "약냉방칸 있고", attributive: "약냉방칸 있는" },
   "덜 붐비게": { connective: "덜 붐비고", attributive: "덜 붐비는" },
+  "앉아서 가기": { connective: "덜 붐벼 앉기 쉽고", attributive: "덜 붐벼 앉기 쉬운" },
   "덜 걷게": { connective: "덜 걷고", attributive: "덜 걷는" },
   "계단 피하기": { connective: "오르내림이 적고", attributive: "오르내림이 적은" },
   "엘리베이터 있는 역": {
@@ -131,7 +133,9 @@ export function matchedPreferences(
   highlights: RouteHighlight[],
   routePrefs: string[] = []
 ): string[] {
-  return routePrefs
+  // 앉아서 가기와 덜 붐비게는 같은 장점이라 둘 다 고르면 앉아서 가기 문구 하나만 쓴다
+  const prefs = routePrefs.includes("SEAT") ? routePrefs.filter((code) => code !== "UNCROWDED") : routePrefs;
+  return prefs
     .map((code) => PREF_TAGS[code])
     .filter((pref): pref is { label: string; tags: RouteHighlight[] } => Boolean(pref))
     .filter((pref) => pref.tags.some((tag) => highlights.includes(tag)))
