@@ -346,7 +346,7 @@ describe("doorGuideLines", () => {
   });
 });
 
-// 타입 검사용: 하이라이트 태그가 서버 값 7개를 모두 말로 바꾸는지 reasonText가 확인한다
+// 서버 하이라이트를 모두 문구로 바꿀 수 있는지 확인한다
 const allTags: RouteHighlight[] = [
   "FASTEST",
   "FEWEST_TRANSFERS",
@@ -355,12 +355,22 @@ const allTags: RouteHighlight[] = [
   "LEAST_WALK",
   "CHEAPEST",
   "WEAK_AC_CAR",
+  "LEAST_VERTICAL",
+  "BEST_ELEVATOR_ACCESS",
 ];
 describe("highlight phrases", () => {
   it("has words for every highlight the server can send", () => {
     for (const tag of allTags) {
       expect(reasonText([tag], ["PERSONAL"])).toEqual(expect.any(String));
     }
+  });
+
+  it("describes the accessibility metrics when no preferences are set", () => {
+    const highlights: RouteHighlight[] = ["FASTEST", "NO_TRANSFER", "LEAST_VERTICAL", "BEST_ELEVATOR_ACCESS"];
+    const phrase =
+      "오르내리는 높이가 가장 낮아요 · 엘리베이터 가까운 문을 안내하는 역의 비율이 가장 높아요";
+    expect(reasonText(highlights, ["OPTIMAL"])).toBe(phrase);
+    expect(recommendationReason(undefined, highlights)).toBe(phrase);
   });
 });
 
@@ -502,6 +512,20 @@ describe("점수로 고르는 추천", () => {
 });
 
 describe("recommendationReason", () => {
+  it("shows each selected accessibility preference only on cards with its highlight", () => {
+    const personal = option("PERSONAL", {
+      highlights: ["LEAST_VERTICAL", "BEST_ELEVATOR_ACCESS"],
+    });
+    const alternative = option("OPTIMAL", { totalDurationSec: 2200, highlights: ["LEAST_VERTICAL"] });
+    const [recommended, other] = groupRouteOptions([personal, alternative], ["AVOID_STAIRS", "ELEVATOR"]);
+
+    expect(recommended.tagline).toBe(
+      "오르내림이 적고 엘리베이터 가까운 문을 안내하는 역의 비율이 높은 길로 골랐어요"
+    );
+    expect(other.tagline).toBe("오르내림이 적은 길로 골랐어요");
+    expect(recommendationReason(meta(), ["FASTEST"], ["AVOID_STAIRS", "ELEVATOR"])).toBe("가장 빨라요");
+  });
+
   it("이동 목적과 시간대 근거를 먼저 말한다", () => {
     expect(recommendationReason(meta({ reasons: ["PURPOSE_SCHOOL", "CONTEXT_RUSH"] }), [], ["FAST"])).toBe(
       "등하교 시간이라 붐비지 않는 길로 골랐어요"

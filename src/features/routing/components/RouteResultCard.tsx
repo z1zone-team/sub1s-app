@@ -145,7 +145,7 @@ export function RouteResultCard({ group, boarding, onPress }: RouteResultCardPro
           <Text className="text-small font-sans-bold text-on-primary">{group.title}</Text>
         </View>
         {group.tagline ? (
-          <Text numberOfLines={1} className="shrink text-small font-sans-semibold text-primary">
+          <Text className="shrink text-small font-sans-semibold text-primary">
             {group.tagline}
           </Text>
         ) : null}
