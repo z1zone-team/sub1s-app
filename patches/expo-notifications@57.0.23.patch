@@ -1,0 +1,13 @@
+diff --git a/android/src/main/java/expo/modules/notifications/notifications/presentation/builders/ExpoNotificationBuilder.kt b/android/src/main/java/expo/modules/notifications/notifications/presentation/builders/ExpoNotificationBuilder.kt
+--- a/android/src/main/java/expo/modules/notifications/notifications/presentation/builders/ExpoNotificationBuilder.kt
++++ b/android/src/main/java/expo/modules/notifications/notifications/presentation/builders/ExpoNotificationBuilder.kt
+@@ -92,6 +92,9 @@
+   override suspend fun build(): Notification {
+     val builder = createBuilder()
++    if (notification.notificationRequest.identifier == "sub1s-guide-step") {
++      builder.setTimeoutAfter(6_000L)
++    }
+ 
+     builder.setSmallIcon(icon)
+     builder.setPriority(priority)
+ 

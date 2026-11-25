@@ -9,6 +9,7 @@ import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { LAST_KNOWN_MAX_AGE_MS, useForegroundLocation } from "@/common/device";
 import { formatDistanceKm, formatDurationSec } from "@/common/utils/format";
+import { useGuideAnnouncement } from "@/features/guide/useGuideNotices";
 import { WalkBanner } from "@/features/guide/components/WalkBanner";
 import { guideMapData } from "@/features/guide/guideMap";
 import { remainingParts } from "@/features/guide/guideText";
@@ -26,6 +27,11 @@ export function WalkNavScreen({ navigation, route }: Props) {
   const { option, origin, destination, railArrival } = route.params;
   const from = endpointCoords(origin);
   const to = endpointCoords(destination);
+  useGuideAnnouncement(route.key, from && to ? {
+    id: "walk",
+    title: railArrival ? "하차 후 도보 안내" : "도보 안내를 시작합니다",
+    body: destination.name + "까지 약 " + Math.max(1, Math.round(option.totalDurationSec / 60)) + "분 걸어가세요.",
+  } : null);
   const finishLabel = railArrival ? "이동 결과 보기" : "홈으로";
   const finish = () => {
     if (railArrival) return navigation.replace("Arrived", railArrival);

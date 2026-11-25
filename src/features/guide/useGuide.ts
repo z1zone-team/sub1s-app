@@ -173,7 +173,7 @@ export function useGuide({ option, sessionId, startedAtMs, originCoords }: UseGu
   const from = position ?? originCoords;
   const walkDistanceM = from && boardingCoords ? Math.round(distanceMeters(from, boardingCoords)) : undefined;
 
-  // 앱이 백그라운드일 때 단계가 바뀌면 걷기, 승차 알림을 띄운다
+  // 단계가 바뀌면 걷기, 승차 알림을 띄운다
   const boardingSegment = gate !== undefined ? option.segments[stops[gate]?.segmentIndex ?? -1] : undefined;
   useGuideNotices(sessionId, {
     phase,

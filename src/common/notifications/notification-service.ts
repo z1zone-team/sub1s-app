@@ -1,6 +1,9 @@
 import * as Notifications from "expo-notifications";
+import { Platform } from "react-native";
 import * as Haptics from "expo-haptics";
-import { NOTIFICATION_CHANNELS } from "./channels";
+import { NOTIFICATION_CHANNELS, setupNotificationChannels } from "./channels";
+
+export const GUIDE_STEP_IDENTIFIER = "sub1s-guide-step";
 
 export interface StationAlertParams {
   type: "TRANSFER" | "ALIGHT";
@@ -59,16 +62,22 @@ export async function scheduleStationAlert(
 }
 
 /**
- * 안내 중 앱이 백그라운드일 때 걷기, 승차 안내를 즉시 로컬 알림으로 띄운다(안내 단계가 바뀔 때 한 번씩)
+ * 길안내 단계가 바뀌면 기기의 안내 채널에 로컬 알림을 표시한다.
  */
 export async function showGuideNotification(params: { title: string; body: string }): Promise<string> {
+  await setupNotificationChannels();
+  const permission = await Notifications.getPermissionsAsync();
+  if (!permission.granted) {
+    if (!permission.canAskAgain || !(await Notifications.requestPermissionsAsync()).granted) return "";
+  }
   return Notifications.scheduleNotificationAsync({
+    identifier: GUIDE_STEP_IDENTIFIER,
     content: {
       title: params.title,
       body: params.body,
       data: { type: "GUIDE" },
     },
-    trigger: { channelId: NOTIFICATION_CHANNELS.GUIDE.id },
+    trigger: Platform.OS === "android" ? { channelId: NOTIFICATION_CHANNELS.GUIDE.id } : null,
   });
 }
 
@@ -91,6 +100,7 @@ export async function showSmartAlertNotification(
       : NOTIFICATION_CHANNELS.ALIGHT;
 
   return Notifications.scheduleNotificationAsync({
+    identifier: GUIDE_STEP_IDENTIFIER,
     content: {
       title: params.title,
       body: params.body,
