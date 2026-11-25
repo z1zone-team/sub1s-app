@@ -1,3 +1,4 @@
+import { finalWalkGuide } from "../guide/walkGuide";
 import type {
   PathSegmentDto,
   RecommendationMeta,
@@ -73,6 +74,28 @@ const option = (
   highlights: [],
   operationStatus: "NORMAL",
   ...over,
+});
+
+describe("finalWalkGuide", () => {
+  const stations = new Map([["09_925", { lat: 37.5, lng: 127.1 }]]);
+  const destination = { name: "목적지", lat: 37.51, lng: 127.11 };
+  const rail = option("OPTIMAL");
+  const last = { ...walk(240), fromStationId: "09_925", toStationId: "DEST_COORDINATE", distanceKm: 0.3 };
+  const route = { ...rail, segments: [...rail.segments, last] };
+
+  it("uses only the final walk for the map, duration and distance", () => {
+    const guide = finalWalkGuide(route, destination, stations);
+    expect(guide?.option).toMatchObject({ mode: "ONLY_WALK", totalDurationSec: 240, totalDistanceKm: 0.3,
+      segments: [{ ...last, fromStationId: "ORIGIN_COORDINATE" }] });
+    expect(guide?.origin).toMatchObject(stations.get("09_925")!);
+    expect(guide?.destination).toEqual(destination);
+  });
+
+  it("finishes normally for a station arrival or missing coordinates", () => {
+    expect(finalWalkGuide(rail, destination, stations)).toBeUndefined();
+    expect(finalWalkGuide(route, undefined, stations)).toBeUndefined();
+    expect(finalWalkGuide(route, destination, new Map())).toBeUndefined();
+  });
 });
 
 describe("routeSignature", () => {

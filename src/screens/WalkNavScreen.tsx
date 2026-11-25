@@ -23,22 +23,25 @@ const NO_STATIONS: ReadonlyMap<string, LatLng> = new Map();
 
 /** 지하철 없이 걷기만 하는 경로의 안내. 서버 세션 없이 앱 안에서만 남은 거리와 시간을 보여 주고 도착지 가까이 오면 도착으로 본다 */
 export function WalkNavScreen({ navigation, route }: Props) {
-  const { option, origin, destination } = route.params;
+  const { option, origin, destination, railArrival } = route.params;
   const from = endpointCoords(origin);
   const to = endpointCoords(destination);
-  const goHome = () =>
+  const finishLabel = railArrival ? "이동 결과 보기" : "홈으로";
+  const finish = () => {
+    if (railArrival) return navigation.replace("Arrived", railArrival);
     navigation.navigate("MainTabs", { screen: "HomeTab", params: { recenterRequest: Date.now() } });
+  };
 
   if (!from || !to) {
     return (
       <Screen edges={[]} contentClassName="items-center justify-center gap-4 p-6">
         <Text className="text-center">출발지나 도착지의 위치를 알 수 없어 걸어서 안내할 수 없어요.</Text>
-        <Button label="홈으로" onPress={goHome} />
+        <Button label={finishLabel} onPress={finish} />
       </Screen>
     );
   }
 
-  return <WalkGuide option={option} destination={destination} from={from} to={to} onHome={goHome} />;
+  return <WalkGuide option={option} destination={destination} from={from} to={to} onFinish={finish} finishLabel={finishLabel} />;
 }
 
 interface WalkGuideProps {
@@ -46,10 +49,11 @@ interface WalkGuideProps {
   destination: RouteEndpoint;
   from: LatLng;
   to: LatLng;
-  onHome: () => void;
+  onFinish: () => void;
+  finishLabel: string;
 }
 
-function WalkGuide({ option, destination, from, to, onHome }: WalkGuideProps) {
+function WalkGuide({ option, destination, from, to, onFinish, finishLabel }: WalkGuideProps) {
   const insets = useSafeAreaInsets();
   const location = useForegroundLocation({ autoStart: true, lastKnownMaxAgeMs: LAST_KNOWN_MAX_AGE_MS });
   const coords = location.coords;
@@ -88,7 +92,7 @@ function WalkGuide({ option, destination, from, to, onHome }: WalkGuideProps) {
           destinationName={destination.name}
           summary={`${formatDistanceKm(progress.remainingM / 1000)} · 약 ${formatDurationSec(progress.remainingSec)}`}
           arrived={arrived}
-          onBack={onHome}
+          onBack={onFinish}
         />
       </View>
 
@@ -115,9 +119,9 @@ function WalkGuide({ option, destination, from, to, onHome }: WalkGuideProps) {
             </Text>
           ) : null}
           <Button
-            label={arrived ? "홈으로" : "안내 끝내기"}
+            label={arrived ? finishLabel : "안내 끝내기"}
             variant={arrived ? "primary" : "secondary"}
-            onPress={onHome}
+            onPress={onFinish}
             className="mt-3"
           />
         </View>
