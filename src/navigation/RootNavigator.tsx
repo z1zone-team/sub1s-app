@@ -29,6 +29,7 @@ import { LiveNavScreen } from "@/screens/LiveNavScreen";
 import { WalkNavScreen } from "@/screens/WalkNavScreen";
 import { MoveMapScreen } from "@/screens/MoveMapScreen";
 import { TimelineScreen } from "@/screens/TimelineScreen";
+import { RankedUserTravelScreen } from "@/screens/RankedUserTravelScreen";
 import { MonthlyRecapScreen } from "@/screens/MonthlyRecapScreen";
 import { SplashScreen } from "@/common/components/SplashScreen";
 import { useSplashMinimumElapsed } from "@/common/components/splashTiming";
@@ -176,6 +177,7 @@ export function RootNavigator() {
           options={{ headerShown: false, gestureEnabled: false, animation: "fade" }}
         />
         <Stack.Screen name="MoveMap" component={MoveMapScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="RankedUserTravel" component={RankedUserTravelScreen} options={{ headerShown: false }} />
         <Stack.Screen name="MonthlyRecap" component={MonthlyRecapScreen} options={{ headerShown: false }} />
         <Stack.Screen
           name="Timeline"

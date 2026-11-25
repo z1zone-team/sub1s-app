@@ -77,6 +77,7 @@ export type RootStackParamList = {
     arrivedAtMs: number;
   };
   Timeline: { periodKey?: string; pushOpenedAt?: number } | undefined;
+  RankedUserTravel: { userId: string; nickname: string; period: "MONTH" | "ALL" };
   MonthlyRecap: { periodKey: string; openedAt?: number };
   /** 타임라인에서 고른 기간을 이어서 보여 준다 */
   MoveMap: { period: TravelStatsPeriod; periodKey?: string };

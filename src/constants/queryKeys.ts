@@ -60,6 +60,8 @@ export const queryKeys = {
         limit,
       ] as const,
     myScore: () => [...queryKeys.ranking.all, "myScore"] as const,
+    userTravel: (viewerId: string | undefined, userId: string, period: "MONTH" | "ALL", monthKey: string) =>
+      [...queryKeys.ranking.all, "userTravel", viewerId, userId, period, monthKey] as const,
   },
   users: {
     all: ["users"] as const,
