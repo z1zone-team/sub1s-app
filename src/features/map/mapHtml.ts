@@ -12,6 +12,8 @@ export interface MapMarker {
   /** 지도 위에 항상 보이는 이름. 없으면 점만 그린다 */
   label?: string;
   radius?: number;
+  /** 역 표시 바깥 테두리의 두께(px) */
+  strokeWidth?: number;
   /** "me"면 점 대신 프로토타입의 캐릭터와 맥동 효과로, "pin"이면 지도 검색에서 고른 장소의 핀으로 그린다 */
   kind?: "me" | "pin";
   /** kind가 "me"일 때 캐릭터의 표정. 이번 달 이동 거리로 정하고, 없으면 보통 */
@@ -43,6 +45,8 @@ export interface MapData {
   lines: MapLine[];
   /** 모든 마커와 선이 보이게 맞출지. 아니면 center를 쓴다 */
   fit: boolean;
+  /** 경로와 역을 화면에 맞출 때 가장자리 여백(px) */
+  fitPadding?: number;
   /** 맞출 때나 중심을 잡을 때 아래를 이만큼(px) 더 비운다. 지도 위에 바텀시트가 얹힐 때 쓴다 */
   bottomInset?: number;
   /** 중심을 잡을 때 위를 이만큼(px) 덮은 것으로 본다. 지도 위에 배너가 얹힐 때 쓴다 */
@@ -138,7 +142,7 @@ export const FOCUS_ZOOM = 17;
  * V-World 타일(WMTS)을 Leaflet으로 그리는 페이지. 앱이 window.updateMap(데이터)을 불러 마커와 선을 바꾼다.
  * 키는 주소에 들어가므로 URL 인코딩한다.
  */
-export function buildMapHtml(vworldKey: string, layer: TileLayerName = { name: "Base", extension: "png" }, labelOverlay = false): string {
+export function buildMapHtml(vworldKey: string, layer: TileLayerName = { name: "Base", extension: "png" }, labelOverlay = false, reportTilesReady = false): string {
   const key = encodeURIComponent(vworldKey);
   const tileUrl = (target: TileLayerName) => `https://api.vworld.kr/req/wmts/1.0.0/${key}/${target.name}/{z}/{y}/{x}.${target.extension}`;
   return `<!doctype html>
@@ -172,7 +176,21 @@ export function buildMapHtml(vworldKey: string, layer: TileLayerName = { name: "
     document.getElementById("error").style.display = "block";
   } else {
     var map = L.map("map", { zoomControl: false, attributionControl: false }).setView([${DEFAULT_CENTER[0]}, ${DEFAULT_CENTER[1]}], ${DEFAULT_ZOOM});
-    L.tileLayer("${tileUrl(layer)}", { maxZoom: 19, detectRetina: true }).addTo(map);
+    var baseTiles = L.tileLayer("${tileUrl(layer)}", { maxZoom: 19, detectRetina: true });
+    ${reportTilesReady ? `
+      var mapDataApplied = false;
+      var tileLoaded = false;
+      var reportedTiles = false;
+      function reportVisibleTiles() {
+        if (reportedTiles || !mapDataApplied || !tileLoaded || baseTiles.isLoading()) return;
+        reportedTiles = true;
+        window.ReactNativeWebView.postMessage('map-tiles-ready');
+      }
+      baseTiles.on('loading', function () { tileLoaded = false; });
+      baseTiles.on('tileload', function () { tileLoaded = true; });
+      baseTiles.on('load', reportVisibleTiles);
+    ` : ""}
+    baseTiles.addTo(map);
     ${labelOverlay ? `L.tileLayer("${tileUrl(LABEL_OVERLAY_LAYER)}", { maxZoom: 19, detectRetina: true }).addTo(map);` : ""}
     var layer = L.layerGroup().addTo(map);
     // 진행 방향 화살표. 확대 수준마다 화면 간격이 달라 따로 두고 다시 그린다
@@ -285,7 +303,7 @@ export function buildMapHtml(vworldKey: string, layer: TileLayerName = { name: "
           bounds.push([m.lat, m.lng]);
           return;
         }
-        var circle = L.circleMarker([m.lat, m.lng], { radius: m.radius || 5, color: "#FFFFFF", weight: 2, fillColor: m.color, fillOpacity: 1 }).addTo(layer);
+        var circle = L.circleMarker([m.lat, m.lng], { radius: m.radius || 5, color: "#FFFFFF", weight: m.strokeWidth == null ? 2 : m.strokeWidth, fillColor: m.color, fillOpacity: 1 }).addTo(layer);
         if (m.label) circle.bindTooltip(m.label, { permanent: true, direction: "top", offset: [0, -6], className: "label" });
         bounds.push([m.lat, m.lng]);
       });
@@ -298,7 +316,8 @@ export function buildMapHtml(vworldKey: string, layer: TileLayerName = { name: "
           map.fitBounds(data.focus, { paddingTopLeft: [32, 32 + (data.topInset || 0)], paddingBottomRight: [32, 32 + (data.bottomInset || 0)], maxZoom: ${FOCUS_ZOOM} });
         }
       } else if (data.fit && bounds.length > 0) {
-        map.fitBounds(bounds, { paddingTopLeft: [32, 32 + (data.topInset || 0)], paddingBottomRight: [32, 32 + (data.bottomInset || 0)], maxZoom: 15 });
+        var fitPadding = data.fitPadding == null ? 32 : data.fitPadding;
+        map.fitBounds(bounds, { paddingTopLeft: [fitPadding, fitPadding + (data.topInset || 0)], paddingBottomRight: [fitPadding, fitPadding + (data.bottomInset || 0)], maxZoom: 15 });
       } else if (data.center) {
         map.setView(data.center, data.zoom || ${DEFAULT_ZOOM});
         // 위의 배너와 아래의 시트가 덮은 만큼을 빼고 보이는 영역의 가운데에 중심점이 오도록 지도를 옮긴다
@@ -306,6 +325,7 @@ export function buildMapHtml(vworldKey: string, layer: TileLayerName = { name: "
         if (shift) map.panBy([0, shift], { animate: false });
       }
       drawArrows();
+      ${reportTilesReady ? "mapDataApplied = true; reportVisibleTiles();" : ""}
     };
   }
 </script>
