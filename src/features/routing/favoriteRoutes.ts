@@ -6,7 +6,7 @@ import type { RecentRouteItem } from "@/common/storage/useRecentRoutes";
 export const MAX_ROUTE_CHIPS = 2;
 
 /** 서버가 같은 경로를 판단하는 규칙과 같다. 역은 역 ID, 장소는 소수 4자리 좌표(약 11m). 이름은 보지 않는다 */
-function pointKey(endpoint: { stationId?: string | null; lat?: number | null; lng?: number | null }): string | null {
+export function pointKey(endpoint: { stationId?: string | null; lat?: number | null; lng?: number | null }): string | null {
   if (endpoint.stationId) return `S:${endpoint.stationId}`;
   if (typeof endpoint.lat === "number" && typeof endpoint.lng === "number") {
     return `P:${endpoint.lat.toFixed(4)},${endpoint.lng.toFixed(4)}`;
@@ -46,7 +46,7 @@ export function canFavorite(origin: RouteEndpoint, destination: RouteEndpoint): 
   );
 }
 
-const toBody = (endpoint: RouteEndpoint): FavoriteEndpointBody =>
+export const toBody = (endpoint: RouteEndpoint): FavoriteEndpointBody =>
   endpoint.stationId
     ? { name: endpoint.name, stationId: endpoint.stationId }
     : { name: endpoint.name, lat: endpoint.lat, lng: endpoint.lng };
