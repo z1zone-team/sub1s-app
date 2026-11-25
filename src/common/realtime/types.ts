@@ -4,12 +4,6 @@ import type {
   CarCongestionDto,
 } from "../../apis/queries/congestion/getTrainCongestion";
 
-export interface EtaTickPayload {
-  sessionId: string;
-  etaTimestamp: string;
-  remainingSec: number;
-}
-
 export type SmartAlertType = "TRANSFER_PREPARE" | "TRANSFER_NOW" | "ALIGHT_PREPARE";
 
 export interface SmartAlertPayload {
@@ -73,7 +67,6 @@ export interface ClientToServerEvents {
 
 export interface ServerToClientEvents {
   congestion_tick: (data: TrainCongestionResponse) => void;
-  eta_tick: (data: EtaTickPayload) => void;
   smart_alert: (data: SmartAlertPayload) => void;
   offroute_alert: (data: OffRouteAlertPayload) => void;
   ranking_changed: (data: RankingChangedPayload) => void;
