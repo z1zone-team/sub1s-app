@@ -15,7 +15,7 @@
 - **Realtime / Socket**: Socket.io Client (주소에 `/ws/subway` 네임스페이스를 넣고 엔진 경로 `path`는 주지 않는다, 자동 재연결)
 - **Map**: V-World 지도를 `react-native-webview` 안에서 Leaflet으로 그림
 - **Notifications & Haptics**: Expo Notifications v57, Expo Haptics
-- **Device Capabilities**: Expo Location, Expo AV (오디오 녹음/재생), NetInfo
+- **Device Capabilities**: Expo Location, Expo Audio(녹음), Expo Speech(브리핑을 기기 음성으로 읽기), NetInfo
 - **Storage**: Expo SecureStore (민감 토큰) + AsyncStorage (일반 데이터)
 
 ---
@@ -32,23 +32,26 @@ src/
 ├── common/                  # 도메인 비의존적 공통 인프라 모듈
 │   ├── auth/                # Clerk 인증 동기화와 소셜 로그인(인증 상태의 기준은 Clerk, 토큰 주입은 `AppProviders`의 브리지)
 │   ├── components/          # ErrorBoundary 등 글로벌 공통 컴포넌트
-│   ├── device/              # 위치(GPS), 오디오(녹음/재생/업로드), 네트워크 모니터링
+│   ├── device/              # 위치(GPS, 백그라운드 안내 위치, 방향), 음성 녹음, 네트워크 모니터링
 │   ├── logging/             # Authorization/토큰 자동 마스킹 로거
 │   ├── notifications/       # Android 4개 채널, 하차/환승/오탑승 스케줄러, 푸시 토큰
 │   ├── realtime/            # Socket.io 클라이언트, 실시간 혼잡도 스트림 스토어, REST 폴백
+│   ├── settings/            # 화면 테마 등 앱 설정
 │   ├── storage/             # SecureStore + AsyncStorage 통합 어댑터, 최근 검색 경로
 │   ├── store/               # 글로벌 토스트(toast-store) 등 UI 상태
 │   ├── utils/               # 시간 포맷(KST), 에러 파싱
 │   └── widget/              # 홈 화면 위젯 스냅샷 공유 및 딥링크 규약
 ├── constants/               # 환경 변수(Zod 검증), QueryKey 팩토리
-├── features/                # 6대 핵심 비즈니스 도메인 폴더 (UI 및 타입)
-│   ├── routing/             # 경로 탐색
-│   ├── congestion/          # 실시간 혼잡도
-│   ├── navigation/          # 실시간 주행 안내 및 오탑승 감지
-│   ├── voice/               # 음성 쿼리 및 AI 브리핑
-│   ├── ranking/             # 이동거리 리더보드
-│   └── profile/             # 이동 타임라인 및 통계
+├── features/                # 도메인 기능 (순수 로직, 훅, 컴포넌트)
+│   ├── routing/             # 경로 탐색 결과와 추천
+│   ├── guide/               # 실시간 주행 안내, 단계 알림, 이탈 처리
+│   ├── voice/               # 음성 검색과 브리핑 읽기
+│   ├── ranking/, profile/, timeline/, recap/   # 랭킹, 프로필 통계, 타임라인, 월말정산
+│   ├── home/, search/, places/, map/, friends/, onboarding/
+│   └── congestion/, navigation/
 ├── navigation/              # 루트/탭 네비게이터 및 딥링크 매핑
+├── providers/               # AppProviders (QueryClient, Clerk, TokenBridge, 알림)
+├── hooks/, lib/, theme/     # 공용 훅, 유틸(cn 등), 디자인 토큰
 └── screens/                 # 네비게이션에 마운트되는 스크린 컴포넌트
 ```
 
@@ -254,7 +257,7 @@ adb shell pm list packages | grep sub1s # 설치된 앱 확인
 | 음성 검색 | 음성 경로 추천 | 로그인 필요, 서버의 AI 서비스 연결이 있어야 실제 인식 |
 | 집, 학교 즐겨찾기 | 장소 저장 | 로그인 필요 |
 
-화면은 모두 타입 검사, 단위 테스트, 번들링까지만 확인했고 **실기기에서 눈으로 확인한 것은 아직 없습니다**.
+실기기(Galaxy S20, Android)에서 확인한 화면과 아직 보지 못한 화면은 sub1s-docs `TASKS.md`와 `FRONTEND_BACKEND_GAP.md`(E-68 등)에 기록합니다. iOS는 설치와 실행까지만 확인했습니다.
 
 ---
 
@@ -274,7 +277,7 @@ function ProfileHeader() {
 ```
 
 ### 2. 실시간 열차 혼잡도 (30초 스트림 & 칸 단위 렌더링 최적화)
-> 소켓은 아직 화면에서 쓰지 않습니다. 경로 상세의 칸별 혼잡도는 경로 응답의 `cars`를 쓰고, 안내 중 위치 보고는 REST입니다.
+> 소켓은 랭킹 갱신, 음성 결과(`voice_result`), 안내 중 환승·하차 알림(`smart_alert`)에 씁니다. 경로 상세의 칸별 혼잡도는 경로 응답의 `cars`를 쓰고, 안내 중 위치 보고는 REST입니다. 아래 열차 방 구독은 화면에 아직 붙이지 않았습니다.
 ```typescript
 import { useRealtimeSubscription, useCarCongestion } from "@/common/realtime";
 
@@ -304,24 +307,24 @@ await scheduleStationAlert({
 await triggerOffRouteAlert("영등포");
 ```
 
-### 4. 음성 녹음 및 AI 경로 추천 업로드
+### 4. 음성 녹음과 음성 경로 추천 작업
 ```typescript
-import { useAudioRecorder, uploadVoiceRouteRecommend, useAudioPlayer } from "@/common/device";
+import { useAudioRecorder } from "@/common/device";
+import { submitVoiceJob } from "@/apis/mutations/voice/voiceJobs";
 
 const { startRecording, stopRecording } = useAudioRecorder();
-const { playAudio } = useAudioPlayer();
 
 async function handleVoiceSearch() {
   const result = await stopRecording();
   if (result?.uri) {
-    const aiResponse = await uploadVoiceRouteRecommend(result.uri);
-    console.log("추천 경로:", aiResponse.recommendedRoute);
-    if (aiResponse.audioTtsUrl) {
-      await playAudio(aiResponse.audioTtsUrl);
-    }
+    // 결과는 소켓 voice_result로 온다. 놓치면 getVoiceJob(jobId)로 조회한다
+    const { jobId } = await submitVoiceJob({
+      audio: { uri: result.uri, name: "voice_query.m4a", type: "audio/m4a" },
+    });
   }
 }
 ```
+브리핑은 서버 음성 없이 `features/voice/hooks/useBriefingVoice`가 기기 음성(`expo-speech`)으로 읽습니다. 실제 화면은 `src/screens/VoiceScreen.tsx`와 `features/voice/hooks/useVoiceJobMutation.ts`를 보세요.
 
 ### 5. 최근 검색 경로 저장 및 위젯 데이터 갱신
 ```typescript
