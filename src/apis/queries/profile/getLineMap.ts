@@ -40,11 +40,11 @@ export interface LineMapQueryDto {
 
 /**
  * 호선별 전체 노선망 및 사용자 역 방문 여부 조회
- * GET /api/v1/line-map
+ * GET /api/v1/travel/line-map
  */
 export const getLineMap = (
   query: LineMapQueryDto,
   options?: RequestOptions
 ): Promise<LineMapResponseDto> => {
-  return get<LineMapResponseDto>("/line-map", query, options);
+  return get<LineMapResponseDto>("/travel/line-map", query, options);
 };
