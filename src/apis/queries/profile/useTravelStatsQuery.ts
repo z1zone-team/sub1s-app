@@ -23,7 +23,7 @@ export const useTravelStatsQuery = (
   const { isSignedIn } = useAuthToken();
 
   return useQuery({
-    queryKey: queryKeys.profile.stats(period),
+    queryKey: queryKeys.profile.stats(period, query?.periodKey),
     queryFn: ({ signal }) =>
       getTravelStats({ period, ...query }, { signal }),
     enabled: Boolean(isSignedIn) && (options?.enabled ?? true),

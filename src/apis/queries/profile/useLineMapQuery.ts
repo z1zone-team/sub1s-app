@@ -23,7 +23,7 @@ export const useLineMapQuery = (
   const { isSignedIn } = useAuthToken();
 
   return useQuery({
-    queryKey: queryKeys.linemap.period(period),
+    queryKey: queryKeys.linemap.period(period, query?.periodKey),
     queryFn: ({ signal }) =>
       getLineMap({ period, ...query }, { signal }),
     enabled: Boolean(isSignedIn) && (options?.enabled ?? true),

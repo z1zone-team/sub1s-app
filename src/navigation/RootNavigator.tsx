@@ -42,6 +42,10 @@ const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 const AUTH_LOAD_TIMEOUT_MS = 5000;
 
+function navigateToPush(target: NonNullable<PushTarget>) {
+  navigationRef.navigate(target.screen, { periodKey: target.periodKey, pushOpenedAt: Date.now() });
+}
+
 export function RootNavigator() {
   const { scheme, colors } = useTheme();
   const { isLoaded, isSignedIn } = useAuth();
@@ -55,7 +59,7 @@ export function RootNavigator() {
   // 앱이 꺼져 있다가 알림으로 열리면 내비게이션이 준비될 때까지 기다렸다가 이동한다
   const pendingTarget = useRef<NonNullable<PushTarget> | null>(null);
   const openTarget = useCallback((target: NonNullable<PushTarget>) => {
-    if (navigationRef.isReady()) navigationRef.navigate(target.screen);
+    if (navigationRef.isReady()) navigateToPush(target);
     else pendingTarget.current = target;
   }, []);
   usePushNavigation(openTarget);
@@ -92,7 +96,7 @@ export function RootNavigator() {
       ref={navigationRef}
       onReady={() => {
         if (pendingTarget.current) {
-          navigationRef.navigate(pendingTarget.current.screen);
+          navigateToPush(pendingTarget.current);
           pendingTarget.current = null;
         }
       }}

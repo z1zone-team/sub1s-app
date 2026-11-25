@@ -31,6 +31,8 @@ export interface StatsBucketDto {
 export interface TravelStatsQueryDto {
   period: TravelStatsPeriod;
   userId?: string;
+  /** MONTH에서만 지정. 생략하면 이번 달 */
+  periodKey?: string;
 }
 
 /**

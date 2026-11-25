@@ -144,6 +144,29 @@ describe("Travel & Profile Domain APIs & Hooks", () => {
     );
   });
 
+  it("keeps current month, prior months and years in separate caches and forwards the selected month", async () => {
+    const signal = new AbortController().signal;
+    useTravelStatsQuery("MONTH", { periodKey: "2025-12" });
+    let query = mockUseQuery.mock.calls.at(-1)![0];
+    expect(query.queryKey).toEqual(["profile", "stats", "MONTH", "2025-12"]);
+    await query.queryFn({ signal });
+    expect(client.get).toHaveBeenLastCalledWith("/travel/stats", { period: "MONTH", periodKey: "2025-12" }, { signal });
+    useTravelStatsQuery("MONTH", { periodKey: "2026-01" });
+    expect(mockUseQuery.mock.calls.at(-1)![0].queryKey).toEqual(["profile", "stats", "MONTH", "2026-01"]);
+    useTravelStatsQuery("MONTH");
+    expect(mockUseQuery.mock.calls.at(-1)![0].queryKey).toEqual(["profile", "stats", "MONTH"]);
+
+    useLineMapQuery("MONTH", { periodKey: "2025-12" });
+    query = mockUseQuery.mock.calls.at(-1)![0];
+    expect(query.queryKey).toEqual(["linemap", "period", "MONTH", "2025-12"]);
+    await query.queryFn({ signal });
+    expect(client.get).toHaveBeenLastCalledWith("/line-map", { period: "MONTH", periodKey: "2025-12" }, { signal });
+    useLineMapQuery("MONTH", { periodKey: "2026-01" });
+    expect(mockUseQuery.mock.calls.at(-1)![0].queryKey).toEqual(["linemap", "period", "MONTH", "2026-01"]);
+    useLineMapQuery("MONTH");
+    expect(mockUseQuery.mock.calls.at(-1)![0].queryKey).toEqual(["linemap", "period", "MONTH"]);
+  });
+
   it("createTravelLog standalone function should call post /travel/log", async () => {
     const mockLogResponse = {
       logId: "log-100",
