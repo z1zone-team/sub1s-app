@@ -11,147 +11,128 @@
 
 ```text
 src/apis/
-├── client.ts                 # Base HTTP 클라이언트 (토큰 자동주입, 에러 처리, get/post/put/patch/del)
+├── client.ts                 # Base HTTP 클라이언트 (토큰 자동주입, 에러 처리, get/getPaged/post/put/patch/del/postMultipart)
+├── retry.ts                  # 재시도 정책
+├── index.ts                  # 화면에서 쓰는 함수와 훅을 다시 내보냄 (`@/apis`)
 ├── queries/                  # [조회성 API] GET 요청. 같은 입력이면 결과를 재사용할 조회는 POST여도 여기에 둔다(경로 검색 `useRouteSearchQuery`)
 │   ├── auth/                 # ✅ 기준 모범 예제 (getMe.ts, useGetMe.ts)
 │   ├── routing/              # 경로 탐색
-│   ├── congestion/           # 실시간/통계 혼잡도
+│   ├── places/               # 역·장소 검색, 좌표의 주소 조회
+│   ├── stations/             # 역 정보, 다음 열차, 편의시설
+│   ├── trains/               # 호선의 열차 위치
+│   ├── congestion/           # 칸별 혼잡도
 │   ├── tracking/             # 주행 세션 조회
-│   ├── ranking/              # 랭킹 리더보드
-│   └── profile/              # 프로필 통계, 타임라인
+│   ├── ranking/              # 랭킹 리더보드, 랭킹에서 고른 사용자의 이동 기록
+│   ├── profile/              # 프로필 통계, 타임라인, 노선도
+│   └── users/                # 설문, 집·학교, 즐겨찾기 경로, 친구, 알림 설정 (조회와 저장 훅을 함께 둔다)
 └── mutations/                # [변경성 API] POST / PUT / PATCH / DELETE 요청
-    ├── routing/              # 즐겨찾기 등록 등
-    ├── tracking/             # 오탑승 신고, 위치 보고
-    ├── voice/                # 음성 AI 질의 업로드
+    ├── tracking/             # 안내 시작, 위치 보고, 이탈 확인
+    ├── travel/               # 이동 완료 기록
+    ├── users/                # 프로필, 설문 수정
+    ├── voice/                # 음성 작업 제출과 조회 (voiceJobs.ts)
     └── notifications/        # 푸시 토큰 등록
 ```
 
+- 호출 함수(`getMe.ts`)와 훅(`useGetMe.ts`)을 1:1로 둔다. 쿼리 키는 `src/constants/queryKeys.ts`의 팩토리에 등록한다.
+- 타입은 서버 계약(sub1s-docs `API_SPEC.md`)을 그대로 옮긴다.
+
 ---
 
-## 🚀 2. 새 Query(조회 API) 추가하는 법 (3단계)
+## 🚀 2. 새 Query(조회 API) 추가하는 법
 
-예: 지하철 경로 4-모드 탐색 조회 API
+실제 코드 `queries/auth/`를 예로 든다.
 
-### 1단계: 순수 API 함수 작성 (`queries/routing/getOptimalRoutes.ts`)
+### 1단계: 순수 API 함수 작성 (`queries/auth/getMe.ts`)
 ```typescript
 import { get } from "@/apis/client";
 
-// API_SPEC.md 에 정의된 DTO 타입 정의
-export interface RouteParams {
-  originStationId: string;
-  destStationId: string;
-  mode?: "OPTIMAL" | "COMFORTABLE" | "PERSONAL" | "CHEAPEST";
+export interface Me {
+  id: string;
+  nickname: string;
+  // ... API_SPEC.md의 UserProfileResponseDto
 }
 
-export interface RouteResult {
-  routeId: string;
-  totalDurationMinutes: number;
-  totalFareWon: number;
-  transferCount: number;
-  path: Array<{ stationId: string; stationName: string; line: string }>;
-}
-
-export const getOptimalRoutes = (params: RouteParams): Promise<RouteResult> => {
-  return get<RouteResult>("/routes/optimal", params);
+export const getMe = (): Promise<Me> => {
+  return get<Me>("/auth/me");
 };
 ```
 
 ### 2단계: 쿼리 키 등록 (`constants/queryKeys.ts`)
 ```typescript
 export const queryKeys = {
-  routes: {
-    all: ["routes"] as const,
-    optimal: (origin: string, dest: string, mode?: string) =>
-      [...queryKeys.routes.all, "optimal", origin, dest, mode] as const,
+  auth: {
+    all: ["auth"] as const,
+    me: () => [...queryKeys.auth.all, "me"] as const,
   },
   // ...
 };
 ```
 
-### 3단계: React Query 훅 작성 (`queries/routing/useGetOptimalRoutes.ts`)
+### 3단계: React Query 훅 작성 (`queries/auth/useGetMe.ts`)
 ```typescript
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import { queryKeys } from "@/constants/queryKeys";
-import { getOptimalRoutes, type RouteParams, type RouteResult } from "./getOptimalRoutes";
+import { useAuthToken } from "@/hooks/useAuthToken";
+import { getMe, type Me } from "./getMe";
 
-export const useGetOptimalRoutes = (
-  params: RouteParams,
-  enabled: boolean = true
-): UseQueryResult<RouteResult, Error> => {
+export const useGetMe = (): UseQueryResult<Me, Error> => {
+  const { isSignedIn } = useAuthToken();
   return useQuery({
-    queryKey: queryKeys.routes.optimal(params.originStationId, params.destStationId, params.mode),
-    queryFn: () => getOptimalRoutes(params),
-    enabled: enabled && Boolean(params.originStationId && params.destStationId),
-    staleTime: 60 * 1000, // 1분간 캐시 유지
+    queryKey: queryKeys.auth.me(),
+    queryFn: getMe,
+    enabled: Boolean(isSignedIn),
+    staleTime: 5 * 60_000,
   });
 };
 ```
 
 ### 4단계: 화면에서 사용
 ```tsx
-import { useGetOptimalRoutes } from "@/apis/queries/routing/useGetOptimalRoutes";
+import { useGetMe } from "@/apis";
 
-export function RouteResultView({ origin, dest }: { origin: string; dest: string }) {
-  const { data: route, isLoading, isError, error } = useGetOptimalRoutes({
-    originStationId: origin,
-    destStationId: dest,
-  });
-
+export function ProfileHeader() {
+  const { data: me, isLoading, isError, error } = useGetMe();
   if (isLoading) return <ActivityIndicator />;
   if (isError) return <Text className="text-red-500">{error.message}</Text>;
-
-  return (
-    <View className="p-4 bg-slate-900 rounded-lg">
-      <Text className="text-white text-lg font-bold">소요시간: {route.totalDurationMinutes}분</Text>
-      <Text className="text-slate-400">요금: {route.totalFareWon}원</Text>
-    </View>
-  );
+  return <Text>{me?.nickname}님</Text>;
 }
 ```
 
 ---
 
-## ⚡ 3. 새 Mutation(변경 API) 추가하는 법 (3단계)
+## ⚡ 3. 새 Mutation(변경 API) 추가하는 법
 
-예: 오탑승/이탈 신고 API
+실제 코드 `mutations/users/`의 프로필 수정을 예로 든다.
 
-### 1단계: 순수 API 함수 작성 (`mutations/tracking/trackDeviate.ts`)
+### 1단계: 순수 API 함수 작성 (`mutations/users/updateProfile.ts`)
 ```typescript
-import { post } from "@/apis/client";
+import { patch, type RequestOptions } from "@/apis/client";
 
-export interface TrackDeviateBody {
-  sessionId: string;
-  currentStationId: string;
-  latitude: number;
-  longitude: number;
+export interface UpdateProfileRequest {
+  name?: string | null;
+  nickname?: string;
+  rankingVisibility?: "PUBLIC" | "ANONYMOUS" | "PRIVATE";
 }
 
-export interface TrackDeviateResult {
-  isDeviated: boolean;
-  recoveryRouteId?: string;
-}
-
-export const trackDeviate = (body: TrackDeviateBody): Promise<TrackDeviateResult> => {
-  return post<TrackDeviateResult>("/routes/track/deviate", body);
+export const updateProfile = (body: UpdateProfileRequest, options?: RequestOptions): Promise<MyProfile> => {
+  return patch<MyProfile>("/users/me", body, options);
 };
 ```
 
-### 2단계: React Query 훅 작성 (`mutations/tracking/useTrackDeviate.ts`)
+### 2단계: React Query 훅 작성 (`mutations/users/useUpdateProfileMutation.ts`)
 ```typescript
 import { useMutation, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
 import { queryKeys } from "@/constants/queryKeys";
-import { trackDeviate, type TrackDeviateBody, type TrackDeviateResult } from "./trackDeviate";
+import { updateProfile, type MyProfile, type UpdateProfileRequest } from "./updateProfile";
 
-export const useTrackDeviate = (): UseMutationResult<TrackDeviateResult, Error, TrackDeviateBody> => {
+export const useUpdateProfileMutation = (): UseMutationResult<MyProfile, Error, UpdateProfileRequest> => {
   const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: (body: TrackDeviateBody) => trackDeviate(body),
-    onSuccess: (_, variables) => {
-      // 관련된 주행 세션 쿼리 무효화
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.tracking.session(variables.sessionId),
-      });
+    mutationFn: (body: UpdateProfileRequest) => updateProfile(body),
+    onSuccess: () => {
+      // 프로필이 바뀌면 내 정보와 랭킹 표시를 다시 불러온다
+      void queryClient.invalidateQueries({ queryKey: queryKeys.auth.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.ranking.all });
     },
   });
 };
@@ -159,26 +140,8 @@ export const useTrackDeviate = (): UseMutationResult<TrackDeviateResult, Error, 
 
 ### 3단계: 화면에서 사용
 ```tsx
-import { useTrackDeviate } from "@/apis/mutations/tracking/useTrackDeviate";
-
-export function DeviationButton({ sessionId, stationId }: { sessionId: string; stationId: string }) {
-  const { mutate: reportDeviate, isPending } = useTrackDeviate();
-
-  const handleReport = () => {
-    reportDeviate({
-      sessionId,
-      currentStationId: stationId,
-      latitude: 37.4979,
-      longitude: 127.0276,
-    });
-  };
-
-  return (
-    <TouchableOpacity onPress={handleReport} disabled={isPending} className="bg-red-600 p-3 rounded-lg">
-      <Text className="text-white text-center">{isPending ? "보고 중..." : "오탑승 신고"}</Text>
-    </TouchableOpacity>
-  );
-}
+const { mutate: save, isPending } = useUpdateProfileMutation();
+save({ nickname: "새닉네임" });
 ```
 
 ---
@@ -193,11 +156,12 @@ export function DeviationButton({ sessionId, stationId }: { sessionId: string; s
 
 ## 🎙️ 5. 파일 업로드 (음성 인식 등)
 5MB 미만의 멀티파트 폼데이터 업로드가 필요할 때는 `postMultipart` 헬퍼를 사용하세요:
+실제 사용처는 음성 작업 제출이다(`mutations/voice/voiceJobs.ts`). 결과는 바로 오지 않고 소켓 `voice_result`로 오며, 놓치면 `getVoiceJob`으로 조회한다.
 ```typescript
 import { postMultipart } from "@/apis/client";
+import { buildVoiceFormData } from "./voiceRouteTypes";
 
-export const uploadVoiceAudio = async (formData: FormData, sizeBytes: number) => {
-  return postMultipart<VoiceResponse>("/voice/route-recommend", formData, sizeBytes);
-};
+export const submitVoiceJob = (params: VoiceRouteRecommendRequest, fileSizeBytes?: number, options?: RequestOptions) =>
+  postMultipart<VoiceJobSubmitResponse>("/voice/jobs", buildVoiceFormData(params), fileSizeBytes, options);
 ```
 5MB를 초과하는 파일은 네트워크 요청을 보내기 전에 클라이언트단에서 `FILE_TOO_LARGE` `ApiError`를 발생시켜 서버 과부하를 방지합니다.
