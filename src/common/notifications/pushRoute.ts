@@ -5,14 +5,17 @@ export function isEasProjectId(value: string | undefined | null): value is strin
   return !!value && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 }
 
-export type PushTarget = { screen: "Timeline"; periodKey?: string } | null;
+export type PushTarget =
+  | { screen: "MonthlyRecap"; periodKey: string }
+  | { screen: "Timeline"; periodKey?: string }
+  | null;
 
-/** 푸시의 data로 열 화면을 정한다. 월말정산은 타임라인으로 간다. 모르는 알림이면 이동하지 않는다 */
+/** 날짜를 확인한 월말정산은 정산 카드를 열고 기존 타임라인 알림도 지원한다 */
 export function pushTargetOf(data: unknown): PushTarget {
   if (!data || typeof data !== "object") return null;
   const { type, screen, periodKey } = data as { type?: unknown; screen?: unknown; periodKey?: unknown };
-  if (type === "MONTHLY_SETTLEMENT" || screen === "timeline") {
-    return { screen: "Timeline", ...(parseMonthKey(periodKey) ? { periodKey: periodKey as string } : {}) };
-  }
+  const month = typeof periodKey === "string" && parseMonthKey(periodKey) ? periodKey : undefined;
+  if (type === "MONTHLY_SETTLEMENT" && month) return { screen: "MonthlyRecap", periodKey: month };
+  if (type === "MONTHLY_SETTLEMENT" || screen === "timeline") return { screen: "Timeline", ...(month ? { periodKey: month } : {}) };
   return null;
 }

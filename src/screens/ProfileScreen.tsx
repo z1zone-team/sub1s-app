@@ -19,6 +19,7 @@ import { formatDistanceKm } from "@/common/utils/format";
 import { valueParts } from "@/features/guide/arrivedView";
 import { kstYearMonth, moodOf, periodKeyOf } from "@/features/ranking/rankingView";
 import { ProfileMascot } from "@/features/profile/components/ProfileMascot";
+import { previousMonthKey } from "@/features/recap/recapView";
 import {
   isVisibilityOn,
   percentileText,
@@ -136,6 +137,11 @@ export function ProfileScreen() {
       </View>
 
       <View className="mx-3 mt-3 rounded-xl bg-bg py-2">
+        <MenuRow
+          icon="star"
+          label="지난달 정산"
+          onPress={() => navigation.navigate("MonthlyRecap", { periodKey: previousMonthKey(Date.now()) })}
+        />
         <MenuRow
           icon="pulse"
           label="타임라인 자세히 보기"
