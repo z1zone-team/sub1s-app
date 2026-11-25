@@ -5,7 +5,6 @@ import type {
   JoinTrainPayload,
   ReportLocationPayload,
   TrainCongestionResponse,
-  EtaTickPayload,
   SmartAlertPayload,
   OffRouteAlertPayload,
 } from "./types";
@@ -13,7 +12,6 @@ import type {
 export function useRealtimeSubscription(train?: JoinTrainPayload | null) {
   const isConnected = useRealtimeStore((state) => state.isConnected);
   const congestion = useRealtimeStore((state) => state.congestion);
-  const eta = useRealtimeStore((state) => state.eta);
   const latestAlert = useRealtimeStore((state) => state.latestAlert);
   const actions = useRealtimeStore((state) => state.actions);
 
@@ -31,10 +29,6 @@ export function useRealtimeSubscription(train?: JoinTrainPayload | null) {
         actions.setCongestion(data);
       };
 
-      const onEtaTick = (data: EtaTickPayload) => {
-        actions.setEta(data);
-      };
-
       const onSmartAlert = (data: SmartAlertPayload) => {
         actions.setAlert(data);
       };
@@ -44,7 +38,6 @@ export function useRealtimeSubscription(train?: JoinTrainPayload | null) {
       };
 
       socket.on("congestion_tick", onCongestionTick);
-      socket.on("eta_tick", onEtaTick);
       socket.on("smart_alert", onSmartAlert);
       socket.on("offroute_alert", onOffRouteAlert);
 
@@ -54,7 +47,6 @@ export function useRealtimeSubscription(train?: JoinTrainPayload | null) {
 
       return () => {
         socket.off("congestion_tick", onCongestionTick);
-        socket.off("eta_tick", onEtaTick);
         socket.off("smart_alert", onSmartAlert);
         socket.off("offroute_alert", onOffRouteAlert);
         if (train) {
@@ -81,7 +73,6 @@ export function useRealtimeSubscription(train?: JoinTrainPayload | null) {
   return {
     isConnected,
     congestion,
-    eta,
     latestAlert,
     clearAlert: actions.clearAlert,
     reportLocation,

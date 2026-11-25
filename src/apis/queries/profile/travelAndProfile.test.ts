@@ -125,7 +125,7 @@ describe("Travel & Profile Domain APIs & Hooks", () => {
     (client.get as jest.Mock).mockResolvedValue(mockLineMap);
 
     const result = await getLineMap({ period: "ALL" });
-    expect(client.get).toHaveBeenCalledWith("/line-map", { period: "ALL" }, undefined);
+    expect(client.get).toHaveBeenCalledWith("/travel/line-map", { period: "ALL" }, undefined);
     expect(result).toEqual(mockLineMap);
 
     mockUseQuery.mockReturnValue({ data: mockLineMap, isSuccess: true });
@@ -160,7 +160,7 @@ describe("Travel & Profile Domain APIs & Hooks", () => {
     query = mockUseQuery.mock.calls.at(-1)![0];
     expect(query.queryKey).toEqual(["linemap", "period", "MONTH", "2025-12"]);
     await query.queryFn({ signal });
-    expect(client.get).toHaveBeenLastCalledWith("/line-map", { period: "MONTH", periodKey: "2025-12" }, { signal });
+    expect(client.get).toHaveBeenLastCalledWith("/travel/line-map", { period: "MONTH", periodKey: "2025-12" }, { signal });
     useLineMapQuery("MONTH", { periodKey: "2026-01" });
     expect(mockUseQuery.mock.calls.at(-1)![0].queryKey).toEqual(["linemap", "period", "MONTH", "2026-01"]);
     useLineMapQuery("MONTH");

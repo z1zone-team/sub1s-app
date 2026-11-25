@@ -2,7 +2,6 @@ import { create } from "zustand";
 import type {
   TrainCongestionResponse,
   CarCongestionDto,
-  EtaTickPayload,
   SmartAlertPayload,
   OffRouteAlertPayload,
   JoinTrainPayload,
@@ -13,13 +12,11 @@ export interface RealtimeState {
   currentTrain: JoinTrainPayload | null;
   congestion: TrainCongestionResponse | null;
   cars: Record<number, CarCongestionDto>;
-  eta: EtaTickPayload | null;
   latestAlert: SmartAlertPayload | OffRouteAlertPayload | null;
   actions: {
     setConnected: (connected: boolean) => void;
     setCurrentTrain: (train: JoinTrainPayload | null) => void;
     setCongestion: (congestion: TrainCongestionResponse) => void;
-    setEta: (eta: EtaTickPayload) => void;
     setAlert: (alert: SmartAlertPayload | OffRouteAlertPayload) => void;
     clearAlert: () => void;
     reset: () => void;
@@ -31,7 +28,6 @@ const initialState = {
   currentTrain: null,
   congestion: null,
   cars: {},
-  eta: null,
   latestAlert: null,
 };
 
@@ -52,7 +48,6 @@ export const useRealtimeStore = create<RealtimeState>((set) => ({
         cars: carsMap,
       });
     },
-    setEta: (eta) => set({ eta }),
     setAlert: (latestAlert) => set({ latestAlert }),
     clearAlert: () => set({ latestAlert: null }),
     reset: () => set({ ...initialState }),
