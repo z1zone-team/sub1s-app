@@ -1,5 +1,6 @@
 import type { FavoriteRoute } from "@/apis/queries/users/favoriteRoutes";
 import type { RecentRouteItem } from "@/common/storage/useRecentRoutes";
+import type { FrequentRouteDto } from "@/apis/queries/profile/getFrequentRoutes";
 import {
   canFavorite,
   favoriteEndpoint,
@@ -93,6 +94,15 @@ describe("favoriteEndpoint", () => {
   });
 });
 
+const frequent = (origin: string, destination: string, tripCount: number): FrequentRouteDto => ({
+  originStationId: origin,
+  originStationName: origin,
+  destStationId: destination,
+  destStationName: destination,
+  tripCount,
+  lastTraveledAt: "2026-11-25T08:00:00.000+09:00",
+});
+
 describe("toHomeRouteChips", () => {
   const recents = [
     recent("r1", "A", "B", "2026-10-12T08:00:00Z"),
@@ -122,6 +132,23 @@ describe("toHomeRouteChips", () => {
     expect(chips.map((chip) => chip.label)).toEqual(["A → B", "C → D"]);
     expect(chips[0].favorite).toBe(true);
     expect(chips[1].favorite).toBe(false);
+  });
+
+  it("자주 다닌 경로가 최근 경로보다 먼저 온다", () => {
+    const chips = toHomeRouteChips([favorite("f1", "X", "Y")], recents, 2, [frequent("G", "H", 4)]);
+
+    expect(chips.map((chip) => [chip.label, chip.favorite])).toEqual([
+      ["X → Y", true],
+      ["G → H", false],
+    ]);
+    expect(chips[1].origin).toEqual({ name: "G", stationId: "G" });
+  });
+
+  it("즐겨찾기와 같은 자주 다닌 경로, 자주 다닌 경로와 같은 최근 경로는 건너뛴다", () => {
+    const chips = toHomeRouteChips([favorite("f1", "A", "B")], recents, 3, [frequent("A", "B", 5), frequent("C", "D", 3)]);
+
+    expect(chips.map((chip) => chip.label)).toEqual(["A → B", "C → D", "E → F"]);
+    expect(chips.map((chip) => chip.id)).toEqual(["favorite:f1", "frequent:C>D", "recent:r3"]);
   });
 
   it("즐겨찾기가 한도를 채우면 최근 경로는 나오지 않는다", () => {

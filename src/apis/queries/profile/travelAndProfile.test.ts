@@ -4,6 +4,7 @@ import { useTimelineQuery } from "./useTimelineQuery";
 import { getTravelStats } from "./getTravelStats";
 import { useTravelStatsQuery } from "./useTravelStatsQuery";
 import { getLineMap } from "./getLineMap";
+import { getFrequentRoutes } from "./getFrequentRoutes";
 import { useLineMapQuery } from "./useLineMapQuery";
 import { createTravelLog } from "@/apis/mutations/travel/createTravelLog";
 import { useCreateTravelLogMutation } from "@/apis/mutations/travel/useCreateTravelLogMutation";
@@ -105,6 +106,14 @@ describe("Travel & Profile Domain APIs & Hooks", () => {
         enabled: true,
       })
     );
+  });
+
+  it("getFrequentRoutes calls the frequent routes endpoint", async () => {
+    const response = { since: "2026-10-28T00:00:00.000+09:00", routes: [] };
+    (client.get as jest.Mock).mockResolvedValue(response);
+
+    await expect(getFrequentRoutes({ days: 30 })).resolves.toEqual(response);
+    expect(client.get).toHaveBeenCalledWith("/travel/frequent-routes", { days: 30 }, undefined);
   });
 
   it("getLineMap and useLineMapQuery should fetch line map", async () => {

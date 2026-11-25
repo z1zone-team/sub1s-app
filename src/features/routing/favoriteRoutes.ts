@@ -2,6 +2,7 @@ import type { FavoriteEndpoint, FavoriteEndpointBody, FavoriteRoute, SaveFavorit
 import { CURRENT_LOCATION_NAME, isSameEndpoint, isValidEndpoint, type RouteEndpoint } from "./endpoint";
 import { toRecentRouteChips } from "./recentDestinations";
 import type { RecentRouteItem } from "@/common/storage/useRecentRoutes";
+import type { FrequentRouteDto } from "@/apis/queries/profile/getFrequentRoutes";
 
 export const MAX_ROUTE_CHIPS = 2;
 
@@ -73,15 +74,16 @@ export interface HomeRouteChip {
   label: string;
   origin: RouteEndpoint;
   destination: RouteEndpoint;
-  /** 즐겨찾기면 true, 최근 경로로 채운 칩이면 false */
+  /** 즐겨찾기면 true, 자주 다닌 경로나 최근 경로로 채운 칩이면 false */
   favorite: boolean;
 }
 
-/** 홈 칩. 즐겨찾기를 먼저 보이고 모자라면 최근 경로로 채운다(이미 즐겨찾기인 경로는 건너뜀) */
+/** 홈 칩. 즐겨찾기, 자주 다닌 경로(서버 이동 기록), 최근 경로 순으로 채운다(이미 넣은 경로는 건너뜀) */
 export function toHomeRouteChips(
   favorites: FavoriteRoute[] | undefined,
   recentRoutes: RecentRouteItem[],
-  limit: number = MAX_ROUTE_CHIPS
+  limit: number = MAX_ROUTE_CHIPS,
+  frequentRoutes: FrequentRouteDto[] = []
 ): HomeRouteChip[] {
   const chips: HomeRouteChip[] = (favorites ?? []).slice(0, limit).map((favorite) => ({
     id: `favorite:${favorite.id}`,
@@ -94,6 +96,21 @@ export function toHomeRouteChips(
 
   const saved = new Set((favorites ?? []).map((favorite) => favoriteKey(favorite.origin, favorite.destination)));
   const seen = new Set<string>();
+  for (const route of frequentRoutes) {
+    if (chips.length >= limit) return chips;
+    const origin: RouteEndpoint = { name: route.originStationName, stationId: route.originStationId };
+    const destination: RouteEndpoint = { name: route.destStationName, stationId: route.destStationId };
+    const key = favoriteKey(origin, destination);
+    if (key && (saved.has(key) || seen.has(key))) continue;
+    if (key) seen.add(key);
+    chips.push({
+      id: `frequent:${route.originStationId}>${route.destStationId}`,
+      label: `${origin.name} → ${destination.name}`,
+      origin,
+      destination,
+      favorite: false,
+    });
+  }
   for (const chip of toRecentRouteChips(recentRoutes, recentRoutes.length)) {
     if (chips.length >= limit) break;
     const key = favoriteKey(chip.origin, chip.destination);
