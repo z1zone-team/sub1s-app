@@ -74,6 +74,7 @@ export const queryKeys = {
   },
   profile: {
     all: ["profile"] as const,
+    frequentRoutes: () => [...queryKeys.profile.all, "frequentRoutes"] as const,
     stats: (period: "WEEK" | "MONTH" | "YEAR" | "ALL" = "ALL", periodKey?: string) =>
       periodKey ? [...queryKeys.profile.all, "stats", period, periodKey] as const : [...queryKeys.profile.all, "stats", period] as const,
     timeline: (

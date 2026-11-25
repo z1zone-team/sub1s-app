@@ -20,6 +20,8 @@ const REASON_MULTIPLIERS: Record<string, Partial<FactorWeights>> = {
   PREF_FAST: { time: 1.5 },
   PREF_FEW_TRANSFERS: { transfers: 1.8 },
   PREF_UNCROWDED: { crowd: 1.8 },
+  // 좌석 자료가 없어 서버는 앉아서 가기를 덜 붐비는 경로로 근사한다
+  PREF_SEAT: { crowd: 1.8 },
   PREF_WEAK_AC: { crowd: 1.8 },
   PREF_LESS_WALK: { walk: 2.0 },
   CONTEXT_RUSH: { crowd: 1.3 },
@@ -36,6 +38,8 @@ export function factorWeights(meta: RecommendationMeta | undefined): FactorWeigh
   const weights = { ...BASE_FACTOR_WEIGHTS };
   if (!meta) return weights;
   for (const reason of meta.reasons) {
+    // 서버가 두 취향을 혼잡 하나로 합치므로 함께 있으면 한 번만 곱한다
+    if (reason === "PREF_SEAT" && meta.reasons.includes("PREF_UNCROWDED")) continue;
     const multipliers = REASON_MULTIPLIERS[reason];
     if (!multipliers) continue;
     for (const [factor, multiplier] of Object.entries(multipliers) as Array<[ScoreFactor, number]>) {
