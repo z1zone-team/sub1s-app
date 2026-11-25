@@ -63,5 +63,12 @@
     "ts-jest": "^29.4.14",
     "typescript": "~6.0.3"
   },
+  "expo": {
+    "autolinking": {
+      "android": {
+        "buildFromSource": ["expo-notifications"]
+      }
+    }
+  },
   "private": true
 }

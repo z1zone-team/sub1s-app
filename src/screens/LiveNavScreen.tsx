@@ -15,6 +15,7 @@ import { Screen } from "@/common/components/Screen";
 import { Text } from "@/common/components/Text";
 import { formatDurationSec } from "@/common/utils/format";
 import { ArrivalPopup } from "@/features/guide/components/ArrivalPopup";
+import { finalWalkGuide } from "@/features/guide/walkGuide";
 import { GuideBannerCompact, GUIDE_BANNER_COMPACT_HEIGHT } from "@/features/guide/components/GuideBannerCompact";
 import { RouteDiagram } from "@/features/guide/components/RouteDiagram";
 import { buildRouteDiagram, diagramStopIndexes } from "@/features/guide/routeDiagram";
@@ -268,7 +269,10 @@ function Guide({ navigation, sessionId, option, startedAtMs, origin, destination
       {
         onSuccess: (log) => {
           useActiveGuideStore.getState().end();
-          navigation.replace("Arrived", { log, destinationName: destination, arrivedAtMs: Date.now() });
+          const railArrival = { log, destinationName: destination, arrivedAtMs: Date.now() };
+          const walk = finalWalkGuide(option, destinationEndpoint, info);
+          if (walk) navigation.replace("WalkNav", { ...walk, railArrival });
+          else navigation.replace("Arrived", railArrival);
         },
       }
     );

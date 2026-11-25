@@ -62,6 +62,7 @@ export type RootStackParamList = {
   };
   /** 지하철 없이 걷기만 하는 경로의 안내. 서버 세션 없이 앱 안에서만 동작한다 */
   WalkNav: {
+    railArrival?: RootStackParamList["Arrived"];
     option: SubwayRouteOptionDto;
     origin: RouteEndpoint;
     destination: RouteEndpoint;

@@ -1,4 +1,5 @@
 import "./global.css";
+import "./src/common/notifications/presentation";
 import React from "react";
 import { StatusBar } from "expo-status-bar";
 import { SplashScreen } from "./src/common/components/SplashScreen";

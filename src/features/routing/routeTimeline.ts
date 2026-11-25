@@ -118,8 +118,8 @@ export function mapStationIds(option: SubwayRouteOptionDto, max: number = MAX_LO
 export type StationCoords = ReadonlyMap<string, { lat: number; lng: number }>;
 
 /** 서버가 좌표로 요청한 출발지와 도착지를 걷기 구간에서 부르는 가짜 역 ID */
-const ORIGIN_COORDINATE_ID = "ORIGIN_COORDINATE";
-const DESTINATION_COORDINATE_ID = "DEST_COORDINATE";
+export const ORIGIN_COORDINATE_ID = "ORIGIN_COORDINATE";
+export const DESTINATION_COORDINATE_ID = "DEST_COORDINATE";
 
 export interface RouteEndpointCoords {
   origin?: { lat: number; lng: number };

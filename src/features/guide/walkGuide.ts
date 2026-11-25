@@ -1,3 +1,28 @@
+import type { SubwayRouteOptionDto } from "@/apis/queries/routing/searchRoutes";
+import { endpointCoords, type RouteEndpoint } from "@/features/routing/endpoint";
+import { DESTINATION_COORDINATE_ID, ORIGIN_COORDINATE_ID, type StationCoords } from "@/features/routing/routeTimeline";
+
+/** 마지막 하차역부터 좌표 목적지까지의 구간만 도보 안내에 전달한다. */
+export function finalWalkGuide(route: SubwayRouteOptionDto, destination: RouteEndpoint | undefined, stations: StationCoords) {
+  const leg = route.segments[route.segments.length - 1];
+  if (!leg || leg.lineId !== "WALK" || leg.toStationId !== DESTINATION_COORDINATE_ID ||
+      !destination || !endpointCoords(destination)) return undefined;
+  const start = stations.get(leg.fromStationId);
+  if (!start) return undefined;
+  const option: SubwayRouteOptionDto = {
+    mode: "ONLY_WALK",
+    segments: [{ ...leg, fromStationId: ORIGIN_COORDINATE_ID }],
+    totalDurationSec: leg.durationSec,
+    totalDistanceKm: leg.distanceKm,
+    totalFare: 0,
+    transferCount: 0,
+    estimatedArrivalTimestamp: route.estimatedArrivalTimestamp,
+    highlights: [],
+    operationStatus: leg.operationStatus,
+  };
+  return { option, origin: { name: leg.fromStationName, lat: start.lat, lng: start.lng }, destination };
+}
+
 export interface LatLng {
   lat: number;
   lng: number;
