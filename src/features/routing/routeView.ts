@@ -47,6 +47,8 @@ const HIGHLIGHT_PHRASE: Record<RouteHighlight, string> = {
   LEAST_WALK: "걷는 거리가 가장 짧아요",
   CHEAPEST: "요금이 가장 적어요",
   WEAK_AC_CAR: "약냉방칸이 있는 노선이에요",
+  LEAST_VERTICAL: "오르내리는 높이가 가장 낮아요",
+  BEST_ELEVATOR_ACCESS: "엘리베이터 가까운 문을 안내하는 역의 비율이 가장 높아요",
 };
 
 /** 온보딩 설문(`routePrefs`)과 맞는 태그 (API_SPEC 2.2 대응표) */
@@ -56,6 +58,8 @@ const PREF_TAGS: Record<string, { label: string; tags: RouteHighlight[] }> = {
   WEAK_AC: { label: "약냉방칸", tags: ["WEAK_AC_CAR"] },
   UNCROWDED: { label: "덜 붐비게", tags: ["LEAST_CROWDED"] },
   LESS_WALK: { label: "덜 걷게", tags: ["LEAST_WALK"] },
+  AVOID_STAIRS: { label: "계단 피하기", tags: ["LEAST_VERTICAL"] },
+  ELEVATOR: { label: "엘리베이터 있는 역", tags: ["BEST_ELEVATOR_ACCESS"] },
 };
 
 /** 선호 이름을 문장 속에서 잇는 말: 둘 이상이면 앞은 "환승 적고", 마지막은 "약냉방칸 있는"처럼 쓴다 */
@@ -65,6 +69,11 @@ const PREF_PHRASE: Record<string, { connective: string; attributive: string }> =
   "약냉방칸": { connective: "약냉방칸 있고", attributive: "약냉방칸 있는" },
   "덜 붐비게": { connective: "덜 붐비고", attributive: "덜 붐비는" },
   "덜 걷게": { connective: "덜 걷고", attributive: "덜 걷는" },
+  "계단 피하기": { connective: "오르내림이 적고", attributive: "오르내림이 적은" },
+  "엘리베이터 있는 역": {
+    connective: "엘리베이터 가까운 문을 안내하는 역의 비율이 높고",
+    attributive: "엘리베이터 가까운 문을 안내하는 역의 비율이 높은",
+  },
 };
 
 /** 혼잡도 단계를 사람이 말하듯이: 혼잡은 "많이 붐벼요", 보통은 "적당히 붐벼요", 여유는 "여유 있어요" */
@@ -129,9 +138,16 @@ export function matchedPreferences(
     .map((pref) => pref.label);
 }
 
+function accessibilityHighlightReason(highlights: RouteHighlight[]): string | undefined {
+  const phrases = highlights
+    .filter((tag) => tag === "LEAST_VERTICAL" || tag === "BEST_ELEVATOR_ACCESS")
+    .map((tag) => HIGHLIGHT_PHRASE[tag]);
+  return phrases.length > 0 ? phrases.join(" · ") : undefined;
+}
+
 /**
  * 카드에 보이는 한 줄 설명. 사용자의 선호와 맞는 장점이 있으면 "환승 적고 약냉방칸 있는 길로 골랐어요",
- * 없으면 모드의 기본 설명이나 옵션의 장점 한두 개를 쓴다
+ * 없으면 접근성 장점, 모드의 기본 설명, 그 외 장점 순으로 쓴다
  */
 export function reasonText(
   highlights: RouteHighlight[],
@@ -146,7 +162,7 @@ export function reasonText(
     return `${[...front, last].join(" ")} 길로 골랐어요`;
   }
 
-  const tagline = modes.map((mode) => MODE_TAGLINE[mode]).find(Boolean);
+  const tagline = accessibilityHighlightReason(highlights) ?? modes.map((mode) => MODE_TAGLINE[mode]).find(Boolean);
   if (tagline) return tagline;
 
   const phrases = highlights.slice(0, 2).map((tag) => HIGHLIGHT_PHRASE[tag]);
@@ -167,7 +183,7 @@ const REASON_SENTENCE: Array<{ code: string; text: string }> = [
 
 /**
  * 추천 카드의 이유 한 줄. 서버가 준 근거(이동 목적, 시간대, 이력)를 먼저 말하고,
- * 그것이 없으면 설문 취향, 마지막으로 이 후보의 장점 태그를 쓴다
+ * 그것이 없으면 설문 취향, 접근성 장점, 그 외 장점 순으로 쓴다
  */
 export function recommendationReason(
   meta: RecommendationMeta | undefined,
@@ -184,6 +200,8 @@ export function recommendationReason(
     const last = phrases[phrases.length - 1].attributive;
     return `${[...front, last].join(" ")} 길로 골랐어요`;
   }
+  const accessibilityReason = accessibilityHighlightReason(highlights);
+  if (accessibilityReason) return accessibilityReason;
   const phrases = highlights.slice(0, 2).map((tag) => HIGHLIGHT_PHRASE[tag]);
   return phrases.length > 0 ? phrases.join(" · ") : undefined;
 }

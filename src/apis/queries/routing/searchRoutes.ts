@@ -58,7 +58,9 @@ export type RouteHighlight =
   | "LEAST_CROWDED"
   | "LEAST_WALK"
   | "CHEAPEST"
-  | "WEAK_AC_CAR";
+  | "WEAK_AC_CAR"
+  | "LEAST_VERTICAL"
+  | "BEST_ELEVATOR_ACCESS";
 
 /** 칸 하나의 예측 혼잡도(번호는 1부터 그 열차의 칸 수까지, 호선마다 다르다) */
 export interface SegmentCar {
