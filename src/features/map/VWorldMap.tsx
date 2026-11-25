@@ -21,10 +21,12 @@ interface VWorldMapProps {
   mode?: MapMode;
   /** 지도를 길게 눌렀을 때 그 자리의 좌표 */
   onLongPress?: (point: MapLongPress) => void;
+  /** 2D 지도에서 이동 데이터를 적용했고 바탕 타일을 받은 뒤 호출한다 */
+  onTilesReady?: () => void;
 }
 
 /** V-World 지도를 WebView로 보여 주고 데이터가 바뀔 때마다 마커와 선을 다시 그린다. 키가 없으면 안내만 보인다 */
-export function VWorldMap({ data, className = "", mode: modeProp, onLongPress }: VWorldMapProps) {
+export function VWorldMap({ data, className = "", mode: modeProp, onLongPress, onTilesReady }: VWorldMapProps) {
   const webViewRef = useRef<WebView>(null);
   const loaded = useRef(false);
   const mapStyle = useAppearanceStore((state) => state.mapStyle);
@@ -33,11 +35,12 @@ export function VWorldMap({ data, className = "", mode: modeProp, onLongPress }:
   const mode = modeProp ?? storedMode;
   const { scheme } = useTheme();
   const webGl = isWebGlMode(mode);
+  const reportTilesReady = Boolean(onTilesReady);
   const html = useMemo(() => {
     const layer = tileLayerOf(mode, mapStyle);
     if (webGl) return build3dMapHtml();
-    return buildMapHtml(ENV.VWORLD_KEY, layer, needsLabelOverlay(mode, mapStyle));
-  }, [mode, mapStyle, webGl]);
+    return buildMapHtml(ENV.VWORLD_KEY, layer, needsLabelOverlay(mode, mapStyle), reportTilesReady);
+  }, [mode, mapStyle, webGl, reportTilesReady]);
   const [webGlReady, setWebGlReady] = useState(false);
   // 내 위치 표시가 있는 지도에서는 폰이 바라보는 방향을 부채꼴로 보여 준다(2D, 3D 모두). 없으면 센서를 켜지 않는다
   const hasMe = useMemo(() => data.markers.some((marker) => marker.kind === "me"), [data.markers]);
@@ -87,6 +90,10 @@ export function VWorldMap({ data, className = "", mode: modeProp, onLongPress }:
         scrollEnabled={false}
         onMessage={(event) => {
           const raw = event.nativeEvent.data;
+          if (raw === "map-tiles-ready") {
+            onTilesReady?.();
+            return;
+          }
           if (isMapReadyMessage(raw)) {
             setWebGlReady(true);
             return;

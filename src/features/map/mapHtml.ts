@@ -138,7 +138,7 @@ export const FOCUS_ZOOM = 17;
  * V-World 타일(WMTS)을 Leaflet으로 그리는 페이지. 앱이 window.updateMap(데이터)을 불러 마커와 선을 바꾼다.
  * 키는 주소에 들어가므로 URL 인코딩한다.
  */
-export function buildMapHtml(vworldKey: string, layer: TileLayerName = { name: "Base", extension: "png" }, labelOverlay = false): string {
+export function buildMapHtml(vworldKey: string, layer: TileLayerName = { name: "Base", extension: "png" }, labelOverlay = false, reportTilesReady = false): string {
   const key = encodeURIComponent(vworldKey);
   const tileUrl = (target: TileLayerName) => `https://api.vworld.kr/req/wmts/1.0.0/${key}/${target.name}/{z}/{y}/{x}.${target.extension}`;
   return `<!doctype html>
@@ -172,7 +172,21 @@ export function buildMapHtml(vworldKey: string, layer: TileLayerName = { name: "
     document.getElementById("error").style.display = "block";
   } else {
     var map = L.map("map", { zoomControl: false, attributionControl: false }).setView([${DEFAULT_CENTER[0]}, ${DEFAULT_CENTER[1]}], ${DEFAULT_ZOOM});
-    L.tileLayer("${tileUrl(layer)}", { maxZoom: 19, detectRetina: true }).addTo(map);
+    var baseTiles = L.tileLayer("${tileUrl(layer)}", { maxZoom: 19, detectRetina: true });
+    ${reportTilesReady ? `
+      var mapDataApplied = false;
+      var tileLoaded = false;
+      var reportedTiles = false;
+      function reportVisibleTiles() {
+        if (reportedTiles || !mapDataApplied || !tileLoaded || baseTiles.isLoading()) return;
+        reportedTiles = true;
+        window.ReactNativeWebView.postMessage('map-tiles-ready');
+      }
+      baseTiles.on('loading', function () { tileLoaded = false; });
+      baseTiles.on('tileload', function () { tileLoaded = true; });
+      baseTiles.on('load', reportVisibleTiles);
+    ` : ""}
+    baseTiles.addTo(map);
     ${labelOverlay ? `L.tileLayer("${tileUrl(LABEL_OVERLAY_LAYER)}", { maxZoom: 19, detectRetina: true }).addTo(map);` : ""}
     var layer = L.layerGroup().addTo(map);
     // 진행 방향 화살표. 확대 수준마다 화면 간격이 달라 따로 두고 다시 그린다
@@ -306,6 +320,7 @@ export function buildMapHtml(vworldKey: string, layer: TileLayerName = { name: "
         if (shift) map.panBy([0, shift], { animate: false });
       }
       drawArrows();
+      ${reportTilesReady ? "mapDataApplied = true; reportVisibleTiles();" : ""}
     };
   }
 </script>
