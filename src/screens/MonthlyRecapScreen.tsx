@@ -142,7 +142,7 @@ function StoryCard({ card, width, current, motionEnabled, territory }: {
           ) : null}
           {card.detail ? <Text style={[styles.detail, { color: hero ? titleColor : colors.textSecondary }]}>{card.detail}</Text> : null}
           {card.key === "cover" ? <View style={styles.mascot}>{play ? <Bob lift={15} periodMs={3600}>{mascot}</Bob> : mascot}</View> : null}
-          {card.key === "territory" ? <RecapTerritory {...territory} play={play} current={current} /> : null}
+          {card.key === "territory" ? <RecapTerritory {...territory} motionEnabled={motionEnabled} current={current} /> : null}
         </Animated.View>
       ) : null}
       <View accessible={false} style={styles.rail}>
@@ -245,7 +245,15 @@ export function MonthlyRecapScreen({ navigation, route }: Props) {
   const stats = useTravelStatsQuery("MONTH", { periodKey }, { enabled: Boolean(month) });
   const map = useLineMapQuery("MONTH", { periodKey }, { enabled: Boolean(month && stats.data?.totalTravelCount) });
   const territory = useMemo(() => buildRecapMap(map.data), [map.data]);
-  const mapData = useMemo(() => visitedMapData(map.data), [map.data]);
+  const mapData = useMemo(() => {
+    const visited = visitedMapData(map.data);
+    return {
+      ...visited,
+      fitPadding: 16,
+      markers: visited.markers.map((marker) => ({ ...marker, radius: 2.3, strokeWidth: 0.8 })),
+      lines: visited.lines.map((line) => ({ ...line, weight: 3 })),
+    };
+  }, [map.data]);
   if (!isLoaded || (isSignedIn && month && stats.isPending)) {
     return <SafeAreaView style={[styles.screen, styles.center, { backgroundColor: colors.bg }]}><StatusBar style={scheme === "dark" ? "light" : "dark"} /><ActivityIndicator accessibilityLabel="정산 불러오는 중" color={colors.primary} /></SafeAreaView>;
   }

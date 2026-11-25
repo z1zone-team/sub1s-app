@@ -1,7 +1,7 @@
 import type { LineMapResponseDto } from "@/apis/queries/profile/getLineMap";
 
 export const MAP_WIDTH = 320;
-export const MAP_HEIGHT = 192;
+export const MAP_HEIGHT = 174;
 const PADDING = 18;
 
 export function buildRecapMap(data: LineMapResponseDto | undefined) {

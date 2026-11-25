@@ -12,6 +12,8 @@ export interface MapMarker {
   /** 지도 위에 항상 보이는 이름. 없으면 점만 그린다 */
   label?: string;
   radius?: number;
+  /** 역 표시 바깥 테두리의 두께(px) */
+  strokeWidth?: number;
   /** "me"면 점 대신 프로토타입의 캐릭터와 맥동 효과로, "pin"이면 지도 검색에서 고른 장소의 핀으로 그린다 */
   kind?: "me" | "pin";
   /** kind가 "me"일 때 캐릭터의 표정. 이번 달 이동 거리로 정하고, 없으면 보통 */
@@ -43,6 +45,8 @@ export interface MapData {
   lines: MapLine[];
   /** 모든 마커와 선이 보이게 맞출지. 아니면 center를 쓴다 */
   fit: boolean;
+  /** 경로와 역을 화면에 맞출 때 가장자리 여백(px) */
+  fitPadding?: number;
   /** 맞출 때나 중심을 잡을 때 아래를 이만큼(px) 더 비운다. 지도 위에 바텀시트가 얹힐 때 쓴다 */
   bottomInset?: number;
   /** 중심을 잡을 때 위를 이만큼(px) 덮은 것으로 본다. 지도 위에 배너가 얹힐 때 쓴다 */
@@ -299,7 +303,7 @@ export function buildMapHtml(vworldKey: string, layer: TileLayerName = { name: "
           bounds.push([m.lat, m.lng]);
           return;
         }
-        var circle = L.circleMarker([m.lat, m.lng], { radius: m.radius || 5, color: "#FFFFFF", weight: 2, fillColor: m.color, fillOpacity: 1 }).addTo(layer);
+        var circle = L.circleMarker([m.lat, m.lng], { radius: m.radius || 5, color: "#FFFFFF", weight: m.strokeWidth == null ? 2 : m.strokeWidth, fillColor: m.color, fillOpacity: 1 }).addTo(layer);
         if (m.label) circle.bindTooltip(m.label, { permanent: true, direction: "top", offset: [0, -6], className: "label" });
         bounds.push([m.lat, m.lng]);
       });
@@ -312,7 +316,8 @@ export function buildMapHtml(vworldKey: string, layer: TileLayerName = { name: "
           map.fitBounds(data.focus, { paddingTopLeft: [32, 32 + (data.topInset || 0)], paddingBottomRight: [32, 32 + (data.bottomInset || 0)], maxZoom: ${FOCUS_ZOOM} });
         }
       } else if (data.fit && bounds.length > 0) {
-        map.fitBounds(bounds, { paddingTopLeft: [32, 32 + (data.topInset || 0)], paddingBottomRight: [32, 32 + (data.bottomInset || 0)], maxZoom: 15 });
+        var fitPadding = data.fitPadding == null ? 32 : data.fitPadding;
+        map.fitBounds(bounds, { paddingTopLeft: [fitPadding, fitPadding + (data.topInset || 0)], paddingBottomRight: [fitPadding, fitPadding + (data.bottomInset || 0)], maxZoom: 15 });
       } else if (data.center) {
         map.setView(data.center, data.zoom || ${DEFAULT_ZOOM});
         // 위의 배너와 아래의 시트가 덮은 만큼을 빼고 보이는 영역의 가운데에 중심점이 오도록 지도를 옮긴다

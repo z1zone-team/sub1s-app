@@ -7,11 +7,11 @@ import type { MapData } from "@/features/map/mapHtml";
 import { useTheme } from "@/theme";
 import { buildRecapMap, MAP_HEIGHT, MAP_WIDTH } from "./recapMap";
 
-export function RecapTerritory({ lines, mapData, loading, play, current }: {
+export function RecapTerritory({ lines, mapData, loading, motionEnabled, current }: {
   lines: ReturnType<typeof buildRecapMap>;
   mapData: MapData;
   loading: boolean;
-  play: boolean;
+  motionEnabled: boolean;
   current: boolean;
 }) {
   const { colors } = useTheme();
@@ -19,23 +19,24 @@ export function RecapTerritory({ lines, mapData, loading, play, current }: {
   const progress = useRef(new Animated.Value(1)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const [tilesReady, setTilesReady] = useState(false);
+  const [hasOpened, setHasOpened] = useState(false);
 
   useLayoutEffect(() => {
-    if (!current) setTilesReady(false);
+    if (current) setHasOpened(true);
   }, [current]);
 
   useLayoutEffect(() => {
-    if (!tilesReady || !current || !play) {
-      opacity.setValue(tilesReady && current ? 1 : 0);
+    if (!tilesReady || !motionEnabled) {
+      opacity.setValue(tilesReady ? 1 : 0);
       return;
     }
     const fade = Animated.timing(opacity, { toValue: 1, duration: 620, useNativeDriver: true });
     fade.start();
     return () => fade.stop();
-  }, [current, play, opacity, tilesReady]);
+  }, [motionEnabled, opacity, tilesReady]);
 
   useLayoutEffect(() => {
-    const animate = play && width > 0 && lines.length > 0;
+    const animate = hasOpened && motionEnabled && width > 0 && lines.length > 0;
     progress.setValue(animate ? 0 : 1);
     if (!animate) return;
     const draw = Animated.timing(progress, {
@@ -43,7 +44,7 @@ export function RecapTerritory({ lines, mapData, loading, play, current }: {
     });
     draw.start();
     return () => draw.stop();
-  }, [play, width, progress, lines]);
+  }, [hasOpened, motionEnabled, width, progress, lines]);
 
   if (!lines.length) {
     return <Text style={{ color: colors.textSecondary }}>{loading ? "지나간 역을 불러오는 중이에요" : "표시할 역 위치가 없어요"}</Text>;
@@ -68,7 +69,7 @@ export function RecapTerritory({ lines, mapData, loading, play, current }: {
             </Svg>
           </Animated.View>
         ) : null}
-        {current && mapData.markers.length > 0 ? (
+        {hasOpened && mapData.markers.length > 0 ? (
           <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity }]}>
             <VWorldMap mode="2D" data={mapData} className="flex-1" onTilesReady={() => setTilesReady(true)} />
           </Animated.View>
@@ -90,7 +91,7 @@ export function RecapTerritory({ lines, mapData, loading, play, current }: {
 const styles = StyleSheet.create({
   content: { gap: 12 },
   summary: { fontSize: 18 },
-  map: { aspectRatio: MAP_WIDTH / MAP_HEIGHT, borderRadius: 16, borderWidth: 1, overflow: "hidden" },
+  map: { width: "100%", maxWidth: 288, alignSelf: "center", aspectRatio: MAP_WIDTH / MAP_HEIGHT, borderRadius: 16, borderWidth: 1, overflow: "hidden" },
   legend: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 6 },
   chip: { flexDirection: "row", alignItems: "center", borderWidth: 1, borderRadius: 18, paddingVertical: 5, paddingHorizontal: 9, gap: 5 },
   dot: { width: 8, height: 8, borderRadius: 4 },
