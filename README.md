@@ -8,7 +8,7 @@
 
 - **Framework**: Expo SDK 57 (React Native 0.86, React 19)
 - **Styling**: NativeWind v4 (Tailwind CSS 3.4). `className`과 디자인 토큰(`tailwind.config.js`, 색은 `global.css`)을 쓰고 인라인 `style`은 값이 동적인 곳에만 쓴다. 클래스는 `cn`(`src/lib/cn.ts`)으로 합친다
-- **Navigation**: React Navigation v7 (Native Stack, Bottom Tabs, Deep Linking `sub1s://`)
+- **Navigation**: React Navigation v7 (Native Stack, Bottom Tabs, 환경별 Deep Linking)
 - **Server State**: TanStack React Query v5 (순수 fetch 함수 + 커스텀 훅 1:1 매핑)
 - **Global / Realtime State**: Zustand v5 (칸 단위 셀렉터 분리 구독)
 - **HTTP Client**: Axios with Clerk Auth Interceptor & AbortSignal 지원
@@ -94,7 +94,7 @@ pnpm start
 ## 📱 기기에서 실행
 
 - **서버 주소**: 안드로이드 에뮬레이터는 기본값(`10.0.2.2`)으로 호스트 PC의 서버에 닿습니다. 실기기는 PC의 같은 네트워크 주소(`http://192.168.x.x:3000`)나 운영 주소를 `EXPO_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_WS_URL`로 지정합니다.
-- **빌드**: 로그인(Clerk 소셜 로그인 리다이렉트 `sub1s://`), 푸시 토큰, 마이크, 위치를 쓰므로 **개발 빌드**(`npx expo run:android` 또는 EAS 개발 빌드)를 권장합니다. 네이티브 권한 문구(위치, 마이크)는 `app.config.ts`의 플러그인에 있어 바꾸면 다시 빌드해야 반영됩니다. Expo Go에서의 동작은 확인하지 않았습니다.
+- **빌드**: 로그인(Clerk 소셜 로그인 리다이렉트), 푸시 토큰, 마이크, 위치를 쓰므로 **개발 빌드**(`npx expo run:android` 또는 EAS 개발 빌드)를 권장합니다. 네이티브 권한 문구(위치, 마이크)와 앱 스킴은 `app.config.ts`에 있어 바꾸면 다시 빌드해야 반영됩니다. Expo Go에서의 동작은 확인하지 않았습니다.
 - **로그인 제공자**: Clerk 대시보드에서 Google과 카카오(키가 `kakao`인 사용자 지정 OIDC 제공자)를 켜야 합니다.
 - **Android 푸시**: Firebase에 현재 패키지명을 등록하고 Android 앱 설정을 `google-services.local.json`로 둡니다. 개발용 패키지는 `com.z1zone.sub1s.local`, 운영용은 `com.z1zone.sub1s`입니다. 같은 Firebase 프로젝트여도 두 앱은 각각 등록합니다. FCM V1 서비스 계정 키는 해당 Expo 앱 식별자의 Credentials에 업로드합니다. **비공개 서비스 계정 JSON은 앱에 넣지 않습니다.** [공식 FCM 안내](https://docs.expo.dev/push-notifications/fcm-credentials/)
 - **빌드 설정**: `APP_ENV`는 기본 `local`이고, 기본 Firebase 파일은 `google-services.<APP_ENV>.json`입니다. 다른 경로는 빌드 전용 `GOOGLE_SERVICES_JSON`으로 지정합니다(앱에 공개하는 `EXPO_PUBLIC_` 변수가 아님). 파일이 있으면 패키지명을 검증해 네이티브 빌드에 연결합니다. 기본 파일이 없으면 원격 푸시 설정을 생략하고, 명시한 경로가 없거나 패키지명이 다르거나 서비스 계정 키를 잘못 지정하면 오류로 중단합니다. EAS 프로필은 development→local, preview→staging, production→production을 명시합니다. 로컬 파일은 git에서 제외하므로 다른 PC·클라우드 빌드에서는 해당 파일을 별도로 준비해야 합니다(EAS 파일 환경변수를 쓸 때도 경로 변수는 `GOOGLE_SERVICES_JSON`).
@@ -178,7 +178,7 @@ cd .. && mv android android-prod && mv android-local android     # dev 빌드 �
 
 - 릴리스 빌드는 Metro 없이 단독으로 실행되고, `EXPO_PUBLIC_*` 값이 빌드할 때 번들에 들어갑니다. 값을 바꾸면 다시 빌드합니다.
 - 서명은 디버그 키스토어를 씁니다(개인 설치용). 스토어 배포용이 아닙니다.
-- 같은 스킴(`sub1s://`)과 초대 링크 주소를 두 앱이 함께 가져서, 링크를 열 때 어느 앱으로 열지 묻는 창이 뜰 수 있습니다.
+- 앱 링크와 소셜 로그인 복귀 주소는 운영 `sub1s://`, 개발 `sub1s-local://`, 스테이징 `sub1s-staging://`를 씁니다. 기존 개발 앱을 갱신할 때는 네이티브 프로젝트를 `npx expo prebuild --clean --platform android`로 다시 생성한 뒤 APK를 빌드해야 이전 스킴이 제거됩니다. 웹 친구 초대 주소는 `https://sub1s.devnoco.com/invite/…`입니다.
 - 빌드 약 5분(arm64, 이 PC 기준).
 
 ### 4. 실기기 연결과 adb 기본

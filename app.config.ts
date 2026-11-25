@@ -38,7 +38,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/icon.png",
-    scheme: "sub1s",
+    scheme: isProd ? "sub1s" : `sub1s-${appEnv}`,
     userInterfaceStyle: "automatic",
     ios: {
       supportsTablet: false,

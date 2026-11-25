@@ -35,12 +35,12 @@ describe("Widget Bridge", () => {
     const nextTrainLink = createWidgetDeepLink("next-train", {
       stationId: "234",
     });
-    expect(nextTrainLink).toBe("sub1s://widget/next-train?stationId=234");
+    expect(nextTrainLink).toBe("sub1s-local://widget/next-train?stationId=234");
 
     const routeLink = createWidgetDeepLink("route", {
       origin: "신도림",
       destination: "강남",
     });
-    expect(routeLink).toBe("sub1s://widget/route?origin=%EC%8B%A0%EB%8F%84%EB%A6%BC&destination=%EA%B0%95%EB%82%A8");
+    expect(routeLink).toBe("sub1s-local://widget/route?origin=%EC%8B%A0%EB%8F%84%EB%A6%BC&destination=%EA%B0%95%EB%82%A8");
   });
 });

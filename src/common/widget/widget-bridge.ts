@@ -1,3 +1,4 @@
+import { APP_SCHEME } from "@/constants/appScheme";
 import { appStorage } from "../storage/storage";
 import type { WidgetSnapshot } from "./widget-types";
 
@@ -36,5 +37,5 @@ export function createWidgetDeepLink(
 ): string {
   const searchParams = new URLSearchParams(params ?? {});
   const queryString = searchParams.toString();
-  return `sub1s://widget/${action}${queryString ? `?${queryString}` : ""}`;
+  return `${APP_SCHEME}://widget/${action}${queryString ? `?${queryString}` : ""}`;
 }
