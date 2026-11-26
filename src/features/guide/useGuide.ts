@@ -19,6 +19,7 @@ import { useActiveGuideStore } from "./active-guide-store";
 import {
   boardingStopIndexes,
   guidePhase,
+  leadingWalkMeters,
   needsWalkToStation,
   nextBoardingIndex,
   ridesBoardedBy,
@@ -33,12 +34,14 @@ import { useStopInfo } from "./useStopInfo";
 const TICK_MS = 15_000;
 const GPS_MAX_ACCURACY_M = 100;
 const GPS_MAX_DISTANCE_M = 250;
+/** 안내 시작 뒤 첫 위치를 기다리는 시간. 이 동안은 걷기, 승차 알림을 미뤄 위치를 모른 채 "타세요"를 먼저 보내지 않는다 */
+const FIRST_FIX_WAIT_MS = 15_000;
 
 interface UseGuideArgs {
   option: SubwayRouteOptionDto;
   sessionId: string;
   startedAtMs: number;
-  /** 출발지가 좌표(현재 위치나 장소)일 때의 좌표. 역이면 없고, 그러면 첫 탑승역까지 걷는 단계가 없다 */
+  /** 출발지가 좌표(현재 위치나 장소)일 때의 좌표. 역이면 없다. 걷는 단계는 지금 위치를 먼저 보고, 위치를 모를 때만 이 값을 쓴다 */
   originCoords?: Coordinate;
 }
 
@@ -116,7 +119,14 @@ export function useGuide({ option, sessionId, startedAtMs, originCoords }: UseGu
     setPhaseState((previous) => (previous.stationReached ? previous : { ...previous, stationReached: true }));
   }, []);
 
-  const location = useForegroundLocation({ autoStart: true, timeInterval: TICK_MS, distanceInterval: 30 });
+  const location = useForegroundLocation({ autoStart: true, timeInterval: TICK_MS, distanceInterval: 30, lastKnownMaxAgeMs: 60_000 });
+  // 다시 연 안내는 이미 단계가 정해져 있어 기다리지 않는다
+  const [fixWaitOver, setFixWaitOver] = useState(() => Boolean(saved));
+  useEffect(() => {
+    if (fixWaitOver) return;
+    const timer = setTimeout(() => setFixWaitOver(true), FIRST_FIX_WAIT_MS);
+    return () => clearTimeout(timer);
+  }, [fixWaitOver]);
   // 앱이 백그라운드로 가면 포그라운드 서비스가 보내는 위치가 더 최근이다
   const backgroundCoords = useGuideLocationStore((state) => state.latest);
   const coords = newerCoords(location.coords, backgroundCoords);
@@ -156,11 +166,16 @@ export function useGuide({ option, sessionId, startedAtMs, originCoords }: UseGu
   const boardingStation = gate !== undefined ? info.get(stops[gate]?.stationId ?? "") : undefined;
   const boardingCoords = boardingStation ? { lat: boardingStation.lat, lng: boardingStation.lng } : undefined;
   const position = coords ? { lat: coords.latitude, lng: coords.longitude } : undefined;
+  // 걷는 단계는 믿을 만한 위치로만 정한다. 정확도가 나쁘면 위치를 모르는 것으로 본다
+  const accuratePosition =
+    position && coords?.accuracy !== null && coords?.accuracy !== undefined && coords.accuracy <= GPS_MAX_ACCURACY_M ? position : undefined;
+  const leadingWalkM = leadingWalkMeters(option);
+  const phaseKnown = Boolean(accuratePosition) || fixWaitOver || location.error !== null;
   const phase = guidePhase({
     boardingIndexes,
     state: phaseState,
     currentIndex: baseProgress.currentIndex,
-    walkNeeded: needsWalkToStation(originCoords, position, boardingCoords, GPS_MAX_DISTANCE_M),
+    walkNeeded: needsWalkToStation(originCoords, accuratePosition, boardingCoords, GPS_MAX_DISTANCE_M, leadingWalkM),
   });
   // 걷는 동안은 걷는 시간까지 더한 남은 시간을 보여 준다
   const progress =
@@ -171,14 +186,14 @@ export function useGuide({ option, sessionId, startedAtMs, originCoords }: UseGu
         }
       : baseProgress;
   const from = position ?? originCoords;
-  const walkDistanceM = from && boardingCoords ? Math.round(distanceMeters(from, boardingCoords)) : undefined;
+  const walkDistanceM = from && boardingCoords ? Math.round(distanceMeters(from, boardingCoords)) : leadingWalkM;
 
   // 단계가 바뀌면 걷기, 승차 알림을 띄운다
   const boardingSegment = gate !== undefined ? option.segments[stops[gate]?.segmentIndex ?? -1] : undefined;
   useGuideNotices(sessionId, {
     phase,
     boardedRides: phaseState.boardedRides,
-    boarding: boardingStation && boardingSegment ? { stationName: boardingStation.name, segment: boardingSegment } : undefined,
+    boarding: phaseKnown && boardingStation && boardingSegment ? { stationName: boardingStation.name, segment: boardingSegment } : undefined,
     distanceToStationM: walkDistanceM,
   });
 

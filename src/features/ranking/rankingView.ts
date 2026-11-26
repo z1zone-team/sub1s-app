@@ -37,7 +37,7 @@ export const MOOD_LEVELS: MoodLevel[] = [
   { key: "DARK_CIRCLES", label: "다크서클", range: "150km~" },
 ];
 
-/** 이번 달 이동 거리로 정하는 표정. 50km 미만 보통, 150km 미만 피곤, 그 이상 다크서클 */
+/** 이동 거리로 정하는 표정. 50km 미만 보통, 150km 미만 피곤, 그 이상 다크서클. 시상대는 보고 있는 기간(월간, 누적)의 거리를 쓴다 */
 export function moodOf(monthlyKm: number): MoodLevel {
   if (monthlyKm >= 150) return MOOD_LEVELS[2];
   if (monthlyKm >= 50) return MOOD_LEVELS[1];
@@ -54,6 +54,8 @@ export interface RankingRow {
   value: string;
   /** "96.3km". 내 항목이 목록 밖일 때는 거리를 몰라 없다 */
   sub?: string;
+  /** 이동 거리로 정한 표정. 거리를 모르는 내 항목에는 없다 */
+  mood?: MoodLevel["key"];
 }
 
 export interface GapRow {
@@ -92,6 +94,7 @@ export function rowsAfterPodium(data: RankingResponseDto | undefined): Array<Ran
       userId: visibleTravelUserId(item),
       value: pointsText(item.totalPoints),
       sub: kmText(item.totalDistanceKm),
+      mood: moodOf(item.totalDistanceKm).key,
     }));
 
   const meListed = data.leaderboard.some((item) => item.isMe);
@@ -110,7 +113,7 @@ export function rowsAfterPodium(data: RankingResponseDto | undefined): Array<Ran
 
 export function podium(
   data: RankingResponseDto | undefined
-): Array<{ rank: number; name: string; points: string; km: string; isMe: boolean; userId?: string }> {
+): Array<{ rank: number; name: string; points: string; km: string; mood: MoodLevel["key"]; isMe: boolean; userId?: string }> {
   return (data?.leaderboard ?? [])
     .filter((item) => item.rank <= 3)
     .map((item) => ({
@@ -118,6 +121,7 @@ export function podium(
       name: displayName(item),
       points: pointsText(item.totalPoints),
       km: kmText(item.totalDistanceKm),
+      mood: moodOf(item.totalDistanceKm).key,
       isMe: !!item.isMe,
       userId: visibleTravelUserId(item),
     }));

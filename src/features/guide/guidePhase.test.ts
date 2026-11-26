@@ -2,6 +2,7 @@ import type { PathSegmentDto, SubwayRouteOptionDto } from "@/apis/queries/routin
 import {
   boardingStopIndexes,
   guidePhase,
+  leadingWalkMeters,
   needsWalkToStation,
   nextBoardingIndex,
   ridesBoardedBy,
@@ -69,12 +70,41 @@ describe("needsWalkToStation", () => {
     expect(needsWalkToStation(origin, { lat: 37.5, lng: 127.0099 }, station, 250)).toBe(false);
   });
 
-  it("출발지가 역이면(좌표가 없으면) 걷는 단계가 없다", () => {
-    expect(needsWalkToStation(undefined, { lat: 37.5, lng: 127.0 }, station, 250)).toBe(false);
+  it("출발지가 역이어도 지금 위치가 탑승역에서 멀면 걸어야 한다", () => {
+    expect(needsWalkToStation(undefined, { lat: 37.5, lng: 127.0 }, station, 250)).toBe(true);
+  });
+
+  it("출발지가 역이고 지금 위치가 탑승역 근처면 걷는 단계가 없다", () => {
+    expect(needsWalkToStation(undefined, { lat: 37.5, lng: 127.0099 }, station, 250)).toBe(false);
+  });
+
+  it("출발지가 역이고 위치도 모르면 역에 있다고 본다", () => {
+    expect(needsWalkToStation(undefined, undefined, station, 250)).toBe(false);
+  });
+
+  it("위치도 출발지 좌표도 없어도 경로가 걸어서 시작하면 걸어야 한다", () => {
+    expect(needsWalkToStation(undefined, undefined, station, 250, 600)).toBe(true);
+    expect(needsWalkToStation(undefined, undefined, undefined, 250, 600)).toBe(true);
+  });
+
+  it("경로 첫 도보가 기준 거리 이하면 역에 있다고 본다", () => {
+    expect(needsWalkToStation(undefined, undefined, station, 250, 120)).toBe(false);
+  });
+
+  it("지금 위치가 탑승역 근처면 경로가 걸어서 시작해도 걷는 단계가 없다", () => {
+    expect(needsWalkToStation(undefined, { lat: 37.5, lng: 127.0099 }, station, 250, 600)).toBe(false);
   });
 
   it("탑승역 좌표를 모르면 걷는 단계를 만들지 않는다", () => {
     expect(needsWalkToStation(origin, undefined, undefined, 250)).toBe(false);
+  });
+});
+
+describe("leadingWalkMeters", () => {
+  it("첫 구간이 도보면 그 거리, 열차면 없다", () => {
+    const walk = { ...segment("WALK", "", "A", 300), distanceKm: 0.62 };
+    expect(leadingWalkMeters({ segments: [walk, segment("2", "A", "B", 120)] } as SubwayRouteOptionDto)).toBe(620);
+    expect(leadingWalkMeters({ segments: [segment("2", "A", "B", 120)] } as SubwayRouteOptionDto)).toBeUndefined();
   });
 });
 

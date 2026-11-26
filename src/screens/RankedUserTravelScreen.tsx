@@ -12,7 +12,8 @@ import { Text } from "@/common/components/Text";
 import { formatDistanceKm } from "@/common/utils/format";
 import { visitedMapData } from "@/features/map/mapData";
 import { VWorldMap } from "@/features/map/VWorldMap";
-import { RowAvatar } from "@/features/ranking/components/RankCharacters";
+import { MoodFace } from "@/features/ranking/components/RankCharacters";
+import { moodOf } from "@/features/ranking/rankingView";
 import { ActivityRow } from "@/features/timeline/components/ActivityRow";
 import { kstYearMonth, logDateLabel, logSummary } from "@/features/timeline/timelineView";
 import { useAuthToken } from "@/hooks/useAuthToken";
@@ -64,7 +65,7 @@ export function RankedUserTravelScreen({ navigation, route }: NativeStackScreenP
         <>
           <View className="mx-5 mt-5 rounded-xl bg-surface p-5">
             <View className="flex-row items-center gap-3">
-              <View className="h-12 w-12 items-center justify-center rounded-pill bg-bg"><RowAvatar size={27} /></View>
+              <View className="h-12 w-12 items-center justify-center rounded-pill bg-bg"><MoodFace mood={moodOf(query.data.stats.totalDistanceKm).key} size={36} /></View>
               <Text className="min-w-0 flex-1 text-title font-sans-bold" numberOfLines={1}>{nickname}</Text>
             </View>
             <View className="mt-5 flex-row gap-3">

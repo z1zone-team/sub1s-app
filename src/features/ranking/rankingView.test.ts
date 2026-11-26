@@ -83,6 +83,18 @@ describe("podium와 목록", () => {
     expect(podium(data(all)).map((entry) => entry.rank)).toEqual([1, 2, 3]);
   });
 
+  it("시상대와 목록에 각자 거리에 맞는 표정을 준다", () => {
+    const far = [item(1, { totalDistanceKm: 160 }), item(4, { totalDistanceKm: 60 }), item(5, { totalDistanceKm: 3 })];
+    expect(podium(data(far))[0].mood).toBe("DARK_CIRCLES");
+    expect(rowsAfterPodium(data(far)).map((row) => (row.kind === "ROW" ? row.mood : null))).toEqual(["TIRED", "NORMAL"]);
+  });
+
+  it("목록 밖 내 항목은 거리를 몰라 표정이 없다", () => {
+    const rows = rowsAfterPodium(data([item(1)], { myRank: 298, myPoints: 963 }));
+    const me = rows[rows.length - 1];
+    expect(me.kind === "ROW" ? me.mood : "x").toBeUndefined();
+  });
+
   it("시상대에 점수를 크게, 거리를 따로 준다", () => {
     expect(podium(data(all))[0]).toMatchObject({ points: "100점", km: "10.0km", userId: "u1" });
   });
@@ -94,8 +106,8 @@ describe("podium와 목록", () => {
   it("4위부터 목록에 두고 익명은 익명으로 보여 준다", () => {
     const rows = rowsAfterPodium(data(all));
     expect(rows).toEqual([
-      { kind: "ROW", rank: 4, nickname: "@닉4", isMe: false, userId: "u4", value: "100점", sub: "40.0km" },
-      { kind: "ROW", rank: 5, nickname: "익명", isMe: false, value: "100점", sub: "50.0km" },
+      { kind: "ROW", rank: 4, nickname: "@닉4", isMe: false, userId: "u4", value: "100점", sub: "40.0km", mood: "NORMAL" },
+      { kind: "ROW", rank: 5, nickname: "익명", isMe: false, value: "100점", sub: "50.0km", mood: "TIRED" },
     ]);
   });
 

@@ -41,12 +41,23 @@ describe("nameError", () => {
 });
 
 describe("percentileText", () => {
-  it("값이 있으면 상위 퍼센트를 보여 준다", () => {
-    expect(percentileText(12)).toBe("이번 달 상위 12%");
+  it("인원이 충분하면 상위 퍼센트를 보여 준다", () => {
+    expect(percentileText({ myRank: 30, totalUsers: 250, myPercentile: 12 })).toBe("이번 달 상위 12%");
   });
 
-  it("값이 없으면 보여 주지 않는다", () => {
+  it("1위면 퍼센트 대신 1위로 보여 준다", () => {
+    expect(percentileText({ myRank: 1, totalUsers: 3, myPercentile: 34 })).toBe("이번 달 1위");
+    expect(percentileText({ myRank: 1, totalUsers: 500, myPercentile: 1 })).toBe("이번 달 1위");
+  });
+
+  it("인원이 10명 미만이면 몇 명 중 몇 위로 보여 준다", () => {
+    expect(percentileText({ myRank: 2, totalUsers: 3, myPercentile: 67 })).toBe("이번 달 3명 중 2위");
+    expect(percentileText({ myRank: 2, totalUsers: 10, myPercentile: 20 })).toBe("이번 달 상위 20%");
+  });
+
+  it("순위가 없으면 보여 주지 않는다", () => {
     expect(percentileText(undefined)).toBe("");
+    expect(percentileText({ myRank: 0, totalUsers: 3 })).toBe("");
   });
 });
 

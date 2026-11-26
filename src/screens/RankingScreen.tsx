@@ -141,7 +141,7 @@ export function RankingScreen() {
             {order.map((rank) => {
               const entry = top.find((item) => item.rank === rank);
               if (!entry) return <View key={rank} className="flex-1" />;
-              return <PodiumColumn key={`${scope}-${friendsOnly}-${rank}`} rank={rank} name={entry.name} points={entry.points} km={entry.km} onPress={travelAction(entry.userId, entry.name, entry.isMe)} />;
+              return <PodiumColumn key={`${scope}-${friendsOnly}-${rank}`} rank={rank} name={entry.name} points={entry.points} km={entry.km} mood={entry.mood} onPress={travelAction(entry.userId, entry.name, entry.isMe)} />;
             })}
           </View>
         ) : !ranking.isLoading ? (
@@ -156,7 +156,7 @@ export function RankingScreen() {
                   ···
                 </Text>
               ) : (
-                <RankRow key={`${row.rank}-${index}`} rank={row.rank} name={row.nickname} value={row.value} sub={row.sub} isMe={row.isMe} onPress={travelAction(row.userId, row.nickname, row.isMe)} />
+                <RankRow key={`${row.rank}-${index}`} rank={row.rank} name={row.nickname} value={row.value} sub={row.sub} isMe={row.isMe} mood={row.mood ?? (row.isMe && scope === "MONTHLY" ? mood.key : undefined)} onPress={travelAction(row.userId, row.nickname, row.isMe)} />
               )
             )}
           </View>
