@@ -37,7 +37,7 @@ export const MOOD_LEVELS: MoodLevel[] = [
   { key: "DARK_CIRCLES", label: "다크서클", range: "150km~" },
 ];
 
-/** 이번 달 이동 거리로 정하는 표정. 50km 미만 보통, 150km 미만 피곤, 그 이상 다크서클 */
+/** 이동 거리로 정하는 표정. 50km 미만 보통, 150km 미만 피곤, 그 이상 다크서클. 시상대는 보고 있는 기간(월간, 누적)의 거리를 쓴다 */
 export function moodOf(monthlyKm: number): MoodLevel {
   if (monthlyKm >= 150) return MOOD_LEVELS[2];
   if (monthlyKm >= 50) return MOOD_LEVELS[1];
@@ -110,7 +110,7 @@ export function rowsAfterPodium(data: RankingResponseDto | undefined): Array<Ran
 
 export function podium(
   data: RankingResponseDto | undefined
-): Array<{ rank: number; name: string; points: string; km: string; isMe: boolean; userId?: string }> {
+): Array<{ rank: number; name: string; points: string; km: string; mood: MoodLevel["key"]; isMe: boolean; userId?: string }> {
   return (data?.leaderboard ?? [])
     .filter((item) => item.rank <= 3)
     .map((item) => ({
@@ -118,6 +118,7 @@ export function podium(
       name: displayName(item),
       points: pointsText(item.totalPoints),
       km: kmText(item.totalDistanceKm),
+      mood: moodOf(item.totalDistanceKm).key,
       isMe: !!item.isMe,
       userId: visibleTravelUserId(item),
     }));

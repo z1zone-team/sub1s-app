@@ -3,7 +3,7 @@ import { Animated, Easing, Pressable, View } from "react-native";
 import { Bob } from "@/common/components/Bob";
 import { Text } from "@/common/components/Text";
 import { cn } from "@/lib/cn";
-import { Crown, FirstPlaceCharacter, SecondPlaceCharacter, ThirdPlaceCharacter } from "./RankCharacters";
+import { Crown, MoodFace, type MoodFaceKey } from "./RankCharacters";
 
 interface PodiumColumnProps {
   rank: 1 | 2 | 3;
@@ -12,6 +12,8 @@ interface PodiumColumnProps {
   points: string;
   /** "312.8km". 점수 아래에 작게 보인다 */
   km: string;
+  /** 그 사람의 이동 거리로 정한 표정 */
+  mood: MoodFaceKey;
   onPress?: () => void;
 }
 
@@ -25,8 +27,8 @@ const POD = {
   3: { height: "h-14", number: "text-title-lg", numberColor: "text-text-secondary", box: "border border-b-0 border-border bg-surface" },
 } as const;
 
-/** TOP 3 시상대의 한 칸: 캐릭터, 닉네임, 점수와 그 아래 작은 거리, 그 아래 순위 단. 1등은 왕관을 쓰고 둥실 떠 있다 */
-export function PodiumColumn({ rank, name, points, km, onPress }: PodiumColumnProps) {
+/** TOP 3 시상대의 한 칸: 이동 거리에 맞는 표정의 유령, 닉네임, 점수와 그 아래 작은 거리, 그 아래 순위 단. 1등은 왕관을 쓰고 둥실 떠 있다 */
+export function PodiumColumn({ rank, name, points, km, mood, onPress }: PodiumColumnProps) {
   const rise = useRef(new Animated.Value(0)).current;
   const pod = POD[rank];
 
@@ -56,13 +58,11 @@ export function PodiumColumn({ rank, name, points, km, onPress }: PodiumColumnPr
             <Crown />
           </View>
           <Bob lift={4} periodMs={2600}>
-            <FirstPlaceCharacter size={92} />
+            <MoodFace mood={mood} size={92} />
           </Bob>
         </>
-      ) : rank === 2 ? (
-        <SecondPlaceCharacter size={76} />
       ) : (
-        <ThirdPlaceCharacter size={76} />
+        <MoodFace mood={mood} size={76} />
       )}
       <Text className={cn("mt-1.5 max-w-full", rank === 1 ? "text-body font-sans-bold" : "text-body-sm font-sans-bold")} numberOfLines={1}>
         {name}
