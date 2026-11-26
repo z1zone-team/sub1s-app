@@ -1,8 +1,8 @@
 import {
   SMART_ALERT_BANNER_MS,
   smartAlertBody,
-  smartAlertDelivery,
   smartAlertKind,
+  smartAlertShowsBanner,
   smartAlertTitle,
 } from "./smartAlert";
 
@@ -36,11 +36,11 @@ describe("smartAlertBody", () => {
   });
 });
 
-describe("smartAlertDelivery", () => {
-  it("앱이 켜져 있으면 배너, 아니면 로컬 알림이다", () => {
-    expect(smartAlertDelivery("active")).toBe("BANNER");
-    expect(smartAlertDelivery("background")).toBe("NOTIFICATION");
-    expect(smartAlertDelivery("inactive")).toBe("NOTIFICATION");
+describe("smartAlertShowsBanner", () => {
+  it("앱이 켜져 있을 때만 알림과 함께 배너도 보여 준다", () => {
+    expect(smartAlertShowsBanner("active")).toBe(true);
+    expect(smartAlertShowsBanner("background")).toBe(false);
+    expect(smartAlertShowsBanner("inactive")).toBe(false);
   });
 });
 

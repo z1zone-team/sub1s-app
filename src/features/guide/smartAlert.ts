@@ -22,9 +22,7 @@ export function smartAlertBody(alert: SmartAlertPayload): string {
   return alert.recommendedDoor ? `${alert.message} · ${describeDoor(alert.recommendedDoor)}` : alert.message;
 }
 
-/** 앱이 켜져 있으면 안내 화면의 배너로, 아니면 로컬 알림으로 보여 준다 */
-export type SmartAlertDelivery = "BANNER" | "NOTIFICATION";
-
-export function smartAlertDelivery(appState: string): SmartAlertDelivery {
-  return appState === "active" ? "BANNER" : "NOTIFICATION";
+/** 알림은 앱 상태와 상관없이 늘 띄우고(승차 안내와 같은 자리, 소리 포함), 앱이 켜져 있으면 안내 화면 배너도 함께 보여 준다 */
+export function smartAlertShowsBanner(appState: string): boolean {
+  return appState === "active";
 }
