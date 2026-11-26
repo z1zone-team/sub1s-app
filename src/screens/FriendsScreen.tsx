@@ -31,7 +31,7 @@ export function FriendsScreen() {
   };
 
   const confirmRemove = (userId: string, nickname: string) => {
-    Alert.alert(`${nickname}님과 친구를 끊을까요?`, "상대방의 친구 목록에서도 사라져요.", [
+    Alert.alert(`@${nickname}님과 친구를 끊을까요?`, "상대방의 친구 목록에서도 사라져요.", [
       { text: "취소", style: "cancel" },
       { text: "친구 끊기", style: "destructive", onPress: () => remove.mutate(userId) },
     ]);
@@ -62,7 +62,7 @@ export function FriendsScreen() {
         renderItem={({ item }) => (
           <View className="min-h-row flex-row items-center justify-between border-b border-border py-2">
             <View>
-              <Text className="text-subtitle font-sans-bold">{item.nickname}</Text>
+              <Text className="text-subtitle font-sans-bold">@{item.nickname}</Text>
               <Text className="text-small text-text-secondary">{formatMonthDayKst(item.friendedAt)}부터 친구</Text>
             </View>
             <Pressable
