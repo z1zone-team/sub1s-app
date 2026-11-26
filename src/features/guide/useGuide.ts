@@ -19,6 +19,7 @@ import { useActiveGuideStore } from "./active-guide-store";
 import {
   boardingStopIndexes,
   guidePhase,
+  leadingWalkMeters,
   needsWalkToStation,
   nextBoardingIndex,
   ridesBoardedBy,
@@ -168,12 +169,13 @@ export function useGuide({ option, sessionId, startedAtMs, originCoords }: UseGu
   // 걷는 단계는 믿을 만한 위치로만 정한다. 정확도가 나쁘면 위치를 모르는 것으로 본다
   const accuratePosition =
     position && coords?.accuracy !== null && coords?.accuracy !== undefined && coords.accuracy <= GPS_MAX_ACCURACY_M ? position : undefined;
+  const leadingWalkM = leadingWalkMeters(option);
   const phaseKnown = Boolean(accuratePosition) || fixWaitOver || location.error !== null;
   const phase = guidePhase({
     boardingIndexes,
     state: phaseState,
     currentIndex: baseProgress.currentIndex,
-    walkNeeded: needsWalkToStation(originCoords, accuratePosition, boardingCoords, GPS_MAX_DISTANCE_M),
+    walkNeeded: needsWalkToStation(originCoords, accuratePosition, boardingCoords, GPS_MAX_DISTANCE_M, leadingWalkM),
   });
   // 걷는 동안은 걷는 시간까지 더한 남은 시간을 보여 준다
   const progress =
@@ -184,7 +186,7 @@ export function useGuide({ option, sessionId, startedAtMs, originCoords }: UseGu
         }
       : baseProgress;
   const from = position ?? originCoords;
-  const walkDistanceM = from && boardingCoords ? Math.round(distanceMeters(from, boardingCoords)) : undefined;
+  const walkDistanceM = from && boardingCoords ? Math.round(distanceMeters(from, boardingCoords)) : leadingWalkM;
 
   // 단계가 바뀌면 걷기, 승차 알림을 띄운다
   const boardingSegment = gate !== undefined ? option.segments[stops[gate]?.segmentIndex ?? -1] : undefined;
