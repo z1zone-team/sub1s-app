@@ -69,8 +69,16 @@ describe("needsWalkToStation", () => {
     expect(needsWalkToStation(origin, { lat: 37.5, lng: 127.0099 }, station, 250)).toBe(false);
   });
 
-  it("출발지가 역이면(좌표가 없으면) 걷는 단계가 없다", () => {
-    expect(needsWalkToStation(undefined, { lat: 37.5, lng: 127.0 }, station, 250)).toBe(false);
+  it("출발지가 역이어도 지금 위치가 탑승역에서 멀면 걸어야 한다", () => {
+    expect(needsWalkToStation(undefined, { lat: 37.5, lng: 127.0 }, station, 250)).toBe(true);
+  });
+
+  it("출발지가 역이고 지금 위치가 탑승역 근처면 걷는 단계가 없다", () => {
+    expect(needsWalkToStation(undefined, { lat: 37.5, lng: 127.0099 }, station, 250)).toBe(false);
+  });
+
+  it("출발지가 역이고 위치도 모르면 역에 있다고 본다", () => {
+    expect(needsWalkToStation(undefined, undefined, station, 250)).toBe(false);
   });
 
   it("탑승역 좌표를 모르면 걷는 단계를 만들지 않는다", () => {

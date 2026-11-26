@@ -37,8 +37,8 @@ export function ridesBoardedBy(boardingIndexes: number[], stopIndex: number): nu
 }
 
 /**
- * 안내가 첫 탑승역까지 걷는 단계를 보여야 하는지. 출발지가 좌표(현재 위치나 장소)이고 첫 탑승역에서 기준 거리보다 멀 때다.
- * 출발지가 역이면 걸을 필요가 없다. 위치를 알면 지금 위치를, 모르면 출발지 좌표를 쓴다.
+ * 안내가 첫 탑승역까지 걷는 단계를 보여야 하는지. 지금 위치(GPS)를 알면 출발지 종류와 상관없이 그 위치가 첫 탑승역에서 기준 거리보다 먼지로 정한다.
+ * 위치를 모르면 출발지 좌표(현재 위치나 장소)로 재고, 출발지가 역이라 좌표도 없으면 역에 있다고 본다
  */
 export function needsWalkToStation(
   originCoords: Coordinate | undefined,
@@ -47,7 +47,7 @@ export function needsWalkToStation(
   radiusM: number
 ): boolean {
   const from = position ?? originCoords;
-  if (!originCoords || !from || !station) return false;
+  if (!from || !station) return false;
   return distanceMeters(from, station) > radiusM;
 }
 
