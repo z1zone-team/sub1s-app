@@ -15,7 +15,8 @@ export type BottomTabParamList = {
 export type RootStackParamList = {
   Login: undefined;
   /** editing이면 저장된 답을 채워서 다시 고친다 */
-  Voice: undefined;
+  /** `audioUri`: 개발 빌드에서만, 마이크 대신 이 오디오 파일을 기기 음성 인식으로 받아 적는다(측정용) */
+  Voice: { audioUri?: string } | undefined;
   Onboarding: { editing?: boolean } | undefined;
   ProfileEdit: undefined;
   Settings: undefined;

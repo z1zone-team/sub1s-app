@@ -17,6 +17,8 @@ import { Screen } from "@/common/components/Screen";
 import { Shake } from "@/common/components/Shake";
 import { Text } from "@/common/components/Text";
 import { useAudioRecorder, type AudioRecordingResult } from "@/common/device/audio/useAudioRecorder";
+import { isDeviceSpeechAvailable, useSpeechRecognizer } from "@/common/device/speech/useSpeechRecognizer";
+import type { VoiceRouteRecommendRequest } from "@/apis/mutations/voice/voiceRouteTypes";
 import { getCurrentCoordinates } from "@/common/device/location/getCurrentCoordinates";
 import { canSpeakBriefing } from "@/features/voice/briefingVoice";
 import { BriefingCard } from "@/features/voice/components/BriefingCard";
@@ -72,10 +74,14 @@ function VoiceHeader({ onClose }: { onClose: () => void }) {
 }
 
 /** 프로토타입 Voice.dc.html, VoiceFail.dc.html. 듣는 중과 분석 중, 결과, 실패를 한 화면에서 바꿔 보여 준다 */
-export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackParamList, "Voice">) {
+export function VoiceScreen({ navigation, route }: NativeStackScreenProps<RootStackParamList, "Voice">) {
   const { isSignedIn } = useAuth();
   const insets = useSafeAreaInsets();
   const recorder = useAudioRecorder({ stopOnSilence: true });
+  // 기기 음성 인식을 먼저 쓰고, 쓸 수 없으면(서비스 없음, 오류) 녹음 파일을 서버에 올린다
+  const speech = useSpeechRecognizer();
+  const source = useRef<"device" | "recorder">(isDeviceSpeechAvailable() ? "device" : "recorder");
+  const audioUri = __DEV__ ? route.params?.audioUri : undefined;
   const recommend = useVoiceJobMutation();
   const briefingVoice = useBriefingVoice();
   const { addDestination } = useRecentDestinations();
@@ -85,20 +91,23 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
   const close = () => navigation.goBack();
   const bottomPadding = Math.max(insets.bottom, 12) + 10;
 
-  const submit = useCallback(
-    (recording: AudioRecordingResult) => {
-      if (recording.durationMillis < MIN_SPEECH_MS) {
-        setPhase({ name: "failed", failure: "NO_SPEECH" });
-        return;
-      }
+  // 녹음 파일이나 기기에서 받아 적은 문장을 큐 작업으로 보낸다. 현재 위치를 함께 보내 출발지를 말하지 않아도 되게 한다
+  const send = useCallback(
+    (request: Pick<VoiceRouteRecommendRequest, "audio" | "transcriptHint">, recognizedMs?: number) => {
       setPhase({ name: "processing" });
-      // 출발지를 말하지 않아도 되도록 현재 위치를 함께 보낸다. 위치를 얻지 못하면 위치 없이 보낸다
+      const sentAt = Date.now();
+      // 위치를 얻지 못하면 위치 없이 보낸다
       void getCurrentCoordinates().then((coords) => {
         if (!mounted.current) return; // 위치를 기다리는 동안 화면을 닫았으면 보내지 않는다
         recommend.mutate(
-          { audio: { uri: recording.uri, name: "voice_query.m4a", type: "audio/m4a" }, ...coords },
+          { ...request, ...coords },
           {
             onSuccess: (data) => {
+              if (__DEV__) {
+                console.log(
+                  `[voice-timing] source=${request.transcriptHint ? "device" : "upload"} recognizedMs=${recognizedMs ?? "-"} serverMs=${Date.now() - sentAt} kind=${data.kind} transcript=${data.transcript}`
+                );
+              }
               // 출발지나 도착지 후보가 여럿이면 경로 대신 "이 곳이 맞나요?"를 묻는다
               if (isDestinationConfirm(data) || isOriginConfirm(data)) {
                 const step = confirmStepOf(data);
@@ -116,19 +125,67 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
     [recommend, addDestination]
   );
 
-  const listen = useCallback(async () => {
-    briefingVoice.stop();
-    setPhase({ name: "listening" });
+  const submit = useCallback(
+    (recording: AudioRecordingResult) => {
+      if (recording.durationMillis < MIN_SPEECH_MS) {
+        setPhase({ name: "failed", failure: "NO_SPEECH" });
+        return;
+      }
+      send({ audio: { uri: recording.uri, name: "voice_query.m4a", type: "audio/m4a" } });
+    },
+    [send]
+  );
+
+  const startRecorder = useCallback(async () => {
     recorder.reset();
     const ok = await recorder.startRecording();
     if (!ok) setPhase({ name: "failed", failure: "GENERIC" });
-  }, [recorder, briefingVoice]);
+  }, [recorder]);
+
+  const listen = useCallback(async () => {
+    briefingVoice.stop();
+    setPhase({ name: "listening" });
+    if (source.current === "device") {
+      recorder.reset();
+      await speech.start({ audioUri });
+      return; // 결과와 실패는 아래 효과가 `speech.outcome`으로 처리한다
+    }
+    await startRecorder();
+  }, [briefingVoice, speech, audioUri, recorder, startRecorder]);
+
+  // 기기 음성 인식이 끝나면 받아 적은 문장만 보낸다. 인식 서비스를 쓸 수 없으면 녹음 방식으로 다시 듣는다
+  useEffect(() => {
+    const outcome = speech.outcome;
+    if (!outcome || phase.name !== "listening" || source.current !== "device") return;
+    switch (outcome.kind) {
+      case "text":
+        if (__DEV__) console.log(`[voice-timing] device recognized totalMs=${outcome.timing.totalMs} afterSpeechMs=${outcome.timing.afterSpeechMs ?? "-"} text=${outcome.transcript}`);
+        send({ transcriptHint: outcome.transcript }, outcome.timing.afterSpeechMs ?? outcome.timing.totalMs);
+        break;
+      case "no-speech":
+        setPhase({ name: "failed", failure: "NO_SPEECH" });
+        break;
+      case "permission-denied":
+        setPhase({ name: "failed", failure: "GENERIC" });
+        break;
+      case "unavailable":
+        if (__DEV__) console.log(`[voice-timing] device recognition unavailable (${outcome.reason}), recording instead`);
+        source.current = "recorder";
+        speech.reset();
+        void startRecorder();
+        break;
+      case "aborted":
+        break;
+    }
+  }, [speech, phase.name, send, startRecorder]);
 
   useEffect(() => {
     mounted.current = true; // 개발 모드는 효과를 한 번 해제했다가 다시 실행한다
     return () => {
       mounted.current = false;
+      speech.abort();
     };
+    // 화면을 닫을 때 한 번만 듣기를 멈춘다
   }, []);
 
   useEffect(() => {
@@ -146,6 +203,10 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
   }, [phase.name, recorder.isRecording, recorder.recordingResult, recorder.endedWithoutSpeech, submit]);
 
   const stop = async () => {
+    if (source.current === "device") {
+      speech.stop(); // 마지막 결과가 오면 위 효과가 보낸다
+      return;
+    }
     const recording = await recorder.stopRecording();
     if (!recording) {
       setPhase({ name: "failed", failure: "NO_SPEECH" });
@@ -180,7 +241,7 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
 
   if (phase.name === "failed") {
     const failure =
-      recorder.error === "AUDIO_PERMISSION_DENIED"
+      recorder.error === "AUDIO_PERMISSION_DENIED" || speech.outcome?.kind === "permission-denied"
         ? { title: "마이크 권한이 필요해요", body: "설정에서 마이크 사용을 허용한 뒤 다시 시도해 주세요." }
         : FAILURE_TEXT[phase.failure];
     const showExamples =
@@ -353,10 +414,15 @@ export function VoiceScreen({ navigation }: NativeStackScreenProps<RootStackPara
       <View className="flex-1 items-center px-7 pt-14">
         <Text className="text-subtitle font-sans-medium text-text-secondary">{processing ? "분석하는 중이에요" : "듣고 있어요"}</Text>
         <Text className="mt-3 text-center text-display-sm font-sans-bold leading-snug">어디로 갈까요?</Text>
-        <Text className="mt-2.5 text-center text-body text-text-secondary">예) “{VOICE_EXAMPLES[0]}”</Text>
+        {/* 기기 음성 인식이면 말하는 동안 받아 적는 문장을 보여 준다 */}
+        {speech.interim ? (
+          <Text className="mt-2.5 text-center text-body font-sans-semibold text-primary">“{speech.interim}”</Text>
+        ) : (
+          <Text className="mt-2.5 text-center text-body text-text-secondary">예) “{VOICE_EXAMPLES[0]}”</Text>
+        )}
         <View className="mt-16">
           {/* 물결의 크기가 목소리 크기를 따른다. 조용하거나 분석 중이면 선으로 보인다 */}
-          <WaveBars level={processing ? 0 : recorder.level} />
+          <WaveBars level={processing ? 0 : source.current === "device" ? speech.level : recorder.level} />
         </View>
       </View>
       <View style={{ paddingBottom: bottomPadding }} className="items-center gap-3.5 px-5">
