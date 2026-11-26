@@ -3,7 +3,7 @@ import { Pressable, View } from "react-native";
 import { Text } from "@/common/components/Text";
 import { valueParts } from "@/features/guide/arrivedView";
 import { cn } from "@/lib/cn";
-import { RowAvatar } from "./RankCharacters";
+import { MoodFace, RowAvatar, type MoodFaceKey } from "./RankCharacters";
 
 interface RankRowProps {
   rank: number;
@@ -13,11 +13,13 @@ interface RankRowProps {
   /** "96.3km". 점수 아래에 작게 보인다. 내 순위가 목록 밖일 때는 없다 */
   sub?: string;
   isMe: boolean;
+  /** 이동 거리로 정한 표정. 없으면 기본 유령 */
+  mood?: MoodFaceKey;
   onPress?: () => void;
 }
 
-/** 4위부터의 한 줄: 순위, 동그란 아바타, 닉네임(내 줄은 굵게 + 나 배지), 점수와 그 아래 작은 거리 */
-export function RankRow({ rank, name, value, sub, isMe, onPress }: RankRowProps) {
+/** 4위부터의 한 줄: 순위, 이동 거리에 맞는 표정의 아바타, 닉네임(내 줄은 굵게 + 나 배지), 점수와 그 아래 작은 거리 */
+export function RankRow({ rank, name, value, sub, isMe, mood, onPress }: RankRowProps) {
   const [part] = valueParts(value);
   return (
     <Pressable
@@ -29,7 +31,7 @@ export function RankRow({ rank, name, value, sub, isMe, onPress }: RankRowProps)
     >
       <Text className={cn("w-6 text-center text-subtitle font-sans-bold", isMe ? "" : "text-text-secondary")}>{rank}</Text>
       <View className="h-10 w-10 items-center justify-center rounded-md-plus bg-surface">
-        <RowAvatar size={24} />
+        {mood ? <MoodFace mood={mood} size={30} /> : <RowAvatar size={24} />}
       </View>
       <View className="min-w-0 flex-1 flex-row items-center gap-1.5">
         <Text className={cn("text-subtitle", isMe ? "font-sans-bold" : "font-sans-medium")} numberOfLines={1}>

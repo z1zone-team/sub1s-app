@@ -54,6 +54,8 @@ export interface RankingRow {
   value: string;
   /** "96.3km". 내 항목이 목록 밖일 때는 거리를 몰라 없다 */
   sub?: string;
+  /** 이동 거리로 정한 표정. 거리를 모르는 내 항목에는 없다 */
+  mood?: MoodLevel["key"];
 }
 
 export interface GapRow {
@@ -92,6 +94,7 @@ export function rowsAfterPodium(data: RankingResponseDto | undefined): Array<Ran
       userId: visibleTravelUserId(item),
       value: pointsText(item.totalPoints),
       sub: kmText(item.totalDistanceKm),
+      mood: moodOf(item.totalDistanceKm).key,
     }));
 
   const meListed = data.leaderboard.some((item) => item.isMe);

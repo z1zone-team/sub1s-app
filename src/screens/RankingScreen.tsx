@@ -156,7 +156,7 @@ export function RankingScreen() {
                   ···
                 </Text>
               ) : (
-                <RankRow key={`${row.rank}-${index}`} rank={row.rank} name={row.nickname} value={row.value} sub={row.sub} isMe={row.isMe} onPress={travelAction(row.userId, row.nickname, row.isMe)} />
+                <RankRow key={`${row.rank}-${index}`} rank={row.rank} name={row.nickname} value={row.value} sub={row.sub} isMe={row.isMe} mood={row.mood ?? (row.isMe && scope === "MONTHLY" ? mood.key : undefined)} onPress={travelAction(row.userId, row.nickname, row.isMe)} />
               )
             )}
           </View>
