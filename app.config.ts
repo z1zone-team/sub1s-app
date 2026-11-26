@@ -94,6 +94,15 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         { microphonePermission: "음성으로 목적지를 말해 경로를 찾는 데 마이크를 사용해요." },
       ],
       [
+        // 기기 음성 인식(Android SpeechRecognizer, iOS Speech). 안 되면 녹음 파일을 서버에 올린다
+        "expo-speech-recognition",
+        {
+          microphonePermission: "음성으로 목적지를 말해 경로를 찾는 데 마이크를 사용해요.",
+          speechRecognitionPermission: "말씀하신 목적지를 기기에서 받아 적는 데 음성 인식을 사용해요.",
+          androidSpeechServicePackages: ["com.google.android.googlequicksearchbox"],
+        },
+      ],
+      [
         "expo-location",
         {
           locationWhenInUsePermission:

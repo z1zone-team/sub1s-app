@@ -9,6 +9,14 @@ function fieldsOf(params: VoiceRouteRecommendRequest): Record<string, string> {
 }
 
 describe("buildVoiceFormData", () => {
+  it("기기에서 받아 적은 문장만 보낼 때는 파일 없이 transcriptHint만 보낸다", () => {
+    expect(fieldsOf({ transcriptHint: " 강남역 가자 " })).toEqual({ transcriptHint: "강남역 가자" });
+  });
+
+  it("빈 문장은 보내지 않는다", () => {
+    expect(Object.keys(fieldsOf({ audio, transcriptHint: "  " }))).toEqual(["file"]);
+  });
+
   it("위치가 없으면 lat, lng를 보내지 않는다", () => {
     expect(Object.keys(fieldsOf({ audio }))).toEqual(["file"]);
   });

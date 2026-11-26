@@ -16,6 +16,7 @@ import type { RootStackParamList } from "./navigation-types";
  * - `sub1s://ranking` -> 랭킹 탭
  * - `sub1s://profile` -> 프로필 탭
  * - `sub1s://search` -> 검색 화면
+ * - `sub1s://voice` -> 음성 검색 화면. 개발 빌드에서만 `?audioUri=file:///...`로 마이크 대신 오디오 파일을 받아 적는다(측정용)
  * - `sub1s://route?origin=09_907&destination=02_222&mode=OPTIMAL` -> 경로 추천 결과 화면 (origin, destination은 역 ID)
  * - `sub1s://livenav/:sessionId` -> 실시간 주행 세션 화면
  * - `sub1s://timeline` -> 이동 타임라인 화면
@@ -36,6 +37,7 @@ export const linking: LinkingOptions<RootStackParamList> = {
         },
       },
       Search: "search",
+      Voice: "voice",
       RouteResult: {
         path: "route",
         parse: {

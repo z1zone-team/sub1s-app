@@ -3,3 +3,4 @@ export * from "./location/getCurrentCoordinates";
 export * from "./audio/useAudioRecorder";
 export * from "./network/network-store";
 export * from "./network/useNetworkStatus";
+export * from "./speech/useSpeechRecognizer";

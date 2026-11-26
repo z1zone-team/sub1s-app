@@ -18,6 +18,7 @@ describe("Deep Linking Configuration", () => {
 
     // Stack mappings
     expect(screens.Search).toBe("search");
+    expect(screens.Voice).toBe("voice");
     expect(screens.RouteResult.path).toBe("route");
     expect(screens.LiveNav).toBe("livenav/:sessionId");
     expect(screens.Timeline).toBe("timeline");

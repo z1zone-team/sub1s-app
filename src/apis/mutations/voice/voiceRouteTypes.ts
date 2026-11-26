@@ -73,7 +73,10 @@ export const isOriginConfirm = (result: VoiceResultDto): result is VoiceOriginCo
   result.kind === "CONFIRM_ORIGIN";
 
 export interface VoiceRouteRecommendRequest {
-  audio: Blob | File | { uri: string; name: string; type: string };
+  /** 녹음 파일. 기기 음성 인식으로 받아 적은 문장(`transcriptHint`)만 보낼 때는 없다 */
+  audio?: Blob | File | { uri: string; name: string; type: string };
+  /** 기기에서 받아 적은 문장. 있으면 서버는 음성 인식을 건너뛴다(서버 #298부터 오디오 없이 받음) */
+  transcriptHint?: string;
   preferredMode?: RouteMode;
   /** 출발지를 말하지 않았을 때 서버가 현재 위치로 쓴다. 둘 다 있을 때만 보낸다 */
   lat?: number;
@@ -85,7 +88,9 @@ export function buildVoiceFormData(params: VoiceRouteRecommendRequest): FormData
   const formData = new FormData();
 
   // React Native file object vs Web Blob/File 호환성 처리
-  formData.append("file", params.audio as unknown as Blob);
+  if (params.audio) formData.append("file", params.audio as unknown as Blob);
+  const hint = params.transcriptHint?.trim();
+  if (hint) formData.append("transcriptHint", hint);
 
   if (params.preferredMode) {
     formData.append("preferredMode", params.preferredMode);
