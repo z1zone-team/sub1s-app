@@ -47,8 +47,20 @@ export function nameError(name: string): string {
   return name.trim().length > 30 ? "이름은 30자까지 입력할 수 있어요" : "";
 }
 
-/** 이번 달 상위 N% 문구(월간 랭킹의 내 백분위). 값이 없으면 보여 주지 않는다 */
-export function percentileText(percentile: number | undefined): string {
+/** 이 인원보다 적으면 백분위 대신 "N명 중 M위"로 보여 준다(3명 중 1위가 "상위 34%"로 보이지 않게) */
+export const PERCENTILE_MIN_USERS = 10;
+
+/**
+ * 이번 달 순위 문구(월간 랭킹). 1위면 "이번 달 1위", 인원이 적으면 "이번 달 3명 중 2위", 그 밖에는 "이번 달 상위 12%".
+ * 순위가 없으면 보여 주지 않는다
+ */
+export function percentileText(ranking: { myRank?: number; totalUsers?: number; myPercentile?: number } | undefined): string {
+  const rank = ranking?.myRank ?? 0;
+  if (rank <= 0) return "";
+  if (rank === 1) return "이번 달 1위";
+  const total = ranking?.totalUsers ?? 0;
+  if (total > 0 && total < PERCENTILE_MIN_USERS) return `이번 달 ${total}명 중 ${rank}위`;
+  const percentile = ranking?.myPercentile;
   if (percentile === undefined || !Number.isFinite(percentile)) return "";
   return `이번 달 상위 ${Math.round(percentile)}%`;
 }

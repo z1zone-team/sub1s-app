@@ -87,7 +87,7 @@ export function ProfileScreen() {
   }
 
   const profile = me.data;
-  const percentile = percentileText(ranking.data?.myPercentile);
+  const percentile = percentileText(ranking.data);
   const visibility = profile?.rankingVisibility ?? "PUBLIC";
 
   return (
